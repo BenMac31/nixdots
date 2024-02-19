@@ -1,5 +1,8 @@
 { config, lib, pkgs, inputs, ... }:
 
+let
+upkgs = pkgs.unstable;
+in
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -87,7 +90,7 @@
   };
   home-manager = {
 # also pass inputs to home-manager modules
-    extraSpecialArgs = {inherit inputs;};
+    extraSpecialArgs = {inherit inputs; inherit upkgs;};
     users = {
       "greencheetah" = import ./home.nix;
     };

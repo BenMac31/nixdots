@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, lib, pkgs, upkgs, inputs, ... }:
 
 {
   imports = 
@@ -15,16 +15,17 @@
   home.homeDirectory = "/home/greencheetah";
 
 
-  home.packages = with pkgs; [ #
-    signal-desktop
-    lunarvim
-    foot
-    kitty
-    wl-clipboard
-    ripgrep
-    noto-fonts-cjk
-    pavucontrol
-    pass
+  home.packages = [ #
+    pkgs.signal-desktop
+    pkgs.lunarvim
+    pkgs.foot
+    pkgs.kitty
+    pkgs.wl-clipboard
+    pkgs.ripgrep
+    pkgs.noto-fonts-cjk
+    pkgs.pavucontrol
+    pkgs.pass
+    upkgs.r2modman
 
 # # It is sometimes useful to fine-tune packages, for example, by applying
 # # overrides. You can do that directly here, just don't forget the
@@ -39,9 +40,6 @@
 #   echo "Hello, ${config.home.username}!"
 # '')
     ];
-# home.packages = with uPkgs; [
-#   r2modman
-# ];
   services.flatpak = {
     update.auto = {
       enable = true;
