@@ -7,23 +7,23 @@
       ../../modules/home-manager/gnome.nix
       ../../modules/home-manager/ai.nix
       ../../modules/home-manager/zsh.nix
-      # ../../modules/home-manager/nixvim.nix
+# ../../modules/home-manager/nixvim.nix
       inputs.nix-flatpak.homeManagerModules.nix-flatpak
     ];
   home.username = "greencheetah";
   home.homeDirectory = "/home/greencheetah";
 
 
-  home.packages = with pkgs; [
+  home.packages = with pkgs; [ #
     signal-desktop
-      lunarvim
-      foot
-      kitty
-      wl-clipboard
-      ripgrep
-      noto-fonts-cjk
-      pavucontrol
-      pass
+    lunarvim
+    foot
+    kitty
+    wl-clipboard
+    ripgrep
+    noto-fonts-cjk
+    pavucontrol
+    pass
 
 # # It is sometimes useful to fine-tune packages, for example, by applying
 # # overrides. You can do that directly here, just don't forget the
@@ -37,14 +37,31 @@
 # (pkgs.writeShellScriptBin "my-hello" ''
 #   echo "Hello, ${config.home.username}!"
 # '')
-      ];
+    ];
 # home.packages = with uPkgs; [
 #   r2modman
 # ];
-  services.flatpak.packages = [
-    "com.valvesoftware.Steam"
-    "com.github.tchx84.Flatseal"
-  ];
+  services.flatpak = {
+    update.auto = {
+      enable = true;
+      onCalendar = "weekly";
+    };
+    packages = [ #
+      "com.valvesoftware.Steam"
+      "net.ankiweb.Anki"
+      "org.qbittorrent.qBittorrent"
+    ];
+    overrides = {
+      "com.valvesoftware.Steam"= {
+        Context.filesystems = [
+          "xdg-config/r2modmanPlus-local"
+        ];
+        Environment = {
+          STEAM_FORCE_DESKTOPUI_SCALING = "2.0";
+        };
+      };
+    };
+  };
 
 # Home Manager is pretty good at managing dotfiles. The primary way to manage
 # plain files is through 'home.file'.

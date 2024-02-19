@@ -21,7 +21,6 @@
     services = {
       flatpak = {
         enable = true;
-        update.onActivation = true;
       };
       localtimed.enable = true;
       printing.enable = true;
