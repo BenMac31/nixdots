@@ -18,14 +18,20 @@
   networking.hostName = "nixBlade";
   networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
 
+    services = {
+      flatpak = {
+        enable = true;
+        update.onActivation = true;
+      };
+      localtimed.enable = true;
+      printing.enable = true;
+    };
 # Set your time zone.
-# time.timeZone = "Europe/Amsterdam";
-    services.localtimed.enable = true;
+  time.timeZone = "America/New_York";
 
 # Configure network proxy if necessary
 # networking.proxy.default = "http://user:password@proxy:port/";
 # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
 # Select internationalisation properties.
 # i18n.defaultLocale = "en_US.UTF-8";
 # console = {
@@ -34,10 +40,6 @@
 #   useXkbConfig = true; # use xkb.options in tty.
 # };
 
-# Enable CUPS to print documents.
-  services.printing.enable = true;
-
-# Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
@@ -46,21 +48,18 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-# If you want to use JACK applications, uncomment this
 #jack.enable = true;
   };
 
-# List packages installed in system profile. To search, run:
-# $ nix search wget
-  environment.systemPackages = with pkgs; [
-    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-      wget
-      home-manager
-      pinentry
-      lshw
-      lsof
-      powertop
-      git
+  environment.systemPackages = with pkgs; [ #
+    vim
+    wget
+    home-manager
+    pinentry
+    lshw
+    lsof
+    powertop
+    git
   ];
 
 # Some programs need SUID wrappers, can be configured further or are
@@ -70,8 +69,6 @@
 #   enable = true;
 #   enableSSHSupport = true;
 # };
-
-# List services that you want to enable:
 
 # Open ports in the firewall.
 # networking.firewall.allowedTCPPorts = [ ... ];
@@ -96,7 +93,6 @@
       "greencheetah" = import ./home.nix;
     };
   };
-  services.flatpak.enable = true;
   programs.gnupg.agent = {                                                      
     enable = true;
   };
