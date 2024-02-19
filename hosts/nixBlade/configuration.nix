@@ -83,7 +83,7 @@
   users.users.greencheetah = {
     isNormalUser = true;
     shell= pkgs.zsh;
-    extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "uinput" "input" ]; # Enable ‘sudo’ for the user.
   };
   home-manager = {
 # also pass inputs to home-manager modules
@@ -95,4 +95,5 @@
   programs.gnupg.agent = {                                                      
     enable = true;
   };
+  hardware.uinput.enable = true;
 }

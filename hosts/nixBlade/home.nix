@@ -7,6 +7,7 @@
       ../../modules/home-manager/gnome.nix
       ../../modules/home-manager/ai.nix
       ../../modules/home-manager/zsh.nix
+      ../../modules/home-manager/xremap.nix
 # ../../modules/home-manager/nixvim.nix
       inputs.nix-flatpak.homeManagerModules.nix-flatpak
     ];

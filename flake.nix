@@ -20,6 +20,8 @@
     #   url = "github:nix-community/nixvim/nixos-23.11";
     #   inputs.nixpkgs.follows = "nixpkgs";
     # };
+    # nix-colors.url = "github:misterio77/nix-colors";
+    xremap-flake.url = "github:xremap/nix-flake";
   };
 
   outputs = { self, nixpkgs, unstable, ... }@inputs:
