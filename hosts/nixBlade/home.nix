@@ -6,6 +6,7 @@
     ../../modules/home-manager/firefox.nix
       ../../modules/home-manager/gnome.nix
       ../../modules/home-manager/ai.nix
+      ../../modules/home-manager/zsh.nix
       inputs.nix-flatpak.homeManagerModules.nix-flatpak
     ];
   home.username = "greencheetah";
