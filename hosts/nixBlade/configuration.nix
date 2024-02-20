@@ -10,7 +10,7 @@ in
       inputs.home-manager.nixosModules.default
       ../../modules/nixos/gnome.nix
       ../../modules/nixos/japanese.nix
-      ../../modules/nixos/nvidia.nix
+      ../../modules/nixos/nvidia-disable.nix
       ../../modules/nixos/laptop.nix
       # ../../modules/nixos/hyprland.nix
     ];
@@ -65,6 +65,7 @@ in
     powertop
     git
     nix-index
+    openrazer-daemon
   ];
 
 # Some programs need SUID wrappers, can be configured further or are
@@ -102,4 +103,6 @@ in
     enable = true;
   };
   hardware.uinput.enable = true;
+  hardware.openrazer.enable = true;
+  programs.hyprland.enable = true;
 }

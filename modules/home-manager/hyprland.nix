@@ -1,7 +1,7 @@
 {pkgs, inputs, config, ...}:
 
 {
-  environment.sessionVariables = {
+  home.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "1";
     WLR_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0";
     NIXOS_OZONE_WL = "1";
@@ -11,6 +11,7 @@
   swww
   swaynotificationcenter
   wluma
+  wlr-randr
   ];
   imports = 
     [

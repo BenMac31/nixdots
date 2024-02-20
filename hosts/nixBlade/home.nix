@@ -31,6 +31,7 @@
     pkgs.pass
     pkgs.neofetch
     pkgs.libnotify
+    pkgs.polychromatic
     upkgs.r2modman
     (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" "FiraCode" "DroidSansMono" ]; })
 
