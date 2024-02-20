@@ -3,9 +3,8 @@
 {
   programs.hyprland = {
     enable = true;
-    enableNvidiaPatches = true;
     xwayland.enable = true;
-
+    package = pkgs.unstable.hyprland;
   };
   environment.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "1";

@@ -11,7 +11,8 @@ in
       ../../modules/nixos/gnome.nix
       ../../modules/nixos/japanese.nix
       ../../modules/nixos/nvidia.nix
-      ../../modules/nixos/hyprland.nix
+      ../../modules/nixos/laptop.nix
+      # ../../modules/nixos/hyprland.nix
     ];
 
 # Use the systemd-boot EFI boot loader.
@@ -55,6 +56,7 @@ in
 
   environment.systemPackages = with pkgs; [ #
     vim
+    htop
     wget
     home-manager
     pinentry
@@ -62,6 +64,7 @@ in
     lsof
     powertop
     git
+    nix-index
   ];
 
 # Some programs need SUID wrappers, can be configured further or are
@@ -86,7 +89,7 @@ in
   users.users.greencheetah = {
     isNormalUser = true;
     shell= pkgs.zsh;
-    extraGroups = [ "wheel" "uinput" "input" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "uinput" "input" "video" ]; # Enable ‘sudo’ for the user.
   };
   home-manager = {
 # also pass inputs to home-manager modules

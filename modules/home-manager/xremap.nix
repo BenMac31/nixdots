@@ -5,7 +5,8 @@
     inputs.xremap-flake.homeManagerModules.default
   ];
   services.xremap = {
-    withGnome = true;
+    # withGnome = true;
+    withWlroots = true;
     config = {
       keymap = [
         {
