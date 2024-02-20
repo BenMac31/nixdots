@@ -12,6 +12,7 @@ in
       ../../modules/nixos/japanese.nix
       ../../modules/nixos/nvidia-disable.nix
       ../../modules/nixos/laptop.nix
+      ../../modules/nixos/plymouth.nix
       # ../../modules/nixos/hyprland.nix
     ];
 
