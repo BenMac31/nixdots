@@ -1,9 +1,10 @@
-{pkgs, inputs, config, ...}:
+{pkgs, inputs, upkgs, config, ...}:
 
 {
   home.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "1";
-    WLR_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0";
+    # WLR_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0";
+    # WLR_DRM_DEVICES="/dev/dri/card0:/dev/dri/card1";
     NIXOS_OZONE_WL = "1";
   };
   services.swayosd.enable = true;
@@ -15,7 +16,8 @@
   ];
   imports = 
     [
-    wm/gBar.nix
+    wm/waybar/waybar.nix
+    # wm/gBar.nix
     wm/rofi.nix
     # wm/swayidle.nix
     ];
@@ -28,7 +30,7 @@
     settings = {
       monitor= ",preferred,auto,2";
       exec-once = [
-      "gBar bar"
+      # "gBar bar"
       "swww init"
       "swaync"
       "wluma"

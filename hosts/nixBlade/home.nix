@@ -12,6 +12,7 @@
       ../../modules/home-manager/hyprland.nix
       ../../modules/home-manager/foot.nix
       ../../modules/home-manager/gtk.nix
+      # ../../modules/home-manager/latex.nix
 # ../../modules/home-manager/nixvim.nix
       inputs.nix-flatpak.homeManagerModules.nix-flatpak
     ];
@@ -26,12 +27,18 @@
     pkgs.wl-clipboard
     pkgs.ripgrep
     pkgs.gnome.gnome-tweaks
+    pkgs.python3
     pkgs.noto-fonts-cjk
     pkgs.pavucontrol
+    pkgs.gpu-screen-recorder-gtk
     pkgs.pass
     pkgs.neofetch
     pkgs.libnotify
     pkgs.polychromatic
+    pkgs.yt-dlp
+    pkgs.mpv
+    pkgs.mullvad-vpn
+    pkgs.jq
     upkgs.r2modman
     (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" "FiraCode" "DroidSansMono" ]; })
 
@@ -56,15 +63,16 @@
       "com.valvesoftware.Steam"
       "net.ankiweb.Anki"
       "org.qbittorrent.qBittorrent"
+      "com.github.bajoja.indicator-kdeconnect"
     ];
     overrides = {
       "com.valvesoftware.Steam"= {
         Context.filesystems = [
           "xdg-config/r2modmanPlus-local"
         ];
-        Environment = {
-          STEAM_FORCE_DESKTOPUI_SCALING = "2.0";
-        };
+        # Environment = {
+        #   STEAM_FORCE_DESKTOPUI_SCALING = "2.0";
+        # };
       };
     };
   };

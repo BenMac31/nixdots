@@ -29,6 +29,12 @@
       inputs.hyprland.follows = "hyprland";
     };
     # hypridle.url = "github:hyprwm/hypridle";
+    # ags.url = "github:Aylur/ags";
+    # ollama = {
+    #   url = "github:abysssol/ollama-flake/cuda-testing";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
+    llamacpp.url = "github:ggerganov/llama.cpp";
   };
 
   outputs = { self, nixpkgs, nixpkgs-unstable, ... }@inputs:
@@ -36,14 +42,20 @@
     system = "x86_64-linux";
   pkgs = nixpkgs.legacyPackages.${system};
   overlay-unstable = final: prev: {
-    unstable = nixpkgs-unstable.legacyPackages.${prev.system};
+      unstable = nixpkgs-unstable.legacyPackages.${prev.system};
+  };
+  overlay-unstable-unfree = final: prev: {
+    unstable-unfree = import nixpkgs-unstable {
+      inherit system;
+      config.allowUnfree = true;
+    };
   };
   in
   {
     nixosConfigurations.nixBlade = nixpkgs.lib.nixosSystem {
       specialArgs = {inherit inputs;};
       modules = [ 
-        ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable ]; })
+        ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable overlay-unstable-unfree ]; })
         ./hosts/nixBlade/configuration.nix
 # inputs.home-manager.nixosModules.default
       ];

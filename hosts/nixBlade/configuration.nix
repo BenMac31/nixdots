@@ -4,12 +4,23 @@ let
 upkgs = pkgs.unstable;
 in
 {
+  nixpkgs.config.allowUnfreePredicate = pkg:
+    builtins.elem (lib.getName pkg) [
+    "nvidia-x11"
+      "nvidia-settings"
+      "nvidia-persistenced"
+      "cudatoolkit"
+      "cudatoolkit-11.8.0"
+      "cudatoolkit-12.2.2"
+      # config.boot.kernel.kernelPackages.nvidiaPackages.beta
+    ];
   imports =
     [ # Include the results of the hardware scan.
     ./hardware-configuration.nix
       inputs.home-manager.nixosModules.default
       ../../modules/nixos/gnome.nix
       ../../modules/nixos/japanese.nix
+      ../../modules/nixos/nvidia.nix
       ../../modules/nixos/nvidia-disable.nix
       ../../modules/nixos/laptop.nix
       ../../modules/nixos/plymouth.nix
@@ -29,6 +40,7 @@ in
       };
       localtimed.enable = true;
       printing.enable = true;
+      mullvad-vpn.enable = true;
     };
 # Set your time zone.
   time.timeZone = "America/New_York";
@@ -64,6 +76,9 @@ in
     lshw
     lsof
     powertop
+    (unstable-unfree.ollama.override {
+     enableCuda = true;
+     })
     git
     nix-index
     openrazer-daemon
