@@ -21,7 +21,7 @@ in
       ../../modules/nixos/gnome.nix
       ../../modules/nixos/japanese.nix
       ../../modules/nixos/nvidia.nix
-      ../../modules/nixos/nvidia-disable.nix
+      ../../modules/nixos/onTheGo.nix
       ../../modules/nixos/laptop.nix
       ../../modules/nixos/plymouth.nix
       # ../../modules/nixos/hyprland.nix

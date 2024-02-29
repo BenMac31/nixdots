@@ -78,7 +78,7 @@
       };
 
       animations = {
-        enabled = true;
+        enabled = false;
         bezier = "myBezier,0.05,0.9,0.1,1.05";
 
         animation =[
@@ -128,13 +128,13 @@
 # See https://wiki.hyprland.org/Configuring/Keywords/ for more
       "$mainMod" = "SUPER";
 
-      bindni = [
-        "SUPER,SUPER_L,exec,hyprrazer -f /home/greencheetah/.cache/hyprrazer/mainMod.csv"
-        # "SUPERSHIFT,SUPER_L,exec,hyprrazer -f /home/greencheetah/.cache/hyprrazer/mainModSHIFT.csv"
-      ];
-      bindirnt = with config.colorScheme.colors; [
-        "SUPER,SUPER_L,exec,polychromatic-cli -d laptop -z main -o static -c ${base07}"
-      ];
+      # bindni = [
+      #   "SUPER,SUPER_L,exec,hyprrazer -f /home/greencheetah/.cache/hyprrazer/mainMod.csv"
+      #   # "SUPERSHIFT,SUPER_L,exec,hyprrazer -f /home/greencheetah/.cache/hyprrazer/mainModSHIFT.csv"
+      # ];
+      # bindirnt = with config.colorScheme.colors; [
+      #   "SUPER,SUPER_L,exec,polychromatic-cli -d laptop -z main -o static -c ${base07}"
+      # ];
       bind = [ #
         "$mainMod,Q,exec,foot"
         "$mainMod,C,killactive,"
