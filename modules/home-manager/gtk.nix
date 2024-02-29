@@ -1,6 +1,14 @@
-{pkgs, upkgs, config, ...}:
+{pkgs, config, ...}:
 {
-  gtk.enable = true;
-  gtk.theme.package = pkgs.gruvbox-gtk-theme;
-  gtk.theme.name = "Gruvbox-Dark-BL";
+  gtk = {
+    enable = true;
+    theme = {
+      package = pkgs.gruvbox-gtk-theme;
+      name = "Gruvbox-Dark-BL";
+    };
+    iconTheme = {
+      package = pkgs.unstable.morewaita-icon-theme;
+      name = "MoreWaita";
+    };
+  };
 }

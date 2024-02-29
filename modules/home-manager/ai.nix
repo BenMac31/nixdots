@@ -1,4 +1,4 @@
-{config, upkgs, inputs, pkgs, ...}:
+{config, inputs, pkgs, ...}:
 let
 # system = "x86_64-linux";
 # overlay-unstable2 = final: prev: {

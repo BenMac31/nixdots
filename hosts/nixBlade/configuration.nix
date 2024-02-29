@@ -17,7 +17,7 @@ in
   imports =
     [ # Include the results of the hardware scan.
     ./hardware-configuration.nix
-      inputs.home-manager.nixosModules.default
+      # inputs.home-manager.nixosModules.default
       ../../modules/nixos/gnome.nix
       ../../modules/nixos/japanese.nix
       ../../modules/nixos/nvidia.nix
@@ -106,19 +106,18 @@ in
   users.users.greencheetah = {
     isNormalUser = true;
     shell= pkgs.zsh;
-    extraGroups = [ "wheel" "uinput" "input" "video" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "openrazer" "wheel" "uinput" "input" "video" ]; # Enable ‘sudo’ for the user.
   };
-  home-manager = {
-# also pass inputs to home-manager modules
-    extraSpecialArgs = {inherit inputs; inherit upkgs;};
-    users = {
-      "greencheetah" = import ./home.nix;
-    };
-  };
+#   home-manager = {
+# # also pass inputs to home-manager modules
+#     extraSpecialArgs = {inherit inputs; inherit upkgs;};
+#     users."greencheetah" = import ./home.nix;
+#   };
   programs.gnupg.agent = {                                                      
     enable = true;
   };
   hardware.uinput.enable = true;
   hardware.openrazer.enable = true;
+  # hardware.openrazer.users = [ "greencheetah" ];
   programs.hyprland.enable = true;
 }

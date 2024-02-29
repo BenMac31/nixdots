@@ -1,4 +1,4 @@
-{pkgs, inputs, upkgs, config, ...}:
+{pkgs,inputs,config,...}:
 
 {
   home.sessionVariables = {
@@ -8,18 +8,20 @@
     NIXOS_OZONE_WL = "1";
   };
   services.swayosd.enable = true;
-  home.packages = with pkgs; [ #
-  swww
-  swaynotificationcenter
-  wluma
-  wlr-randr
+  home.packages = [ #
+    pkgs.swww
+    pkgs.swaynotificationcenter
+    pkgs.wluma
+    pkgs.wlr-randr
+    inputs.asztal.packages."${pkgs.system}".default
   ];
   imports = 
     [
-    wm/waybar/waybar.nix
+    # wm/waybar/waybar.nix
     # wm/gBar.nix
-    wm/rofi.nix
+    # wm/rofi.nix
     # wm/swayidle.nix
+    wm/hyprrazer.nix
     ];
   wayland.windowManager.hyprland = {
     enable = true;
@@ -31,6 +33,7 @@
       monitor= ",preferred,auto,2";
       exec-once = [
       # "gBar bar"
+      "nmcli radio wifi off && nmcli radio wifi on"
       "swww init"
       "swaync"
       "wluma"
@@ -43,19 +46,21 @@
         };
       };
 
-      general = {
+      general = with config.colorScheme.colors; {
 # See https://wiki.hyprland.org/Configuring/Variables/ for more
-        gaps_in = 5;
-        gaps_out = 20;
+        gaps_in = 3;
+        gaps_out = 5;
         border_size = 2;
-        "col.active_border" = "rgba(33ccffee) rgba(00ff99ee) 45deg";
-        "col.inactive_border" = "rgba(595959aa)";
+        # "col.active_border" = "rgba(33ccffee) rgba(00ff99ee) 45deg";
+        # "col.inactive_border" = "rgba(595959aa)";
+        "col.active_border" = "rgba(${base08}ee) rgba(${base0A}ee) 45deg";
+        "col.inactive_border" = "rgba(${base03}aa)";
         layout = "dwindle";
 # Please see https://wiki.hyprland.org/Configuring/Tearing/ before you turn this on
         allow_tearing = false;
       };
 
-      decoration = {
+      decoration = with config.colorScheme.colors; {
 # See https://wiki.hyprland.org/Configuring/Variables/ for more
 
         rounding = 10;
@@ -69,20 +74,20 @@
         drop_shadow = true;
         shadow_range = 4;
         shadow_render_power = 3;
-        "col.shadow" = "rgba(1a1a1aee)";
+        "col.shadow" = "rgba(${base01}ee)";
       };
 
       animations = {
         enabled = true;
-        bezier = "myBezier, 0.05, 0.9, 0.1, 1.05";
+        bezier = "myBezier,0.05,0.9,0.1,1.05";
 
         animation =[
-          "windows, 1, 7, myBezier"
-            "windowsOut, 1, 7, default, popin 80%"
-            "border, 1, 10, default"
-            "borderangle, 1, 8, default"
-            "fade, 1, 7, default"
-            "workspaces, 1, 6, default"
+          "windows,1,7,myBezier"
+            "windowsOut,1,7,default,popin 80%"
+            "border,1,10,default"
+            "borderangle,1,8,default"
+            "fade,1,7,default"
+            "workspaces,1,6,default"
         ];
       };
 
@@ -114,7 +119,7 @@
 #        }
 
 # Example windowrule v1
-# windowrule = float, ^(kitty)$
+# windowrule = float,^(kitty)$
 # Example windowrule v2
 # windowrulev2 = float,class:^(kitty)$,title:^(kitty)$
 # See https://wiki.hyprland.org/Configuring/Window-Rules/ for more
@@ -123,49 +128,69 @@
 # See https://wiki.hyprland.org/Configuring/Keywords/ for more
       "$mainMod" = "SUPER";
 
+      bindni = [
+        "SUPER,SUPER_L,exec,hyprrazer -f /home/greencheetah/.cache/hyprrazer/mainMod.csv"
+        # "SUPERSHIFT,SUPER_L,exec,hyprrazer -f /home/greencheetah/.cache/hyprrazer/mainModSHIFT.csv"
+      ];
+      bindirnt = with config.colorScheme.colors; [
+        "SUPER,SUPER_L,exec,polychromatic-cli -d laptop -z main -o static -c ${base07}"
+      ];
       bind = [ #
-        "$mainMod, Q, exec, foot"
-        "$mainMod, C, killactive, "
-        "$mainMod, M, exit, "
-        "$mainMod, E, exec, nautilus"
-        "$mainMod, V, togglefloating, "
-        "$mainMod, R, exec, rofi -show drun"
-        "$mainMod, P, pseudo, # dwindle"
-        "$mainMod, J, togglesplit, # dwindle"
-        "$mainMod, left, movefocus, l"
-        "$mainMod, right, movefocus, r"
-        "$mainMod, up, movefocus, u"
-        "$mainMod, down, movefocus, d"
-        "$mainMod, 1, workspace, 1"
-        "$mainMod, 2, workspace, 2"
-        "$mainMod, 3, workspace, 3"
-        "$mainMod, 4, workspace, 4"
-        "$mainMod, 5, workspace, 5"
-        "$mainMod, 6, workspace, 6"
-        "$mainMod, 7, workspace, 7"
-        "$mainMod, 8, workspace, 8"
-        "$mainMod, 9, workspace, 9"
-        "$mainMod, 0, workspace, 10"
-        "$mainMod SHIFT, 1, movetoworkspace, 1"
-        "$mainMod SHIFT, 2, movetoworkspace, 2"
-        "$mainMod SHIFT, 3, movetoworkspace, 3"
-        "$mainMod SHIFT, 4, movetoworkspace, 4"
-        "$mainMod SHIFT, 5, movetoworkspace, 5"
-        "$mainMod SHIFT, 6, movetoworkspace, 6"
-        "$mainMod SHIFT, 7, movetoworkspace, 7"
-        "$mainMod SHIFT, 8, movetoworkspace, 8"
-        "$mainMod SHIFT, 9, movetoworkspace, 9"
-        "$mainMod SHIFT, 0, movetoworkspace, 10"
-        "$mainMod, S, togglespecialworkspace, magic"
-        "$mainMod SHIFT, S, movetoworkspace, special:magic"
-        "$mainMod, mouse_down, workspace, e+1"
-        "$mainMod, mouse_up, workspace, e-1"
+        "$mainMod,Q,exec,foot"
+        "$mainMod,C,killactive,"
+        "$mainMod,M,exit,"
+        "$mainMod,E,exec,nautilus"
+        "$mainMod,V,togglefloating,"
+        "$mainMod,R,exec,rofi -show drun"
+        "$mainMod,P,pseudo,# dwindle"
+        # "$mainMod,J,togglesplit,# dwindle"
+        "$mainMod,H,movefocus,l"
+        "$mainMod,L,movefocus,r"
+        "$mainMod,K,movefocus,u"
+        "$mainMod,J,movefocus,d"
+        "$mainMod,S,togglespecialworkspace,magic"
+        "$mainMod SHIFT,S,movetoworkspace,special:magic"
+        "$mainMod,mouse_down,workspace,e+1"
+        "$mainMod,mouse_up,workspace,e-1"
         # hyprcov
-        "ALT,tab,hycov:toggleoverview"
-        "ALT,left,hycov:movefocus,l"
-        "ALT,right,hycov:movefocus,r"
-        "ALT,up,hycov:movefocus,u"
-        "ALT,down,hycov:movefocus,d"
+        # "ALT,tab,hycov:toggleoverview"
+        # "ALT,left,hycov:movefocus,l"
+        # "ALT,right,hycov:movefocus,r"
+        # "ALT,up,hycov:movefocus,u"
+        # "ALT,down,hycov:movefocus,d"
+        # Brightness
+        ",XF86AudioRaiseVolume,exec,swayosd --input-volume=+10"
+        ",XF86AudioLowerVolume,exec,swayosd --input-volume=-10"
+        ",XF86AudioMute,exec,swayosd --input-volume=mute-toggle"
+        ",XF86MonBrightnessUP,exec,swayosd --brightness=+10"
+        ",XF86MonBrightnessDown,exec,swayosd --brightness=-10"
+        "$mainMod,R,exec,asztal -t applauncher"
+        ",XF86PowerOff,exec,asztal -t powermenu"
+        "$mainMod,Tab,exec,asztal -t overview"
+        ",XF86Launch4,exec,asztal -r 'recorder.start()'"
+        ",Print,exec,asztal -r 'recorder.screenshot()'"
+        "SHIFT,Print,exec,asztal -r 'recorder.screenshot(true)'"
+        ] ++ [
+        "$mainMod,1,workspace,1"
+        "$mainMod,2,workspace,2"
+        "$mainMod,3,workspace,3"
+        "$mainMod,4,workspace,4"
+        "$mainMod,5,workspace,5"
+        "$mainMod,6,workspace,6"
+        "$mainMod,7,workspace,7"
+        "$mainMod,8,workspace,8"
+        "$mainMod,9,workspace,9"
+        "$mainMod,0,workspace,10"
+        "$mainMod SHIFT,1,movetoworkspace,1"
+        "$mainMod SHIFT,2,movetoworkspace,2"
+        "$mainMod SHIFT,3,movetoworkspace,3"
+        "$mainMod SHIFT,4,movetoworkspace,4"
+        "$mainMod SHIFT,5,movetoworkspace,5"
+        "$mainMod SHIFT,6,movetoworkspace,6"
+        "$mainMod SHIFT,7,movetoworkspace,7"
+        "$mainMod SHIFT,8,movetoworkspace,8"
+        "$mainMod SHIFT,9,movetoworkspace,9"
+        "$mainMod SHIFT,0,movetoworkspace,10"
         ];
       plugin = {
         hycov = {
@@ -181,8 +206,8 @@
 
 # Move/resize windows with mainMod + LMB/RMB and dragging
       bindm = [
-        "$mainMod, mouse:272, movewindow"
-          "$mainMod, mouse:273, resizewindow"
+        "$mainMod,mouse:272,movewindow"
+          "$mainMod,mouse:273,resizewindow"
       ];
     };
   };

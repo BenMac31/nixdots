@@ -1,4 +1,4 @@
-{ config, lib, pkgs, upkgs, inputs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 
 {
   imports = 
@@ -39,7 +39,7 @@
     pkgs.mpv
     pkgs.mullvad-vpn
     pkgs.jq
-    upkgs.r2modman
+    pkgs.unstable.r2modman
     (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" "FiraCode" "DroidSansMono" ]; })
 
 # # It is sometimes useful to fine-tune packages, for example, by applying
@@ -62,14 +62,20 @@
     packages = [ #
       "com.valvesoftware.Steam"
       "net.ankiweb.Anki"
+      "com.github.tchx84.Flatseal"
       "org.qbittorrent.qBittorrent"
       "com.github.bajoja.indicator-kdeconnect"
     ];
     overrides = {
       "com.valvesoftware.Steam"= {
-        Context.filesystems = [
+        Context = {
+        filesystems = [
           "xdg-config/r2modmanPlus-local"
         ];
+        device = [
+          "dri"
+        ];
+        };
         # Environment = {
         #   STEAM_FORCE_DESKTOPUI_SCALING = "2.0";
         # };
@@ -113,7 +119,7 @@
 
   programs.home-manager.enable = true;
   home.stateVersion = "23.11"; # Please read the comment before changing.
-    services.gnome-keyring.enable = true;
+  services.gnome-keyring.enable = true;
 
   programs.gpg.enable = true;
   services.gpg-agent = {

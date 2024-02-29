@@ -32,12 +32,12 @@
     # ags.url = "github:Aylur/ags";
     # ollama = {
     #   url = "github:abysssol/ollama-flake/cuda-testing";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
+    #   inputs.nixpkgs.follows = "nixpkgs"; };
     llamacpp.url = "github:ggerganov/llama.cpp";
+    asztal.url = "github:Aylur/dotfiles";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, nixpkgs-unstable, ... }@inputs:
     let
     system = "x86_64-linux";
   pkgs = nixpkgs.legacyPackages.${system};
@@ -50,16 +50,30 @@
       config.allowUnfree = true;
     };
   };
-  in
-  {
-    nixosConfigurations.nixBlade = nixpkgs.lib.nixosSystem {
+  in rec {
+    nixosConfigurations.nixBlade = nixpkgs.lib.nixosSystem rec {
       specialArgs = {inherit inputs;};
       modules = [ 
         ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable overlay-unstable-unfree ]; })
         ./hosts/nixBlade/configuration.nix
-# inputs.home-manager.nixosModules.default
+        inputs.home-manager.nixosModules.default
+        ({
+         home-manager = {
+         useGlobalPkgs = true;
+         useUserPackages = true;
+         extraSpecialArgs = specialArgs;
+         users.greencheetah = import ./hosts/nixBlade/home.nix;
+         };
+         })
       ];
     };
-
+    homeConfigurations.nixBlade = home-manager.lib.homeManagerConfiguration {
+      extraSpecialArgs = {inherit inputs;};
+      inherit pkgs;
+      modules = [
+        ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable overlay-unstable-unfree ]; })
+        ./hosts/nixBlade/home.nix 
+      ];
+    };
   };
 }
