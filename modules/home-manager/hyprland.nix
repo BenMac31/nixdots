@@ -159,9 +159,9 @@
         # "ALT,up,hycov:movefocus,u"
         # "ALT,down,hycov:movefocus,d"
         # Brightness
-        ",XF86AudioRaiseVolume,exec,swayosd --input-volume=+10"
-        ",XF86AudioLowerVolume,exec,swayosd --input-volume=-10"
-        ",XF86AudioMute,exec,swayosd --input-volume=mute-toggle"
+        ",XF86AudioRaiseVolume,exec,swayosd --output-volume=+10"
+        ",XF86AudioLowerVolume,exec,swayosd --output-volume=-10"
+        ",XF86AudioMute,exec,swayosd --output-volume=mute-toggle"
         ",XF86MonBrightnessUP,exec,swayosd --brightness=+10"
         ",XF86MonBrightnessDown,exec,swayosd --brightness=-10"
         "$mainMod,R,exec,asztal -t applauncher"
