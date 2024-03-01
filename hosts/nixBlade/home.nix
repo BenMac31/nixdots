@@ -28,6 +28,7 @@
     pkgs.ripgrep
     pkgs.gnome.gnome-tweaks
     pkgs.python3
+    pkgs.brave
     pkgs.noto-fonts-cjk
     pkgs.pavucontrol
     pkgs.gpu-screen-recorder-gtk
@@ -61,6 +62,7 @@
     };
     packages = [ #
       "com.valvesoftware.Steam"
+      "com.valvesoftware.Steam.Utility.gamescope"
       "net.ankiweb.Anki"
       "com.github.tchx84.Flatseal"
       "org.qbittorrent.qBittorrent"

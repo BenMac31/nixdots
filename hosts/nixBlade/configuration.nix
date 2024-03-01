@@ -120,4 +120,5 @@ in
   hardware.openrazer.enable = true;
   # hardware.openrazer.users = [ "greencheetah" ];
   programs.hyprland.enable = true;
+  virtualisation.docker.enable = true;
 }
