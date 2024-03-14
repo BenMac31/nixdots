@@ -38,9 +38,13 @@ in
       flatpak = {
         enable = true;
       };
-      localtimed.enable = true;
+      automatic-timezoned.enable = true;
       printing.enable = true;
       mullvad-vpn.enable = true;
+      udev.extraRules =''
+      SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="a291", TAG+="uaccess"
+      SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="df11", TAG+="uaccess"
+      '';
     };
 # Set your time zone.
   time.timeZone = "America/New_York";
@@ -69,6 +73,7 @@ in
 
   environment.systemPackages = with pkgs; [ #
     vim
+    pciutils
     htop
     wget
     home-manager
@@ -76,9 +81,6 @@ in
     lshw
     lsof
     powertop
-    (unstable-unfree.ollama.override {
-     enableCuda = true;
-     })
     git
     nix-index
     openrazer-daemon
@@ -106,7 +108,7 @@ in
   users.users.greencheetah = {
     isNormalUser = true;
     shell= pkgs.zsh;
-    extraGroups = [ "openrazer" "wheel" "uinput" "input" "video" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "docker" "openrazer" "wheel" "uinput" "input" "video" ]; # Enable ‘sudo’ for the user.
   };
 #   home-manager = {
 # # also pass inputs to home-manager modules
@@ -120,5 +122,9 @@ in
   hardware.openrazer.enable = true;
   # hardware.openrazer.users = [ "greencheetah" ];
   programs.hyprland.enable = true;
-  virtualisation.docker.enable = true;
+  virtualisation.docker = {
+    enable = true;
+    enableNvidia = true;
+  };
+  programs.gamemode.enable = true;
 }

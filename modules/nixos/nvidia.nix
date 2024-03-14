@@ -11,8 +11,8 @@
       config.boot.kernel.kernelPackages.nvidiaPackages.beta
     ];
   environment.systemPackages = [
-  pkgs.unstable-unfree.cudatoolkit
-  pkgs.unstable-unfree.cudaPackages.cuda_cudart
+  pkgs.unfree.cudatoolkit
+  pkgs.unfree.cudaPackages.cuda_cudart
   ];
   nixpkgs.config.cudaSupport = true;
 
@@ -27,17 +27,17 @@
 
     modesetting.enable = true;
 
-    # prime = {
-    #   sync.enable = true;
-    #   amdgpuBusId = "PCI:100:0:0";
-    #   nvidiaBusId = "PCI:01:0:0";
-    #   # offload = {
-    #   #   enable = true;
-    #   #   enableOffloadCmd = true;
-    #   # };
-    # };
-    # powerManagement.enable = true;
-    # powerManagement.finegrained = true;
+    prime = {
+      # sync.enable = true;
+      amdgpuBusId = "PCI:100:0:0";
+      nvidiaBusId = "PCI:01:0:0";
+      offload = {
+        enable = true;
+        enableOffloadCmd = true;
+      };
+    };
+    powerManagement.enable = true;
+    powerManagement.finegrained = true;
 
     open = false;
 

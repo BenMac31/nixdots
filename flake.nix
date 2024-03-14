@@ -2,13 +2,13 @@
   description = "Nixos config flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
-      url = "github:nix-community/home-manager/release-23.11";
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-master.url = "github:nixos/nixpkgs/master";
 # arkenfox = {
 #   url = "github:dwarfmaster/arkenfox-nixos";
 #   inputs.nixpkgs.follows = "nixpkgs";
@@ -23,29 +23,39 @@
     nix-colors.url = "github:misterio77/nix-colors";
     gBar.url = "github:scorpion-26/gBar";
     xremap-flake.url = "github:xremap/nix-flake";
-    hyprland.url = "github:hyprwm/Hyprland";
+    hyprland = {
+      url = "github:hyprwm/Hyprland";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     hycov={
       url = "github:DreamMaoMao/hycov";
       inputs.hyprland.follows = "hyprland";
     };
     # hypridle.url = "github:hyprwm/hypridle";
     # ags.url = "github:Aylur/ags";
-    # ollama = {
-    #   url = "github:abysssol/ollama-flake/cuda-testing";
-    #   inputs.nixpkgs.follows = "nixpkgs"; };
+    ollama = {
+      url = "github:abysssol/ollama-flake";
+      inputs.nixpkgs.follows = "nixpkgs"; 
+     };
     llamacpp.url = "github:ggerganov/llama.cpp";
     asztal.url = "github:Aylur/dotfiles";
   };
 
-  outputs = { self, nixpkgs, home-manager, nixpkgs-unstable, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, nixpkgs-master, ... }@inputs:
     let
     system = "x86_64-linux";
   pkgs = nixpkgs.legacyPackages.${system};
-  overlay-unstable = final: prev: {
-      unstable = nixpkgs-unstable.legacyPackages.${prev.system};
+  overlay-master = final: prev: {
+      master = nixpkgs-master.legacyPackages.${prev.system};
   };
-  overlay-unstable-unfree = final: prev: {
-    unstable-unfree = import nixpkgs-unstable {
+  overlay-unfree = final: prev: {
+    unfree = import nixpkgs{
+      inherit system;
+      config.allowUnfree = true;
+    };
+  };
+  overlay-master-unfree = final: prev: {
+    master.unfree = import nixpkgs-master{
       inherit system;
       config.allowUnfree = true;
     };
@@ -54,7 +64,7 @@
     nixosConfigurations.nixBlade = nixpkgs.lib.nixosSystem rec {
       specialArgs = {inherit inputs;};
       modules = [ 
-        ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable overlay-unstable-unfree ]; })
+        ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree ]; })
         ./hosts/nixBlade/configuration.nix
         inputs.home-manager.nixosModules.default
         ({
@@ -71,7 +81,7 @@
       extraSpecialArgs = {inherit inputs;};
       inherit pkgs;
       modules = [
-        ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unstable overlay-unstable-unfree ]; })
+        ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree ]; })
         ./hosts/nixBlade/home.nix 
       ];
     };

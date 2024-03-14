@@ -3,8 +3,8 @@
 {
   imports = 
     [
-../../modules/home-manager/nix-colors.nix
-    ../../modules/home-manager/firefox.nix
+    ../../modules/home-manager/nix-colors.nix
+      ../../modules/home-manager/firefox.nix
       ../../modules/home-manager/gnome.nix
       ../../modules/home-manager/ai.nix
       ../../modules/home-manager/zsh.nix
@@ -12,7 +12,8 @@
       ../../modules/home-manager/hyprland.nix
       ../../modules/home-manager/foot.nix
       ../../modules/home-manager/gtk.nix
-      # ../../modules/home-manager/latex.nix
+      ../../modules/home-manager/mpv.nix
+../../modules/home-manager/latex.nix
 # ../../modules/home-manager/nixvim.nix
       inputs.nix-flatpak.homeManagerModules.nix-flatpak
     ];
@@ -22,39 +23,51 @@
 
   home.packages = [ #
     pkgs.signal-desktop
-    pkgs.lunarvim
-    pkgs.kitty
-    pkgs.wl-clipboard
-    pkgs.ripgrep
-    pkgs.gnome.gnome-tweaks
-    pkgs.python3
-    pkgs.brave
-    pkgs.noto-fonts-cjk
-    pkgs.pavucontrol
-    pkgs.gpu-screen-recorder-gtk
-    pkgs.pass
-    pkgs.neofetch
-    pkgs.libnotify
-    pkgs.polychromatic
-    pkgs.yt-dlp
-    pkgs.mpv
-    pkgs.mullvad-vpn
-    pkgs.jq
-    pkgs.unstable.r2modman
-    (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" "FiraCode" "DroidSansMono" ]; })
-
-# # It is sometimes useful to fine-tune packages, for example, by applying
-# # overrides. You can do that directly here, just don't forget the
-# # parentheses. Maybe you want to install Nerd Fonts with a limited number of
-# # fonts?
-
-# # You can also create simple shell scripts directly inside your
-# # configuration. For example, this adds a command 'my-hello' to your
-# # environment:
-# (pkgs.writeShellScriptBin "my-hello" ''
-#   echo "Hello, ${config.home.username}!"
-# '')
-    ];
+    (pkgs.writeShellScriptBin "aiclip" ''
+     touch /tmp/aiclip.lock
+     (aichat --role test <<< "$(wl-paste)" > /tmp/aiclip.out && sleep 1 && rm /tmp/aiclip.lock) &
+     notifID=$(notify-send -p "ANSWER" "EXPLANATION" -t "10000")
+     outOld="ANSWER\nEXPLANATION"
+     while [ -e /tmp/aiclip.lock ]
+     do
+     out="""$(cat /tmp/aiclip.out)
+     ..."""
+     if [ "$out" != "$outOld" ]
+     then
+     notify-send "--replace-id=$notifID" -t "10000" "$(echo "$out" | head -n 1)" "$(echo "$out" | tail -n +2)"
+     outOld="$out"
+     fi
+     sleep 0.2
+     done
+     cat /tmp/aiclip.out
+     notify-send "--replace-id=$notifID" -t "$(($(wc -w < /tmp/aiclip.out)*250))" "$(head -n 1 /tmp/aiclip.out)" "$(tail -n +2 /tmp/aiclip.out)"
+     rm /tmp/aiclip.out
+     '')
+     pkgs.lunarvim
+     pkgs.kitty
+     pkgs.wl-clipboard
+     pkgs.ripgrep
+     pkgs.gnome.gnome-tweaks
+     pkgs.python3
+     pkgs.bitwarden
+     pkgs.speedcrunch
+     pkgs.brave
+     pkgs.noto-fonts-cjk
+     pkgs.zathura
+     pkgs.pavucontrol
+     pkgs.gpu-screen-recorder-gtk
+     pkgs.pass
+     pkgs.neofetch
+     pkgs.libnotify
+     pkgs.polychromatic
+     pkgs.fzf
+     pkgs.ffmpeg
+     pkgs.yt-dlp
+     pkgs.mullvad-vpn
+     pkgs.jq
+     pkgs.r2modman
+     (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" "FiraCode" "DroidSansMono" ]; })
+     ];
   services.flatpak = {
     update.auto = {
       enable = true;
@@ -67,20 +80,21 @@
       "com.github.tchx84.Flatseal"
       "org.qbittorrent.qBittorrent"
       "com.github.bajoja.indicator-kdeconnect"
+      "org.prismlauncher.PrismLauncher"
     ];
     overrides = {
       "com.valvesoftware.Steam"= {
         Context = {
-        filesystems = [
-          "xdg-config/r2modmanPlus-local"
-        ];
-        device = [
-          "dri"
-        ];
+          filesystems = [
+            "xdg-config/r2modmanPlus-local"
+          ];
+          device = [
+            "dri"
+          ];
         };
-        # Environment = {
-        #   STEAM_FORCE_DESKTOPUI_SCALING = "2.0";
-        # };
+# Environment = {
+#   STEAM_FORCE_DESKTOPUI_SCALING = "2.0";
+# };
       };
     };
   };
@@ -121,7 +135,7 @@
 
   programs.home-manager.enable = true;
   home.stateVersion = "23.11"; # Please read the comment before changing.
-  services.gnome-keyring.enable = true;
+    services.gnome-keyring.enable = true;
 
   programs.gpg.enable = true;
   services.gpg-agent = {

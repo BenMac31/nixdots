@@ -1,20 +1,12 @@
-{config, inputs, pkgs, ...}:
-let
-# system = "x86_64-linux";
-# overlay-unstable2 = final: prev: {
-#   unstable2 = import inputs.nixpkgs-unstable {
-#     inherit system;
-#     enableCuda = true;
-#     config.enableCuda = true;
-#   };
-# };
-in {
+{lib, config, inputs, pkgs, ...}:
+{
   # nixpkgs.overlays = [ overlay-unstable2 ];
   home.packages = [
-    # (inputs.pkgs.ollama.override {
-    #  enableCuda = true;
-    #  })
-  #   inputs.ollama.packages.${pkgs.system}.cuda
+    pkgs.aichat
+    (pkgs.master.unfree.ollama.override {
+     acceleration = "cuda";
+     })
+    # inputs.ollama.packages.${pkgs.system}.cuda
     # inputs.llamacpp.packages.${pkgs.system}.cuda
   ];
 }
