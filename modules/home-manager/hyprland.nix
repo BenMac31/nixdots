@@ -4,14 +4,18 @@ let
 playerctl = "${pkgs.playerctl}/bin/playerctl";
 brightnessctl = "${pkgs.brightnessctl}/bin/brightnessctl";
 pactl = "${pkgs.pulseaudio}/bin/pactl";
+asztal = "${inputs.asztal.packages.${pkgs.system}.default}/bin/asztal";
 in {
-  xdg.desktopEntries."org.gnome.Settings" = {
-    name = "Settings";
-    comment = "Gnome Control Center";
-    icon = "org.gnome.Settings";
-    exec = "env XDG_CURRENT_DESKTOP=gnome ${pkgs.gnome.gnome-control-center}/bin/gnome-control-center";
-    categories = [ "X-Preferences" ];
-    terminal = false;
+  xdg = {
+    configFile."hypr/hyprland.conf".onChange = "${pkgs.procps}/bin/pkill ags"; # re-launching asztal doesn't seem to work.
+    desktopEntries."org.gnome.Settings" = {
+      name = "Settings";
+      comment = "Gnome Control Center";
+      icon = "org.gnome.Settings";
+      exec = "env XDG_CURRENT_DESKTOP=gnome ${pkgs.gnome.gnome-control-center}/bin/gnome-control-center";
+      categories = [ "X-Preferences" ];
+      terminal = false;
+    };
   };
   home.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "1";
@@ -45,7 +49,7 @@ in {
         "nmcli radio wifi off && nmcli radio wifi on" # wifi doesn't work without this.
         "swww init"
         "wluma"
-        "asztal"
+        "${asztal}"
       ];
       input = {
         kb_layout = "us";
@@ -169,12 +173,12 @@ in {
         "$mainMod SHIFT,S,movetoworkspace,special:magic"
         "$mainMod,mouse_down,workspace,e+1"
         "$mainMod,mouse_up,workspace,e-1"
-        "$mainMod,R,exec,asztal -t launcher"
-        ",XF86PowerOff,exec,asztal -t powermenu"
-        "$mainMod,Tab,exec,asztal -t overview"
-        ",XF86Launch4,exec,asztal -r 'recorder.start()'"
-        ",Print,exec,asztal -r 'recorder.screenshot()'"
-        "SHIFT,Print,exec,asztal -r 'recorder.screenshot(true)'"
+        "$mainMod,R,exec,${asztal} -t launcher"
+        ",XF86PowerOff,exec,${asztal} -t powermenu"
+        "$mainMod,Tab,exec,${asztal} -t overview"
+        ",XF86Launch4,exec,${asztal} -r 'recorder.start()'"
+        ",Print,exec,${asztal} -r 'recorder.screenshot()'"
+        "SHIFT,Print,exec,${asztal} -r 'recorder.screenshot(true)'"
         "$mainMod,F11,fullscreen,0"
         "CTRL$mainMod,F11,fakefullscreen,0"
         ] ++ [

@@ -13,6 +13,7 @@
       ../../modules/home-manager/foot.nix
       ../../modules/home-manager/gtk.nix
       ../../modules/home-manager/mpv.nix
+      ../../modules/home-manager/xdg.nix
 ../../modules/home-manager/latex.nix
 # ../../modules/home-manager/nixvim.nix
       inputs.nix-flatpak.homeManagerModules.nix-flatpak
