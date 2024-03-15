@@ -11,4 +11,9 @@
       name = "MoreWaita";
     };
   };
+  qt = {
+    enable = true;
+    style.name = "adwaita";
+    platformTheme = "gnome";
+  };
 }

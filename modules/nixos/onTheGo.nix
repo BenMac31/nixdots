@@ -1,10 +1,13 @@
-{pkgs, config, ...}:
+{pkgs,lib, config, ...}:
 {
 
   specialisation = {
     onTheGo.configuration = {
       system.nixos.tags = [ "onTheGo" ];
 
+      virtualisation.docker = {
+        enable = false;
+      };
       boot = {
         extraModprobeConfig = ''
           blacklist nouveau

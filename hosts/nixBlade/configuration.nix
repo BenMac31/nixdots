@@ -38,6 +38,7 @@ in
       flatpak = {
         enable = true;
       };
+      ratbagd.enable = true;
       automatic-timezoned.enable = true;
       printing.enable = true;
       mullvad-vpn.enable = true;
@@ -123,8 +124,12 @@ in
   # hardware.openrazer.users = [ "greencheetah" ];
   programs.hyprland.enable = true;
   virtualisation.docker = {
-    enable = true;
+    enable = lib.mkDefault true;
     enableNvidia = true;
   };
   programs.gamemode.enable = true;
+  fileSystems."/home/greencheetah/Desktop" = {
+  device = "/home/greencheetah/.local/share/applications";
+  options = [ "bind" ];
+  };
 }

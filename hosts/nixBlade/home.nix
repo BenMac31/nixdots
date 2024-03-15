@@ -45,6 +45,7 @@
      '')
      pkgs.lunarvim
      pkgs.kitty
+     pkgs.piper
      pkgs.wl-clipboard
      pkgs.ripgrep
      pkgs.gnome.gnome-tweaks
@@ -76,6 +77,7 @@
     packages = [ #
       "com.valvesoftware.Steam"
       "com.valvesoftware.Steam.Utility.gamescope"
+      "net.lutris.Lutris"
       "net.ankiweb.Anki"
       "com.github.tchx84.Flatseal"
       "org.qbittorrent.qBittorrent"
@@ -83,10 +85,27 @@
       "org.prismlauncher.PrismLauncher"
     ];
     overrides = {
+      global = {
+# Force Wayland by default
+        Context = {
+          # sockets = ["wayland" "!x11" "!fallback-x11"];
+          filesystems = [
+            "xdg-data/themes:ro"
+          ];
+        };
+
+        Environment = {
+# Fix un-themed cursor in some Wayland apps
+          XCURSOR_PATH = "/run/host/user-share/icons:/run/host/share/icons";
+
+# Force correct theme for some GTK apps
+          GTK_THEME = "Adwaita:dark";
+        };
+      };
       "com.valvesoftware.Steam"= {
         Context = {
           filesystems = [
-            "xdg-config/r2modmanPlus-local"
+            "xdg-config/r2modmanPlus-local:rw"
           ];
           device = [
             "dri"
@@ -138,9 +157,9 @@
     services.gnome-keyring.enable = true;
 
   programs.gpg.enable = true;
-  services.gpg-agent = {
-    enable = true;
-    pinentryFlavor = "gnome3";
-  };
+  # services.gnupg.agent = {
+  #   enable = true;
+  #   pinentryPackage = "pkgs.pinentry-gnome3";
+  # };
   programs.password-store.enable = true;
 }

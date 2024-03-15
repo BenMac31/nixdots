@@ -27,10 +27,9 @@
       url = "github:hyprwm/Hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    hycov={
-      url = "github:DreamMaoMao/hycov";
-      inputs.hyprland.follows = "hyprland";
-    };
+    # hyprrazer={
+    #   url = "github:benmac31/hyprrazer/flake";
+    # };
     # hypridle.url = "github:hyprwm/hypridle";
     # ags.url = "github:Aylur/ags";
     ollama = {

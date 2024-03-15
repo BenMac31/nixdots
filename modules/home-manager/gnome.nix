@@ -35,7 +35,7 @@
     };
   };
   qt.platformTheme = "gnome";
-  services.gpg-agent.pinentryFlavor = "gnome3";
+  # services.gnupg.agent.pinentryPackage = "pkgs.pinentry-gnome3";
   programs.firefox.package = pkgs.firefox.override {
     cfg = {
       enableGnomeExtensions = true;

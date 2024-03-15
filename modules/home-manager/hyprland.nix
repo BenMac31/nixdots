@@ -1,4 +1,4 @@
-{pkgs,inputs,config,...}:
+{pkgs,lib,inputs,config,...}:
 
 let
 playerctl = "${pkgs.playerctl}/bin/playerctl";
@@ -45,7 +45,7 @@ in {
         "nmcli radio wifi off && nmcli radio wifi on" # wifi doesn't work without this.
         "swww init"
         "wluma"
-        "asztal -b hypr"
+        "asztal"
       ];
       input = {
         kb_layout = "us";
@@ -85,7 +85,7 @@ in {
       };
 
       animations = {
-        enabled = true;
+        enabled = lib.mkDefault true;
         # enabled = false;
         bezier = "myBezier,0.05,0.9,0.1,1.05";
 
@@ -169,12 +169,12 @@ in {
         "$mainMod SHIFT,S,movetoworkspace,special:magic"
         "$mainMod,mouse_down,workspace,e+1"
         "$mainMod,mouse_up,workspace,e-1"
-        "$mainMod,R,exec,asztal -b hypr -t applauncher"
-        ",XF86PowerOff,exec,asztal -b hypr -t powermenu"
-        "$mainMod,Tab,exec,asztal -b hypr -t overview"
-        ",XF86Launch4,exec,asztal -b hypr -r 'recorder.start()'"
-        ",Print,exec,asztal -b hypr -r 'recorder.screenshot()'"
-        "SHIFT,Print,exec,asztal -b hypr -r 'recorder.screenshot(true)'"
+        "$mainMod,R,exec,asztal -t launcher"
+        ",XF86PowerOff,exec,asztal -t powermenu"
+        "$mainMod,Tab,exec,asztal -t overview"
+        ",XF86Launch4,exec,asztal -r 'recorder.start()'"
+        ",Print,exec,asztal -r 'recorder.screenshot()'"
+        "SHIFT,Print,exec,asztal -r 'recorder.screenshot(true)'"
         "$mainMod,F11,fullscreen,0"
         "CTRL$mainMod,F11,fakefullscreen,0"
         ] ++ [
