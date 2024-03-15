@@ -14,6 +14,7 @@
       ../../modules/home-manager/gtk.nix
       ../../modules/home-manager/mpv.nix
       ../../modules/home-manager/xdg.nix
+      ../../modules/home-manager/gaming.nix
 ../../modules/home-manager/latex.nix
 # ../../modules/home-manager/nixvim.nix
       inputs.nix-flatpak.homeManagerModules.nix-flatpak
@@ -67,7 +68,6 @@
      pkgs.yt-dlp
      pkgs.mullvad-vpn
      pkgs.jq
-     pkgs.r2modman
      (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" "FiraCode" "DroidSansMono" ]; })
      ];
   services.flatpak = {
@@ -76,14 +76,10 @@
       onCalendar = "weekly";
     };
     packages = [ #
-      "com.valvesoftware.Steam"
-      "com.valvesoftware.Steam.Utility.gamescope"
-      "net.lutris.Lutris"
       "net.ankiweb.Anki"
       "com.github.tchx84.Flatseal"
       "org.qbittorrent.qBittorrent"
       "com.github.bajoja.indicator-kdeconnect"
-      "org.prismlauncher.PrismLauncher"
     ];
     overrides = {
       global = {
@@ -102,19 +98,6 @@
 # Force correct theme for some GTK apps
           GTK_THEME = "Adwaita:dark";
         };
-      };
-      "com.valvesoftware.Steam"= {
-        Context = {
-          filesystems = [
-            "xdg-config/r2modmanPlus-local:rw"
-          ];
-          device = [
-            "dri"
-          ];
-        };
-# Environment = {
-#   STEAM_FORCE_DESKTOPUI_SCALING = "2.0";
-# };
       };
     };
   };
