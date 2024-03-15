@@ -19,8 +19,4 @@
       };
     };
   };
-# home.packages = [
-#   pkgs.mpv
-#   pkgs.mpvScripts.sponsorblock
-# ];
 }

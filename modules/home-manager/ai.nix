@@ -12,7 +12,6 @@ cat = "${pkgs.coreutils}/bin/cat";
 rm = "${pkgs.coreutils}/bin/rm";
 in
 {
-  # nixpkgs.overlays = [ overlay-unstable2 ];
   home.packages = [
     pkgs.aichat
     (pkgs.master.unfree.ollama.override {

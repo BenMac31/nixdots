@@ -1,7 +1,7 @@
 {pkgs, ...}:
 {
-home.packages = with pkgs; [
-zathura
-texliveFull
-];
+  home.packages = with pkgs; [ #
+    zathura
+    texliveFull
+  ];
 }

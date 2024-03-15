@@ -21,17 +21,8 @@ in {
     "x-scheme-handler/about"   = "firefox.desktop";
     "x-scheme-handler/unknown" = "firefox.desktop";
   };
-# imports = 
-#   [
-#   inputs.arkenfox.hmModules.default
-#   ];
   programs.firefox = {
     enable = true;
-
-# arkenfox = {
-#   enable = true;
-#   version = "119.0";
-# };
 
     policies = {
       DisableTelemetry = true;
@@ -57,10 +48,6 @@ in {
           install_url = "https://addons.mozilla.org/firefox/downloads/latest/bitwarden-password-manager/latest.xpi";
           installation_mode = "force_installed";
         };
-# "BraveSearchExtension@io.Uvera" = {
-#   install_url = "https://addons.mozilla.org/firefox/downloads/latest/brave-search/latest.xpi";
-#   installation_mode = "force_installed";
-# };
       };
     };
 
@@ -68,7 +55,6 @@ in {
       default = {
         name = "default";
         isDefault = true;
-# userChrome = ""USERCHROME STRING"";
         search = {
           default = "brave";
           force = true;
