@@ -64,11 +64,13 @@
         filesystems = [
         "xdg-config/gtk-4.0"
         "xdg-config/gtk-3.0"
+        "${pkgs.gruvbox-gtk-theme}/share/themes/"
         ];
         };
 
         Environment = {
           XCURSOR_PATH = "/run/host/user-share/icons:/run/host/share/icons";
+          GTK_THEME = "Gruvbox-Dark-BL";
         };
       };
     };
