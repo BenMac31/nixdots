@@ -14,6 +14,7 @@
     ../../modules/home-manager/xdg.nix
     ../../modules/home-manager/gaming.nix
     ../../modules/home-manager/latex.nix
+    ../../modules/home-manager/vim.nix
     inputs.nix-flatpak.homeManagerModules.nix-flatpak
   ];
   home.username = "greencheetah";
@@ -22,7 +23,6 @@
 
   home.packages = [ #
     pkgs.signal-desktop
-    pkgs.lunarvim
     pkgs.kitty
     pkgs.piper
     pkgs.wl-clipboard
@@ -74,10 +74,6 @@
         };
       };
     };
-  };
-
-  home.sessionVariables = {
-    EDITOR = "lvim";
   };
 
   programs.home-manager.enable = true;
