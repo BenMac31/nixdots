@@ -115,17 +115,32 @@ lvim.plugins = {
 		"huggingface/llm.nvim",
 		opts = {
 			backend = "ollama",
-			model = "gemma:instruct",
-			accept_keymap = "<S-CR>",
-			dismiss_keymap = "<CR>",
+			model = "starcoder2:7b",
+			-- context_window = 512,
+			tokenizer = {
+				repository = "bigcode/starcoder2-7b",
+			},
 			url = "http://localhost:11434/api/generate",
 			request_body = {
-				options = {
-					temperature = 0.2,
+				parameters = {
+					max_new_tokens = 64,
+					temperature = 0.3,
 					top_p = 0.95,
 				},
 			},
 			enable_suggestions_on_startup = true,
+			enable_suggestions_on_files = "*",
+			tokens_to_clear = { "<|endoftext|>" },
+			fim = {
+				enabled = true,
+				prefix = "<fim_prefix>",
+				middle = "<fim_middle>",
+				suffix = "<fim_suffix>",
+			},
+			debounce_ms = 150,
+			accept_keymap = "<S-CR>",
+			dismiss_keymap = "<CR>",
+			url = "http://localhost:11434/api/generate",
 			lsp = {
 				bin_path = vim.api.nvim_call_function("stdpath", { "data" }) .. "/mason/bin/llm-ls",
 			},

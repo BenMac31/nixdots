@@ -8,9 +8,8 @@
       pkgs.shellcheck
   ];
   xdg.configFile."lvim" = {
-  enable = true;
-  source = ../../confs/lvim;
-  recursive = true;
+    enable = true;
+    source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos/confs/lvim";
   };
   home.sessionVariables = {
     EDITOR = "${pkgs.lunarvim}/bin/lvim";

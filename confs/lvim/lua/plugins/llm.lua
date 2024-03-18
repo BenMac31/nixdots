@@ -1,7 +1,7 @@
 require("llm").setup({
 	model = "starcoder2:15b",
 	backend = "ollama",
-	url = "http://127.0.0.1:11434/api/generate", -- the http url of the backend
+	url = "http://localhost:11434/api/generate", -- the http url of the backend
 	tokens_to_clear = { "<|endoftext|>" }, -- tokens to remove from the model's output
 	request_body = {
 		parameters = {
