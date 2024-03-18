@@ -38,10 +38,11 @@ in
       automatic-timezoned.enable = true;
       printing.enable = true;
       mullvad-vpn.enable = true;
-      udev.extraRules =''
-      SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="a291", TAG+="uaccess"
-      SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="df11", TAG+="uaccess"
-      '';
+      udev.extraRules = # Numworks Udev
+        ''
+        SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="a291", TAG+="uaccess"
+        SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="df11", TAG+="uaccess"
+        '';
     };
   time.timeZone = "America/New_York";
 
