@@ -94,7 +94,13 @@ in
   };
   programs.gamemode.enable = true;
   fileSystems."/home/greencheetah/Desktop" = {
-  device = "/home/greencheetah/.local/share/applications";
-  options = [ "bind" ];
+    device = "/home/greencheetah/.local/share/applications";
+    options = [ "bind" ];
   };
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 7d";
+  };
+  programs.nix-ld.enable = true;
 }
