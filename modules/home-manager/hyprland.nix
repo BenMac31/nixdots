@@ -19,14 +19,7 @@ in {
   };
   home.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "1";
-# WLR_DRM_DEVICES="/dev/dri/card1:/dev/dri/card0";
-# WLR_DRM_DEVICES="/dev/dri/card0:/dev/dri/card1";
     NIXOS_OZONE_WL = "1";
-# LIBVA_DRIVER_NAME="nvidia";
-# XDG_SESSION_TYPE="wayland";
-# GBM_BACKEND="nvidia-drm";
-# __GLX_VENDOR_LIBRARY_NAME="nvidia";
-# XWAYLAND_NO_GLAMOR="1";
   };
   services.swayosd.enable = true;
   home.packages = [ #
@@ -60,19 +53,16 @@ in {
       };
 
       general = with config.colorScheme.colors; {
-# See https://wiki.hyprland.org/Configuring/Variables/ for more
         gaps_in = 3;
         gaps_out = 5;
         border_size = 2;
         "col.active_border" = "rgba(${base08}ee) rgba(${base0A}ee) 45deg";
         "col.inactive_border" = "rgba(${base03}aa)";
         layout = "master";
-# Please see https://wiki.hyprland.org/Configuring/Tearing/ before you turn this on
         allow_tearing = false;
       };
 
       decoration = with config.colorScheme.colors; {
-# See https://wiki.hyprland.org/Configuring/Variables/ for more
 
         rounding = 10;
 
@@ -90,7 +80,6 @@ in {
 
       animations = {
         enabled = lib.mkDefault true;
-        # enabled = false;
         bezier = "myBezier,0.05,0.9,0.1,1.05";
 
         animation =[
@@ -104,33 +93,24 @@ in {
       };
 
       dwindle = {
-# See https://wiki.hyprland.org/Configuring/Dwindle-Layout/ for more
-        pseudotile = true; # master switch for pseudotiling. Enabling is bound to mainMod + P in the keybinds section below
-        preserve_split = true; # you probably want this
+        pseudotile = true;
+        preserve_split = true;
       };
 
       master = {
-# See https://wiki.hyprland.org/Configuring/Master-Layout/ for more
         new_is_master = false;
       };
 
       gestures = {
-# See https://wiki.hyprland.org/Configuring/Variables/ for more
         workspace_swipe = true;
         workspace_swipe_forever = true;
       };
 
       misc = {
-# See https://wiki.hyprland.org/Configuring/Variables/ for more
         force_default_wallpaper = -1;
         enable_swallow = true;
       };
 
-# Example per-device config
-# See https://wiki.hyprland.org/Configuring/Keywords/#executing for more
-# device:epic-mouse-v1 {
-#          sensitivity = -0.5
-#        }
       windowrule = let 
         f = regex: "float, ^(${regex})$";
       in [
@@ -150,7 +130,6 @@ in {
 
       bindni = [
         "SUPER,SUPER_L,exec,hyprrazer -f /home/greencheetah/.cache/hyprrazer/mainMod.csv"
-# "SUPERSHIFT,SUPER_L,exec,hyprrazer -f /home/greencheetah/.cache/hyprrazer/mainModSHIFT.csv"
       ];
       bindirnt = with config.colorScheme.colors; [
         "SUPER,SUPER_L,exec,polychromatic-cli -d laptop -z main -o static -c ${base07}"
@@ -224,18 +203,8 @@ in {
           ",XF86AudioMicMute, exec, ${pactl} set-source-mute @DEFAULT_SOURCE@ toggle"
       ];
       plugin = {
-# hycov = {
-#   overview_gappo = 20;
-#     overview_gappi = 5;
-#     hotarea_size = 10;
-#     hotarea_pos = 1;
-#     enable_hotarea = 1;
-#     enable_gesture = true;
-#     swipe_fingers = 4;
-# };
       };
 
-# Move/resize windows with mainMod + LMB/RMB and dragging
       bindm = [
         "$mainMod,mouse:272,movewindow"
           "$mainMod,mouse:273,resizewindow"
