@@ -15,7 +15,8 @@ in
     ];
   imports =
     [
-    ./hardware-configuration.nix
+    inputs.home-manager.nixosModules.default
+      ./hardware-configuration.nix
       ../../modules/nixos/gnome.nix
       ../../modules/nixos/japanese.nix
       ../../modules/nixos/nvidia.nix
@@ -103,4 +104,10 @@ in
     options = "--delete-older-than 7d";
   };
   programs.nix-ld.enable = true;
+  home-manager = {
+# also pass inputs to home-manager modules
+    extraSpecialArgs = {inherit inputs; inherit pkgs;};
+    users."greencheetah" = import ./home.nix;
+  };
+
 }

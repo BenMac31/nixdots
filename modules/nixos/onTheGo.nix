@@ -1,12 +1,13 @@
-{pkgs,lib, config, ...}:
+{pkgs, lib, config, inputs, ...}:
 {
-
   specialisation = {
     onTheGo.configuration = {
       system.nixos.tags = [ "onTheGo" ];
-
       virtualisation.docker = {
         enable = false;
+      };
+      home-manager = { 
+        users."greencheetah" = import ../home-manager/onTheGo.nix;
       };
       boot = {
         extraModprobeConfig = ''

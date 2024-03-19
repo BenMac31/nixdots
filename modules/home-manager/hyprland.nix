@@ -37,7 +37,7 @@ in {
     enable = true;
     package = inputs.hyprland.packages."${pkgs.system}".hyprland;
     settings = {
-      monitor= ",preferred,auto,2";
+      monitor= lib.mkDefault ",preferred,auto,2";
       exec-once = [
         "nmcli radio wifi off && nmcli radio wifi on" # wifi doesn't work without this.
         "swww init"
@@ -136,7 +136,7 @@ in {
       bindni = [
         "SUPER,SUPER_L,exec,hyprrazer -f /home/greencheetah/.cache/hyprrazer/mainMod.csv"
       ];
-      bindirnt = with config.colorScheme.colors; [
+      bindirnt = with config.colorScheme.colors; lib.mkDefault [
         "SUPER,SUPER_L,exec,polychromatic-cli -d laptop -z main -o static -c ${base07}"
       ];
       bind = [ #

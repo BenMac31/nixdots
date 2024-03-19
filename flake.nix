@@ -67,15 +67,6 @@
       modules = [ 
         ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree ]; })
         ./hosts/nixBlade/configuration.nix
-        inputs.home-manager.nixosModules.default
-        ({
-         home-manager = {
-         useGlobalPkgs = true;
-         useUserPackages = true;
-         extraSpecialArgs = specialArgs;
-         users.greencheetah = import ./hosts/nixBlade/home.nix;
-         };
-         })
       ];
     };
     homeConfigurations.nixBlade = home-manager.lib.homeManagerConfiguration {
