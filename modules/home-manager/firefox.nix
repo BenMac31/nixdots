@@ -21,9 +21,24 @@ in {
     "x-scheme-handler/about"   = "firefox.desktop";
     "x-scheme-handler/unknown" = "firefox.desktop";
   };
+  home.file.csshacks = {
+     source = inputs.firefox-css-hacks;
+     target = ".mozilla/firefox/default/chrome/css-hacks";
+  };
+  home.file.verttabs = {
+     source = inputs.firefox-vertical-tabs;
+     target = ".mozilla/firefox/default/chrome/verttabs";
+  };
   programs.firefox = {
     enable = true;
-
+    package = pkgs.firefox.override {
+      cfg = {
+        enableGnomeExtensions = true;
+      };
+      nativeMessagingHosts = [
+        pkgs.tridactyl-native
+      ];
+    };
     policies = {
       DisableTelemetry = true;
       DisableFirefoxStudies = true;
@@ -73,8 +88,57 @@ in {
         settings = {
           "browser.search.defaultenginename" = "brave";
           "browser.search.order.1" = "brave";
+          "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
         };
+        userChrome = ''
+        @import url(verttabs/userChrome.css);
+        @import url(css-hacks/chrome/blank_page_background.css);
+        @import url(css-hacks/chrome/hide_toolbox_top_bottom_borders.css);
+        @import url(css-hacks/chrome/vertical_context_navigation.css);
+        @import url(css-hacks/chrome/minimal_popup_scrollbars.css);
+        @import url(css-hacks/chrome/urlbar_centered_text.css);
+        '';
       };
     };
   };
+  xdg.configFile."tridactyl/tridactylrc".text = ''
+" Comment toggler for Reddit, Hacker News and Lobste.rs
+bind ;c hint -Jc [class*="expand"],[class*="togg"],[class="comment_folder"]
+
+bind d composite tabprev; tabclose #
+bind D tabclose
+" Make gu take you back to subreddit from comments
+bindurl reddit.com gu urlparent 4
+
+" Only hint search results on Google and DDG
+bindurl www.google.com f hint -Jc #search a
+bindurl www.google.com F hint -Jbc #search a
+
+" Handy multiwindow/multitasking binds
+bind gd tabdetach
+bind gD composite tabduplicate; tabdetach
+
+" Binds for new reader mode
+bind gr reader
+bind gR reader --tab
+
+" set editorcmd to foot, or use the defaults on other platforms
+js tri.browserBg.runtime.getPlatformInfo().then(os=>{const editorcmd = os.os=="linux" ? "foot lvim" : "auto"; tri.config.set("editorcmd", editorcmd)})
+
+" Sane hinting mode
+set hintfiltermode vimperator-reflow
+set hintnames numeric
+
+t hintdelay 100
+xamo_quiet
+
+jsb browser.webRequest.onHeadersReceived.addListener(tri.request.clobberCSP,{urls:["<all_urls>"],types:["main_frame"]},["blocking","responseHeaders"])
+
+command translate js let googleTranslateCallback = document.createElement('script'); googleTranslateCallback.innerHTML = "function googleTranslateElementInit(){ new google.translate.TranslateElement(); }"; document.body.insertBefore(googleTranslateCallback, document.body.firstChild); let googleTranslateScript = document.createElement('script'); googleTranslateScript.charset="UTF-8"; googleTranslateScript.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit&tl=&sl=&hl="; document.body.insertBefore(googleTranslateScript, document.body.firstChild);
+
+autocmd DocStart ^http(s?)://www.reddit.com js tri.excmds.urlmodify("-t", "www", "old")
+set smoothscroll true
+bind J tabnext
+bind K tabprev
+  '';
 }

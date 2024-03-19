@@ -124,6 +124,11 @@ in {
           (f "xdg-desktop-portal")
           (f "xdg-desktop-portal-gnome")
           (f "com.github.Aylur.ags")
+          "workspace 5,title:^(Signal)$"
+          "workspace 8,class:^(steam)(.*)$"
+          "workspace 8,^(org.prismlauncher.PrismLauncher)$"
+          "float,title:(Bitwarden)$"
+          "fullscreen,title:(Bitwarden)$"
       ];
 
       "$mainMod" = "SUPER";

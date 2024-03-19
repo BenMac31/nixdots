@@ -35,9 +35,4 @@
     };
   };
   qt.platformTheme = "gnome";
-  programs.firefox.package = pkgs.firefox.override {
-    cfg = {
-      enableGnomeExtensions = true;
-    };
-  };
 }

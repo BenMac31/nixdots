@@ -119,6 +119,22 @@
         "type": "github"
       }
     },
+    "firefox-css-hacks": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1709263335,
+        "narHash": "sha256-XJ+MTEADzOsCIh0I8EAxbtIpDHfMJsN68sKBy7/1l60=",
+        "owner": "MrOtherGuy",
+        "repo": "firefox-csshacks",
+        "rev": "4215caf2b84db4e5bf4a6c89e11fabeb979dd0b1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "MrOtherGuy",
+        "repo": "firefox-csshacks",
+        "type": "github"
+      }
+    },
     "firefox-gnome-theme": {
       "flake": false,
       "locked": {
@@ -132,6 +148,22 @@
       "original": {
         "owner": "rafaelmardojai",
         "repo": "firefox-gnome-theme",
+        "type": "github"
+      }
+    },
+    "firefox-vertical-tabs": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1709145887,
+        "narHash": "sha256-DHI8QFr4z00tlS8SlWrrNymP6pRQ55YHq6ZegDx5iYk=",
+        "owner": "ranmaru22",
+        "repo": "firefox-vertical-tabs",
+        "rev": "1ea3052354b08286fab758d7c346fb1c5c465d55",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ranmaru22",
+        "repo": "firefox-vertical-tabs",
         "type": "github"
       }
     },
@@ -1197,6 +1229,8 @@
     "root": {
       "inputs": {
         "asztal": "asztal",
+        "firefox-css-hacks": "firefox-css-hacks",
+        "firefox-vertical-tabs": "firefox-vertical-tabs",
         "gBar": "gBar",
         "home-manager": "home-manager_2",
         "hyprland": "hyprland_3",
