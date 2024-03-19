@@ -9,6 +9,7 @@
     ../../modules/home-manager/zsh.nix
     ../../modules/home-manager/hyprland.nix
     ../../modules/home-manager/foot.nix
+    ../../modules/home-manager/zathura.nix
     ../../modules/home-manager/gtk.nix
     ../../modules/home-manager/mpv.nix
     ../../modules/home-manager/xdg.nix
@@ -33,7 +34,6 @@
     pkgs.speedcrunch
     pkgs.brave
     pkgs.noto-fonts-cjk
-    pkgs.zathura
     pkgs.pavucontrol
     pkgs.gpu-screen-recorder-gtk
     pkgs.pass
