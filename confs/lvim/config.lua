@@ -115,10 +115,10 @@ lvim.plugins = {
 		"huggingface/llm.nvim",
 		opts = {
 			backend = "ollama",
-			model = "starcoder2:7b",
+			model = "starcoder2:3b",
 			-- context_window = 512,
 			tokenizer = {
-				repository = "bigcode/starcoder2-7b",
+				repository = "bigcode/starcoder2-3b",
 			},
 			url = "http://localhost:11434/api/generate",
 			request_body = {
@@ -137,7 +137,7 @@ lvim.plugins = {
 				middle = "<fim_middle>",
 				suffix = "<fim_suffix>",
 			},
-			debounce_ms = 150,
+			debounce_ms = 500,
 			accept_keymap = "<S-CR>",
 			dismiss_keymap = "<CR>",
 			url = "http://localhost:11434/api/generate",
