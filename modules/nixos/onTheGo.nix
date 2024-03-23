@@ -3,8 +3,9 @@
   specialisation = {
     onTheGo.configuration = {
       system.nixos.tags = [ "onTheGo" ];
-      virtualisation.docker = {
-        enable = false;
+      virtualisation = {
+        docker.enable = false;
+        waydroid.enable = false;
       };
       home-manager = { 
         users."greencheetah" = import ../home-manager/onTheGo.nix;

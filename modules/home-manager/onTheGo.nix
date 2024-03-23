@@ -8,4 +8,6 @@
     "SUPER,SUPER_L"
     ];
   };
+
+  programs.mpv.config.profile = "fast";
 }

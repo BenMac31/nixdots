@@ -39,11 +39,14 @@ in
       automatic-timezoned.enable = true;
       printing.enable = true;
       mullvad-vpn.enable = true;
-      udev.extraRules = # Numworks Udev
-        ''
-        SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="a291", TAG+="uaccess"
-        SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="df11", TAG+="uaccess"
-        '';
+      # udev.extraRules = # Numworks Udev
+      #   ''
+      #   SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="a291", TAG+="uaccess"
+      #   SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="df11", TAG+="uaccess"
+      #   SUBSYSTEM=="usb", ATTR{idVendor}=="483", ATTR{idProduct}=="a291", TAG+="uaccess"
+      #   SUBSYSTEM=="usb", ATTR{idVendor}=="483", ATTR{idProduct}=="df11", TAG+="uaccess"
+      #   '';
+      fwupd.enable = true; # Firmware updater
     };
   time.timeZone = "America/New_York";
 
@@ -71,6 +74,7 @@ in
     git
     nix-index
     openrazer-daemon
+    numworks-udev-rules
   ];
 
   system.stateVersion = "23.11"; # DO NOT CHANGE
@@ -89,9 +93,12 @@ in
   hardware.uinput.enable = true;
   hardware.openrazer.enable = true;
   programs.hyprland.enable = true;
-  virtualisation.docker = {
-    enable = lib.mkDefault true;
-    enableNvidia = true;
+  virtualisation = {
+    waydroid.enable = lib.mkDefault true;
+    docker = {
+      enable = lib.mkDefault true;
+      enableNvidia = true;
+    };
   };
   programs.gamemode.enable = true;
   fileSystems."/home/greencheetah/Desktop" = {
