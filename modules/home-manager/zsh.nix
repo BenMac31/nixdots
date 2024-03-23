@@ -13,6 +13,7 @@
       nixtest = "sudo nixos-rebuild test --fast --flake $HOME/nixos/#nixBlade";
       cat = "bat";
       ls = "eza";
+      vpnexit = "mullvad split-tunnel add \$\$";
     };
     zplug = {
       enable = true;
