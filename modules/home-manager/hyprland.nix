@@ -28,6 +28,18 @@ in {
     pkgs.wlr-randr
     pkgs.networkmanagerapplet
     inputs.asztal.packages."${pkgs.system}".default
+    (pkgs.writeShellScriptBin "devbright" ''
+     val=$(${brightnessctl} get)
+     max=$(${brightnessctl} max)
+     h="$(printf "%02x\n" "$val")"
+     ${pkgs.polychromatic}/bin/polychromatic-cli -d laptop -o brightness -p "$((val*100/max))" &
+     mice=$(${pkgs.libratbag}/bin/ratbagctl | ${pkgs.coreutils-full}/bin/cut -d: -f1)
+     if [[ -n $mice ]]; then
+       while read -r mouse; do
+         ${pkgs.libratbag}/bin/ratbagctl "$mouse" led 0 set color "$h$h$h"
+      done <<< "$mice"
+     fi
+     '')
   ];
   imports = 
     [
@@ -164,6 +176,7 @@ in {
         ",Print,exec,${asztal} -r 'recorder.screenshot()'"
         "SHIFT,Print,exec,${asztal} -r 'recorder.screenshot(true)'"
         "$mainMod,F11,fullscreen,0"
+        "$mainMod,p,pin,"
         "CTRL$mainMod,F11,fakefullscreen,0"
         ] ++ [
         "$mainMod,1,workspace,1"
@@ -188,10 +201,8 @@ in {
           "$mainMod SHIFT,0,movetoworkspacesilent,10"
           ];
       bindle = [
-        ",XF86MonBrightnessUp,   exec, ${brightnessctl} set +5%"
-        ",XF86MonBrightnessDown, exec, ${brightnessctl} set  5%-"
-        ",XF86KbdBrightnessUp,   exec, ${brightnessctl} -d asus::kbd_backlight set +1"
-        ",XF86KbdBrightnessDown, exec, ${brightnessctl} -d asus::kbd_backlight set  1-"
+        ",XF86MonBrightnessUp,   exec, ${brightnessctl} set +5%; devbright"
+        ",XF86MonBrightnessDown, exec, ${brightnessctl} set  5%-; devbright"
         ",XF86AudioRaiseVolume,  exec, ${pactl} set-sink-volume @DEFAULT_SINK@ +5%"
         ",XF86AudioLowerVolume,  exec, ${pactl} set-sink-volume @DEFAULT_SINK@ -5%"
         "CTRL$mainMod,H,resizeactive,-10 0"
