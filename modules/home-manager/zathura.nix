@@ -34,8 +34,8 @@
       inputbar-fg = "#${base02}";
       statusbar-bg = "#${base02}";
       statusbar-fg = "#${base0F}";
-      highlight-color = "#${base00}";
-      highlight-active-color= "#${base0D}";
+      highlight-color = "#${base02}7F";
+      highlight-active-color= "#${base0D}7F";
       render-loading= "true";
       render-loading-fg = "#${base02}";
       render-loading-bg = "#${base02}";
