@@ -19,6 +19,7 @@ in {
   };
   home.sessionVariables = {
     WLR_NO_HARDWARE_CURSORS = "1";
+    XCURSOR_SIZE = "48";
     NIXOS_OZONE_WL = "1";
   };
   services.swayosd.enable = true;
@@ -39,6 +40,12 @@ in {
          ${pkgs.libratbag}/bin/ratbagctl "$mouse" led 0 set color "$h$h$h"
       done <<< "$mice"
      fi
+     '')
+     pkgs.grim
+     pkgs.slurp
+    (pkgs.writeShellScriptBin "qshot" ''
+      ${pkgs.grim}/bin/grim -g "$(${pkgs.slurp}/bin/slurp)" "/tmp/clip.png" &&\
+      ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/clip.png
      '')
   ];
   imports = 
@@ -175,6 +182,7 @@ in {
         ",XF86Launch4,exec,${asztal} -r 'recorder.start()'"
         ",Print,exec,${asztal} -r 'recorder.screenshot()'"
         "SHIFT,Print,exec,${asztal} -r 'recorder.screenshot(true)'"
+        "CTRLSHIFT$mainMod,S,exec,qshot"
         "$mainMod,F11,fullscreen,0"
         "$mainMod,p,pin,"
         "CTRL$mainMod,F11,fakefullscreen,0"
