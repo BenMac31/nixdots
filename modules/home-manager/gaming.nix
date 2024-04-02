@@ -3,7 +3,7 @@
 home.packages = with pkgs; [
      pkgs.r2modman
     (pkgs.writeShellScriptBin "steam" ''
-      ${pkgs.flatpak}/bin/flatpak run com.valvesoftware.Steam "$@"
+      ${pkgs.flatpak}/bin/flatpak run com.valvesoftware.Steam -silent "$@"
      '')
      ];
   services.flatpak = {
@@ -14,6 +14,12 @@ home.packages = with pkgs; [
       "org.prismlauncher.PrismLauncher"
     ];
     overrides = {
+    "com.prismlauncher.PrismLauncher" = {
+      Context = {
+        filesystems = [
+          "xdg-data/applications:create"
+        ];
+      };
       "com.valvesoftware.Steam"= {
         Context = {
           filesystems = [
