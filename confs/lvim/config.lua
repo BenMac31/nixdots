@@ -11,14 +11,14 @@ lvim.format_on_save = {
 }
 -- keymappings <https://www.lunarvim.org/docs/configuration/keybindings>
 -- add your own keymapping
-lvim.keys.normal_mode["<C-s>"] = ":w<cr>"
 
 lvim.keys.normal_mode["<S-l>"] = ":BufferLineCycleNext<CR>"
 lvim.keys.normal_mode["<S-h>"] = ":BufferLineCyclePrev<CR>"
+lvim.keys.insert_mode["<C-l>"] = "<C-o>:LLMSuggestion<CR>"
 
 -- -- Use which-key to add extra bindings with the leader-key prefix
--- lvim.builtin.which_key.mappings["W"] = { "<cmd>noautocmd w<cr>", "Save without formatting" }
--- lvim.builtin.which_key.mappings["P"] = { "<cmd>Telescope projects<CR>", "Projects" }
+lvim.builtin.which_key.mappings["a"] = { "<cmd>Gen<CR>", "AI" }
+lvim.builtin.which_key.mappings["P"] = { "<cmd>Telescope projects<CR>", "Projects" }
 
 lvim.colorscheme = "gruvbox"
 
@@ -90,33 +90,40 @@ lvim.plugins = {
 		end,
 	},
 	{
+		"nvim-telescope/telescope-ui-select.nvim",
+		config = function()
+			require("telescope").load_extension("ui-select")
+		end,
+	},
+	{
 		"David-Kunz/gen.nvim",
+		cmd = "Gen",
 		opts = {
-			model = "starcoder2:15b",
-			display_mode = "float",
-			show_prompt = false,
-			show_model = true,
-			no_auto_close = false,
+			model = "dolphincoder:latest",
+			host = "localhost",
+			port = "11434",
 			init = function(options)
 				pcall(io.popen, "ollama serve > /dev/null 2>&1 &")
 			end,
 			-- Function to initialize Ollama
 			command = function(options)
+				local body = { model = options.model, stream = true }
 				return "curl --silent --no-buffer -X POST http://"
 					.. options.host
 					.. ":"
 					.. options.port
-					.. "/api/generate -d $body"
+					.. "/api/chat -d $body"
 			end,
 			debug = false,
+			display_mode = "split",
 		},
 	},
 	{
 		"huggingface/llm.nvim",
 		opts = {
 			backend = "ollama",
-			model = "starcoder2:3b",
-			-- context_window = 512,
+			model = "starcoder:3b",
+			context_window = 64,
 			tokenizer = {
 				repository = "bigcode/starcoder2-3b",
 			},
@@ -124,11 +131,11 @@ lvim.plugins = {
 			request_body = {
 				parameters = {
 					max_new_tokens = 64,
-					temperature = 0.3,
-					top_p = 0.95,
+					-- temperature = 0.8,
+					-- top_p = 0.95,
 				},
 			},
-			enable_suggestions_on_startup = true,
+			enable_suggestions_on_startup = false,
 			enable_suggestions_on_files = "*",
 			tokens_to_clear = { "<|endoftext|>" },
 			fim = {
@@ -147,61 +154,53 @@ lvim.plugins = {
 		},
 	},
 
-	--   {
-	--     "zbirenbaum/copilot.lua",
-	--     cmd = "Copilot",
-	--     event = "InsertEnter",
-	--     config = function()
-	-- require('copilot').setup({
-	--   panel = {
-	--     enabled = true,
-	--     auto_refresh = false,
-	--     keymap = {
-	--       jump_prev = "[[",
-	--       jump_next = "]]",
-	--       accept = "<CR>",
-	--       refresh = "gr",
-	--       open = "<M-CR>"
-	--     },
-	--     layout = {
-	--       position = "bottom", -- | top | left | right
-	--       ratio = 0.4
-	--     },
-	--   },
-	--   suggestion = {
-	--     enabled = true,
-	--     auto_trigger = true,
-	--     debounce = 75,
-	--     keymap = {
-	--       accept = "<M-l>",
-	--       accept_word = false,
-	--       accept_line = false,
-	--       next = "<M-]>",
-	--       prev = "<M-[>",
-	--       dismiss = "<C-]>",
-	--     },
-	--   },
-	--   filetypes = {
-	--     yaml = false,
-	--     markdown = false,
-	--     help = false,
-	--     gitcommit = false,
-	--     gitrebase = false,
-	--     hgcommit = false,
-	--     svn = false,
-	--     cvs = false,
-	--     ["."] = false,
-	--   },
-	--   copilot_node_command = 'node', -- Node.js version must be > 18.x
-	--   server_opts_overrides = {},
-	-- })
-	--     end,
-	--   },
 	{
-		"zbirenbaum/copilot-cmp",
-		after = { "copilot.lua" },
+		"zbirenbaum/copilot.lua",
+		cmd = "Copilot",
 		config = function()
-			require("copilot_cmp").setup()
+			require("copilot").setup({
+				panel = {
+					enabled = true,
+					auto_refresh = false,
+					keymap = {
+						jump_prev = "[[",
+						jump_next = "]]",
+						accept = "<CR>",
+						refresh = "gr",
+						open = "<M-CR>",
+					},
+					layout = {
+						position = "bottom", -- | top | left | right
+						ratio = 0.4,
+					},
+				},
+				suggestion = {
+					enabled = false,
+					auto_trigger = true,
+					debounce = 75,
+					keymap = {
+						accept = "<M-l>",
+						accept_word = false,
+						accept_line = false,
+						next = "<M-]>",
+						prev = "<M-[>",
+						dismiss = "<C-]>",
+					},
+				},
+				filetypes = {
+					yaml = false,
+					markdown = false,
+					help = false,
+					gitcommit = false,
+					gitrebase = false,
+					hgcommit = false,
+					svn = false,
+					cvs = false,
+					["."] = false,
+				},
+				copilot_node_command = "node", -- Node.js version must be > 18.x
+				server_opts_overrides = {},
+			})
 		end,
 	},
 	{ "ellisonleao/gruvbox.nvim" },
@@ -215,6 +214,35 @@ lvim.plugins = {
 			require("luasnip-latex-snippets").setup()
 			-- or setup({ use_treesitter = true })
 			require("luasnip").config.setup({ enable_autosnippets = true })
+		end,
+	},
+	-- {
+	-- 	"3rd/image.nvim",
+	-- 	config = function()
+	-- 		require("image").setup()
+	-- 	end,
+	-- 	rocks = { "magick" },
+	-- },
+	{
+		"nvim-neorg/neorg",
+		build = ":Neorg sync-parsers",
+		lazy = false, -- specify lazy = false because some lazy.nvim distributions set lazy = true by default
+		-- tag = "*",
+		dependencies = { "nvim-lua/plenary.nvim" },
+		config = function()
+			require("neorg").setup({
+				load = {
+					["core.defaults"] = {}, -- Loads default behaviour
+					["core.concealer"] = {}, -- Adds pretty icons to your documents
+					["core.dirman"] = { -- Manages Neorg workspaces
+						config = {
+							workspaces = {
+								notes = "~/notes",
+							},
+						},
+					},
+				},
+			})
 		end,
 	},
 }
