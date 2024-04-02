@@ -127,9 +127,8 @@ js tri.browserBg.runtime.getPlatformInfo().then(os=>{const editorcmd = os.os=="l
 
 " Sane hinting mode
 set hintfiltermode vimperator-reflow
-set hintnames numeric
 
-t hintdelay 100
+set hintdelay 100
 xamo_quiet
 
 jsb browser.webRequest.onHeadersReceived.addListener(tri.request.clobberCSP,{urls:["<all_urls>"],types:["main_frame"]},["blocking","responseHeaders"])
