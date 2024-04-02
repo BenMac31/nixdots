@@ -28,13 +28,12 @@
     pkgs.kitty
     pkgs.piper
     pkgs.wl-clipboard
+    pkgs.R
     pkgs.ripgrep
     pkgs.gnome.gnome-tweaks
     pkgs.python3
     pkgs.bitwarden
     pkgs.speedcrunch
-    pkgs.brave
-    pkgs.noto-fonts-cjk
     pkgs.pavucontrol
     pkgs.gpu-screen-recorder-gtk
     pkgs.pass
@@ -42,11 +41,16 @@
     pkgs.libnotify
     pkgs.polychromatic
     pkgs.fzf
-    pkgs.ffmpeg
+    pkgs.ffmpeg-full
     pkgs.yt-dlp
     pkgs.mullvad-vpn
     pkgs.jq
     (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" "FiraCode" "DroidSansMono" ]; })
+    pkgs.sxiv
+    pkgs.libsixel
+    pkgs.imagemagick
+    pkgs.newsboat
+    pkgs.unfree.ytfzf
     ];
   services.flatpak = {
     update.auto = {
