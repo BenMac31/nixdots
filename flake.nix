@@ -40,6 +40,7 @@
     asztal.url = "github:Aylur/dotfiles";
     firefox-css-hacks = { url = "github:MrOtherGuy/firefox-csshacks"; flake = false; };
     firefox-vertical-tabs = { url = "github:ranmaru22/firefox-vertical-tabs"; flake = false; };
+    fcitx5-gruvbox = { url = "github:ayamir/fcitx5-gruvbox"; flake = false; };
   };
 
   outputs = { self, nixpkgs, home-manager, nixpkgs-master, ... }@inputs:
