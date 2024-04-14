@@ -175,7 +175,7 @@ lvim.plugins = {
 					},
 				},
 				suggestion = {
-					enabled = false,
+					enabled = true,
 					auto_trigger = true,
 					debounce = 75,
 					keymap = {
@@ -244,5 +244,14 @@ lvim.plugins = {
 				},
 			})
 		end,
+	},
+	{ "mateuszwieloch/automkdir.nvim" },
+	{
+		"HakonHarnes/img-clip.nvim",
+		event = "VeryLazy",
+		keys = {
+			-- suggested keymap
+			{ "<leader>p", "<cmd>PasteImage<cr>", desc = "Paste image from system clipboard" },
+		},
 	},
 }
