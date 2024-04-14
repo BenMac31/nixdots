@@ -6,6 +6,7 @@
       pkgs.stylua
       pkgs.python312Packages.flake8
       pkgs.shellcheck
+      pkgs.luajitPackages.magick # funky images
   ];
   xdg.configFile."lvim" = {
     enable = true;

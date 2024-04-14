@@ -81,7 +81,27 @@ in {
                 { name = "q"; value = "{searchTerms}"; }
                 ];
               }];
-              definedAliases = [ "@br" ];
+              definedAliases = [ "!br" ];
+            };
+            "nyaa" = {
+              urls = [{
+                template = "https://nyaa.si/";
+                params = [
+                { name = "f"; value = "0";}
+                { name = "c"; value = "0_0";}
+                { name = "q"; value = "{searchTerms}"; }
+                ];
+              }];
+              definedAliases = [ "!ny" ];
+            };
+            "PirateBay" = {
+              urls = [{
+                template = "https://thepiratebay.org/search.php";
+                params = [
+                { name = "q"; value = "{searchTerms}"; }
+                ];
+              }];
+              definedAliases = [ "!tpb" ];
             };
           };
         };

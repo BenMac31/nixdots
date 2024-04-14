@@ -18,7 +18,6 @@ in
     inputs.home-manager.nixosModules.default
       ./hardware-configuration.nix
       ../../modules/nixos/gnome.nix
-      ../../modules/nixos/japanese.nix
       ../../modules/nixos/nvidia.nix
       ../../modules/nixos/onTheGo.nix
       ../../modules/nixos/laptop.nix
@@ -49,6 +48,7 @@ in
       fwupd.enable = true; # Firmware updater
     };
   time.timeZone = "America/New_York";
+  programs.noisetorch.enable = true;
 
 
   sound.enable = true;

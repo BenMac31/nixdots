@@ -6,7 +6,6 @@
   programs.zathura = {
     enable = true;
     mappings = {
-      "r" = "reload";
       "=" = "zoom in";
     };
     options = with config.colorScheme.colors; {

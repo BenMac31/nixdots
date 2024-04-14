@@ -41,7 +41,7 @@
     pkgs.libnotify
     pkgs.polychromatic
     pkgs.fzf
-    pkgs.ffmpeg-full
+    pkgs.unfree.ffmpeg-full
     pkgs.yt-dlp
     pkgs.mullvad-vpn
     pkgs.jq

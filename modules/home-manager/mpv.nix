@@ -24,4 +24,9 @@
       };
     };
   };
+  xdg.mimeApps.defaultApplications = {
+    "video/x-matroska" = "mpv.desktop";
+    "video/mp4" = "mpv.desktop";
+    "video/h264" = "mpv.desktop";
+  };
 }

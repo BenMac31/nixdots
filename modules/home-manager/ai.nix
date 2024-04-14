@@ -20,8 +20,7 @@ in
     (pkgs.writeShellScriptBin "aiclip" ''
      ${touch} /tmp/aiclip.lock
      (aichat --role test <<< "$(${wl-paste})" > /tmp/aiclip.out && ${sleep} 1 && ${rm} /tmp/aiclip.lock) &
-     notifID=$(${notify-send} -p "ANSWER" "EXPLANATION" -t "10000")
-     outOld="ANSWER\nEXPLANATION"
+     notifID=$(${notify-send} -p "ANSWER" "EXPLANATION" -t "10000") outOld="ANSWER\nEXPLANATION"
      while [ -e /tmp/aiclip.lock ]
      do
      out="""$(${cat} /tmp/aiclip.out)
@@ -37,5 +36,6 @@ in
      ${notify-send} "--replace-id=$notifID" -t "$(($(${wc} -w < /tmp/aiclip.out)*300))" "$(${head} -n 1 /tmp/aiclip.out)" "$(${tail} -n +2 /tmp/aiclip.out)"
      ${rm} /tmp/aiclip.out
      '')
+     pkgs.unfree.openai-whisper
   ];
 }
