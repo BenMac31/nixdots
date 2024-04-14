@@ -25,6 +25,7 @@
 
   home.packages = [ #
     pkgs.signal-desktop
+    pkgs.element-desktop
     pkgs.kitty
     pkgs.piper
     pkgs.wl-clipboard
