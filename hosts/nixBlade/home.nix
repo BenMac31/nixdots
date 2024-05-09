@@ -34,6 +34,7 @@
     pkgs.gnome.gnome-tweaks
     pkgs.python3
     pkgs.bitwarden
+    pkgs.rbw
     pkgs.speedcrunch
     pkgs.pavucontrol
     pkgs.gpu-screen-recorder-gtk
@@ -52,6 +53,7 @@
     pkgs.imagemagick
     pkgs.newsboat
     pkgs.unfree.ytfzf
+    pkgs.nix-output-monitor
     ];
   services.flatpak = {
     update.auto = {
