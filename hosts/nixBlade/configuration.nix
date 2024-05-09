@@ -100,7 +100,10 @@ in
       enableNvidia = true;
     };
   };
-  programs.gamemode.enable = true;
+  programs = {
+    gamemode.enable = true;
+    gamescope.enable = true;
+  };
   fileSystems."/home/greencheetah/Desktop" = {
     device = "/home/greencheetah/.local/share/applications";
     options = [ "bind" ];
