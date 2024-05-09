@@ -22,7 +22,6 @@ in {
     XCURSOR_SIZE = "48";
     NIXOS_OZONE_WL = "1";
   };
-  services.swayosd.enable = true;
   home.packages = [ #
     pkgs.swww
     pkgs.wluma
@@ -54,7 +53,7 @@ in {
     ];
   wayland.windowManager.hyprland = {
     enable = true;
-    package = inputs.hyprland.packages."${pkgs.system}".hyprland;
+    # package = inputs.hyprland.packages."${pkgs.system}".hyprland;
     settings = {
       monitor= lib.mkDefault ",preferred,auto,2";
       exec-once = [
@@ -184,8 +183,9 @@ in {
         "SHIFT,Print,exec,${asztal} -r 'recorder.screenshot(true)'"
         "CTRLSHIFT$mainMod,S,exec,qshot"
         "$mainMod,F11,fullscreen,0"
-        "$mainMod,p,pin,"
+        "$mainMod,M,fullscreen,1"
         "CTRL$mainMod,F11,fakefullscreen,0"
+        "$mainMod,p,pin,"
         ] ++ [
         "$mainMod,1,workspace,1"
           "$mainMod,2,workspace,2"
