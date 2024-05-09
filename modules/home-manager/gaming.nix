@@ -9,9 +9,9 @@
   services.flatpak = {
     packages = [ #
       "com.valvesoftware.Steam"
-      "com.valvesoftware.Steam.Utility.gamescope"
       "net.lutris.Lutris"
       "org.prismlauncher.PrismLauncher"
+      "net.veloren.airshipper"
     ];
     overrides = {
       "com.valvesoftware.Steam"= {
