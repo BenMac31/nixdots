@@ -73,6 +73,7 @@
         "xdg-config/gtk-4.0"
         "xdg-config/gtk-3.0"
         "${pkgs.gruvbox-gtk-theme}/share/themes/"
+        "xdg-config/themes/"
         ];
         };
 
@@ -88,6 +89,8 @@
   home.stateVersion = "23.11"; # Do not change
     services.gnome-keyring.enable = true;
 
-  programs.gpg.enable = true;
-  programs.password-store.enable = true;
+  programs = {
+  gpg.enable = true;
+  password-store.enable = true;
+  };
 }

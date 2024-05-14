@@ -48,8 +48,8 @@ in
       fwupd.enable = true; # Firmware updater
     };
   time.timeZone = "America/New_York";
-  programs.noisetorch.enable = true;
 
+  i18n.supportedLocales = ["all"]; # Support all languages
 
   sound.enable = true;
   hardware.pulseaudio.enable = false;
@@ -63,6 +63,7 @@ in
 
   environment.systemPackages = with pkgs; [ #
     vim
+    pkgs.noto-fonts-cjk
     pciutils
     htop
     wget
@@ -80,19 +81,14 @@ in
   system.stateVersion = "23.11"; # DO NOT CHANGE
 
     nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  programs.zsh.enable = true;
 
   users.users.greencheetah = {
     isNormalUser = true;
     shell= pkgs.zsh;
     extraGroups = [ "docker" "openrazer" "wheel" "uinput" "input" "video" ]; # Enable ‘sudo’ for the user.
   };
-  programs.gnupg.agent = {                                                      
-    enable = true;
-  };
   hardware.uinput.enable = true;
   hardware.openrazer.enable = true;
-  programs.hyprland.enable = true;
   virtualisation = {
     waydroid.enable = lib.mkDefault true;
     docker = {
@@ -101,8 +97,14 @@ in
     };
   };
   programs = {
+    noisetorch.enable = true;
     gamemode.enable = true;
     gamescope.enable = true;
+    hyprland.enable = true;
+    gnupg.agent.enable = true;
+    zsh.enable = true;
+    kdeconnect.enable = true;
+    nix-ld.enable = true;
   };
   fileSystems."/home/greencheetah/Desktop" = {
     device = "/home/greencheetah/.local/share/applications";
@@ -113,11 +115,9 @@ in
     dates = "weekly";
     options = "--delete-older-than 7d";
   };
-  programs.nix-ld.enable = true;
   home-manager = {
 # also pass inputs to home-manager modules
     extraSpecialArgs = {inherit inputs; inherit pkgs;};
     users."greencheetah" = import ./home.nix;
   };
-
 }

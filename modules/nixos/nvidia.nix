@@ -32,12 +32,12 @@
       amdgpuBusId = "PCI:100:0:0";
       nvidiaBusId = "PCI:01:0:0";
       offload = {
-        enable = true;
-        enableOffloadCmd = true;
+        enable = false;
+        enableOffloadCmd = false;
       };
     };
-    powerManagement.enable = true;
-    powerManagement.finegrained = true;
+    powerManagement.enable = false;
+    powerManagement.finegrained = false;
 
     open = false;
 

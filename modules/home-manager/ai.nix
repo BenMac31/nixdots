@@ -14,7 +14,7 @@ in
 {
   home.packages = [
     pkgs.aichat
-    (pkgs.master.unfree.ollama.override {
+    (pkgs.unfree.ollama.override {
      acceleration = "cuda";
      })
     (pkgs.writeShellScriptBin "aiclip" ''
