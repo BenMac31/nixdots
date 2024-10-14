@@ -14,12 +14,10 @@ in
 {
   home.packages = [
     pkgs.aichat
-    (pkgs.unfree.ollama.override {
-     acceleration = "cuda";
-     })
+    pkgs.ollama
     (pkgs.writeShellScriptBin "aiclip" ''
      ${touch} /tmp/aiclip.lock
-     (aichat --role test <<< "$(${wl-paste})" > /tmp/aiclip.out && ${sleep} 1 && ${rm} /tmp/aiclip.lock) &
+     ("$(${wl-paste})" | aichat --role test > /tmp/aiclip.out && ${sleep} 1 && ${rm} /tmp/aiclip.lock) &
      notifID=$(${notify-send} -p "ANSWER" "EXPLANATION" -t "10000") outOld="ANSWER\nEXPLANATION"
      while [ -e /tmp/aiclip.lock ]
      do

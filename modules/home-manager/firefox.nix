@@ -25,10 +25,6 @@ in {
      source = inputs.firefox-css-hacks;
      target = ".mozilla/firefox/default/chrome/css-hacks";
   };
-  home.file.verttabs = {
-     source = inputs.firefox-vertical-tabs;
-     target = ".mozilla/firefox/default/chrome/verttabs";
-  };
   programs.firefox = {
     enable = true;
     package = pkgs.firefox.override {
@@ -114,7 +110,6 @@ in {
         @import url(verttabs/userChrome.css);
         @import url(css-hacks/chrome/blank_page_background.css);
         @import url(css-hacks/chrome/hide_toolbox_top_bottom_borders.css);
-        @import url(css-hacks/chrome/vertical_context_navigation.css);
         @import url(css-hacks/chrome/minimal_popup_scrollbars.css);
         @import url(css-hacks/chrome/urlbar_centered_text.css);
         '';

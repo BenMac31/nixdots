@@ -50,6 +50,7 @@ in {
   imports = 
     [
     wm/hyprrazer.nix
+    rofi/rofi.nix
     ];
   wayland.windowManager.hyprland = {
     enable = true;
@@ -170,6 +171,10 @@ in {
         "$mainMod,L,movefocus,r"
         "$mainMod,K,movefocus,u"
         "$mainMod,J,movefocus,d"
+        "$mainMod SHIFT,H,movewindoworgroup,l"
+        "$mainMod SHIFT,L,movewindoworgroup,r"
+        "$mainMod SHIFT,K,movewindoworgroup,u"
+        "$mainMod SHIFT,J,movewindoworgroup,d"
         "$mainMod,S,togglespecialworkspace,magic"
         "SHIFT$mainMod,S,exec,magic"
         "$mainMod SHIFT,S,movetoworkspace,special:magic"

@@ -16,7 +16,6 @@
     ../../modules/home-manager/gaming.nix
     ../../modules/home-manager/latex.nix
     ../../modules/home-manager/vim.nix
-    ../../modules/home-manager/python.nix
     ../../modules/home-manager/japanese.nix
     inputs.nix-flatpak.homeManagerModules.nix-flatpak
   ];

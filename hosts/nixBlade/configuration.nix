@@ -22,7 +22,7 @@ in
   networking.networkmanager.enable = true;
 
     services = {
-      xserver.displayManager.lightdm.enable = true;
+      xserver.displayManager.sddm.enable = true;
       flatpak = {
         enable = true;
       };
@@ -49,7 +49,6 @@ in
 
   i18n.supportedLocales = ["all"]; # Support all languages
 
-  sound.enable = true;
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
