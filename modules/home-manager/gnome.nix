@@ -34,5 +34,4 @@
       };
     };
   };
-  qt.platformTheme = "gnome";
 }

@@ -1,11 +1,11 @@
 {pkgs, config, lib, ...}:
 {
-  home.packages = with pkgs; [
-    pkgs.r2modman
-      (pkgs.writeShellScriptBin "steam" ''
-       ${pkgs.flatpak}/bin/flatpak run com.valvesoftware.Steam -silent "$@"
-       '')
-  ];
+home.packages = with pkgs; [
+     pkgs.r2modman
+    (pkgs.writeShellScriptBin "steam" ''
+      ${pkgs.flatpak}/bin/flatpak run com.valvesoftware.Steam -silent "$@"
+     '')
+     ];
   services.flatpak = {
     packages = [ #
       "com.valvesoftware.Steam"
@@ -14,6 +14,13 @@
       "net.veloren.airshipper"
     ];
     overrides = {
+    "org.prismlauncher.PrismLauncher" = {
+      Context = {
+        filesystems = [
+          "xdg-data/applications:create"
+        ];
+      };
+      };
       "com.valvesoftware.Steam"= {
         Context = {
           filesystems = [
@@ -30,13 +37,6 @@
         Context = {
           filesystems = [
             "xdg-data/icons:create"
-          ];
-        };
-      };
-      "com.prismlauncher.PrismLauncher" = {
-        Context = {
-          filesystems = [
-            "xdg-data/applications:create"
           ];
         };
       };

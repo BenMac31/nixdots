@@ -1,15 +1,5 @@
 { lib, pkgs, config, ... }:
 {
-  nixpkgs.config.allowUnfreePredicate = pkg:
-    builtins.elem (lib.getName pkg) [
-    "nvidia-x11"
-      "nvidia-settings"
-      "nvidia-persistenced"
-      "cudatoolkit"
-      "cuda_cudart"
-      "cudaPackages.cuda_cudart"
-      config.boot.kernel.kernelPackages.nvidiaPackages.beta
-    ];
   environment.systemPackages = [
   pkgs.unfree.cudatoolkit
   pkgs.unfree.cudaPackages.cuda_cudart

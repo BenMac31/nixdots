@@ -175,7 +175,11 @@ lvim.plugins = {
 					},
 				},
 				suggestion = {
+<<<<<<< Updated upstream
 					enabled = true,
+=======
+					enabled = false,
+>>>>>>> Stashed changes
 					auto_trigger = true,
 					debounce = 75,
 					keymap = {
@@ -245,6 +249,7 @@ lvim.plugins = {
 			})
 		end,
 	},
+<<<<<<< Updated upstream
 	{ "mateuszwieloch/automkdir.nvim" },
 	{
 		"HakonHarnes/img-clip.nvim",
@@ -254,4 +259,6 @@ lvim.plugins = {
 			{ "<leader>p", "<cmd>PasteImage<cr>", desc = "Paste image from system clipboard" },
 		},
 	},
+=======
+>>>>>>> Stashed changes
 }
