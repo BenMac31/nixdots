@@ -16,6 +16,7 @@
     ../../modules/home-manager/gaming.nix
     ../../modules/home-manager/latex.nix
     ../../modules/home-manager/vim.nix
+    ../../modules/home-manager/python.nix
     ../../modules/home-manager/japanese.nix
     inputs.nix-flatpak.homeManagerModules.nix-flatpak
   ];
@@ -27,12 +28,12 @@
     pkgs.signal-desktop
     pkgs.element-desktop
     pkgs.kitty
+    # pkgs.unfree.android-studio
     pkgs.piper
     pkgs.wl-clipboard
     pkgs.R
     pkgs.ripgrep
     pkgs.gnome.gnome-tweaks
-    pkgs.python3
     pkgs.bitwarden
     pkgs.rbw
     pkgs.speedcrunch
@@ -54,6 +55,7 @@
     pkgs.newsboat
     pkgs.unfree.ytfzf
     pkgs.nix-output-monitor
+    pkgs.thunderbird
     ];
   services.flatpak = {
     update.auto = {

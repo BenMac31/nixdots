@@ -4,22 +4,13 @@ let
 upkgs = pkgs.unstable;
 in
 {
-  nixpkgs.config.allowUnfreePredicate = pkg:
-    builtins.elem (lib.getName pkg) [
-    "nvidia-x11"
-      "nvidia-settings"
-      "nvidia-persistenced"
-      "cudatoolkit"
-      "cudatoolkit-11.8.0"
-      "cudatoolkit-12.2.2"
-    ];
   imports =
     [
     inputs.home-manager.nixosModules.default
       ./hardware-configuration.nix
       ../../modules/nixos/gnome.nix
-      ../../modules/nixos/nvidia.nix
-      ../../modules/nixos/onTheGo.nix
+      # ../../modules/nixos/cosmic.nix
+      # ../../modules/nixos/kde.nix
       ../../modules/nixos/laptop.nix
       ../../modules/nixos/plymouth.nix
     ];
@@ -28,24 +19,31 @@ in
   boot.loader.efi.canTouchEfiVariables = true;
 
   networking.hostName = "nixBlade";
-  networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
+  networking.networkmanager.enable = true;
 
     services = {
+      xserver.displayManager.lightdm.enable = true;
       flatpak = {
         enable = true;
       };
       ratbagd.enable = true;
       automatic-timezoned.enable = true;
-      printing.enable = true;
+      printing = {
+      enable = true;
+        drivers = [
+        pkgs.gutenprint
+        ];
+      };
+      avahi = {
+  enable = true;
+  nssmdns4 = true;
+  openFirewall = true;
+};
       mullvad-vpn.enable = true;
-      # udev.extraRules = # Numworks Udev
-      #   ''
-      #   SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="a291", TAG+="uaccess"
-      #   SUBSYSTEM=="usb", ATTR{idVendor}=="0483", ATTR{idProduct}=="df11", TAG+="uaccess"
-      #   SUBSYSTEM=="usb", ATTR{idVendor}=="483", ATTR{idProduct}=="a291", TAG+="uaccess"
-      #   SUBSYSTEM=="usb", ATTR{idVendor}=="483", ATTR{idProduct}=="df11", TAG+="uaccess"
-      #   '';
       fwupd.enable = true; # Firmware updater
+      fprintd = {
+        enable = true;
+      };
     };
   time.timeZone = "America/New_York";
 
@@ -68,13 +66,13 @@ in
     htop
     wget
     home-manager
+    libusb
     pinentry
     lshw
     lsof
     powertop
     git
     nix-index
-    openrazer-daemon
     numworks-udev-rules
   ];
 
@@ -85,19 +83,10 @@ in
   users.users.greencheetah = {
     isNormalUser = true;
     shell= pkgs.zsh;
-    extraGroups = [ "docker" "openrazer" "wheel" "uinput" "input" "video" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "docker" "wheel" "uinput" "input" "video" ]; # Enable ‘sudo’ for the user.
   };
   hardware.uinput.enable = true;
-  hardware.openrazer.enable = true;
-  virtualisation = {
-    waydroid.enable = lib.mkDefault true;
-    docker = {
-      enable = lib.mkDefault true;
-      enableNvidia = true;
-    };
-  };
   programs = {
-    noisetorch.enable = true;
     gamemode.enable = true;
     gamescope.enable = true;
     hyprland.enable = true;
@@ -105,10 +94,6 @@ in
     zsh.enable = true;
     kdeconnect.enable = true;
     nix-ld.enable = true;
-  };
-  fileSystems."/home/greencheetah/Desktop" = {
-    device = "/home/greencheetah/.local/share/applications";
-    options = [ "bind" ];
   };
   nix.gc = {
     automatic = true;
@@ -119,5 +104,24 @@ in
 # also pass inputs to home-manager modules
     extraSpecialArgs = {inherit inputs; inherit pkgs;};
     users."greencheetah" = import ./home.nix;
+  };
+  services.tailscale.enable = true;
+  networking.firewall.enable = false;
+  services.nginx = {
+  enable = true;
+  additionalModules = [ pkgs.nginxModules.rtmp ];
+  appendConfig = ''
+  rtmp {
+        server {
+                listen 1935;
+                chunk_size 4096;
+
+                application feed {
+                        live on;
+                        record off;
+                }
+        }
+}
+'';
   };
 }
