@@ -24,6 +24,7 @@ in {
     pkgs.swww
     pkgs.wluma
     pkgs.wlr-randr
+    pkgs.swayosd
     pkgs.networkmanagerapplet
     (pkgs.writeShellScriptBin "devbright" ''
      val=$(${brightnessctl} get)
@@ -48,16 +49,18 @@ in {
     [
     wm/hyprrazer.nix
     rofi/rofi.nix
+    wm/waybar/waybar.nix
     ];
   wayland.windowManager.hyprland = {
     enable = true;
     # package = inputs.hyprland.packages."${pkgs.system}".hyprland;
     settings = {
-      monitor= lib.mkDefault ",preferred,auto,2";
+      monitor= lib.mkDefault ",preferred,auto,1.56667";
       exec-once = [
         "nmcli radio wifi off && nmcli radio wifi on" # wifi doesn't work without this.
         "swww init"
         "wluma"
+	"swayosd-server"
       ];
       input = {
         kb_layout = "us";
@@ -68,8 +71,8 @@ in {
       };
 
       general = with config.colorScheme.colors; {
-        gaps_in = 3;
-        gaps_out = 5;
+        gaps_in = 8;
+        gaps_out = 16;
         border_size = 2;
         "col.active_border" = "rgba(${base08}ee) rgba(${base0A}ee) 45deg";
         "col.inactive_border" = "rgba(${base03}aa)";
@@ -151,14 +154,14 @@ in {
         "SUPER,SUPER_L,exec,polychromatic-cli -d laptop -z main -o static -c ${base07}"
       ];
       bind = [ #
-        "$mainMod,Q,exec,footclient"
+        "$mainMod,Q,exec,foot"
         "$mainMod,C,killactive,"
         "CTRLSHIFT$mainMod,C,exit,"
         "$mainMod,E,exec,nautilus"
         "$mainMod,W,exec,firefox"
         "$mainMod,A,exec,pkill aiclip; aiclip"
         "$mainMod,V,togglefloating,"
-        "$mainMod,R,exec,rofi -show drun"
+        "$mainMod,R,exec,pkill rofi || rofi -show drun"
         "$mainMod,H,movefocus,l"
         "$mainMod,L,movefocus,r"
         "$mainMod,K,movefocus,u"
@@ -175,8 +178,9 @@ in {
         "CTRLSHIFT$mainMod,S,exec,qshot"
         "$mainMod,F11,fullscreen,0"
         "$mainMod,M,fullscreen,1"
-        "CTRL$mainMod,F11,fakefullscreen,0"
+        "CTRL$mainMod,F11,fullscreenstate,2"
         "$mainMod,p,pin,"
+        "$mainMod,b,exec,pkill waybar || waybar"
         ] ++ [
         "$mainMod,1,workspace,1"
           "$mainMod,2,workspace,2"
@@ -224,6 +228,10 @@ in {
         "$mainMod,mouse:272,movewindow"
           "$mainMod,mouse:273,resizewindow"
       ];
+	
+	master = {
+	  new_on_top = false;
+	};
     };
   };
 }

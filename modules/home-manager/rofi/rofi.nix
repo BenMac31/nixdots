@@ -67,7 +67,7 @@
               "dummy"
               "mode-switcher"
             ];
-            background-image = mkLiteral ''url("~/.cache/wall.png", width)'';
+            background-image = mkLiteral ''url("/tmp/wall.png", width)'';
           };
           "entry" = {
             enabled = true;
@@ -94,7 +94,7 @@
           "listview" = {
             enabled = true;
             columns = 2;
-            lines = 6;
+            lines = 5;
             cycle = true;
             dynamic = true;
             scrollbar = false;

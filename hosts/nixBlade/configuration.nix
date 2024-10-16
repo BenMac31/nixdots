@@ -22,7 +22,9 @@ in
   networking.networkmanager.enable = true;
 
     services = {
-      xserver.displayManager.sddm.enable = true;
+      displayManager.sddm.enable = true;
+      displayManager.sddm.wayland.enable = true;
+      displayManager.sddm.theme = "elegant-sddm";
       flatpak = {
         enable = true;
       };
@@ -61,6 +63,7 @@ in
   environment.systemPackages = with pkgs; [ #
     vim
     pkgs.noto-fonts-cjk
+    elegant-sddm
     pciutils
     htop
     wget
@@ -105,7 +108,15 @@ in
     users."greencheetah" = import ./home.nix;
   };
   services.tailscale.enable = true;
-  networking.firewall.enable = false;
+  networking.firewall = {
+    enable = true;
+    allowedTCPPortRanges = [
+      { from = 1714; to = 1764; } # KDE Connect
+    ];
+    allowedUDPPortRanges = [
+      { from = 1714; to = 1764; } # KDE Connect
+    ];
+  };
   services.nginx = {
   enable = true;
   additionalModules = [ pkgs.nginxModules.rtmp ];
