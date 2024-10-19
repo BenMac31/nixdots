@@ -27,6 +27,7 @@
     pkgs.signal-desktop
     pkgs.element-desktop
     pkgs.kitty
+    pkgs.brave
     # pkgs.unfree.android-studio
     pkgs.piper
     pkgs.wl-clipboard
@@ -35,6 +36,10 @@
     pkgs.gnome.gnome-tweaks
     pkgs.bitwarden
     pkgs.rbw
+    pkgs.rofi-rbw-wayland
+    (pkgs.writeShellScriptBin "dmenu" ''
+      ${pkgs.rofi}/bin/rofi -dmenu $@
+     '')
     pkgs.speedcrunch
     pkgs.pavucontrol
     pkgs.gpu-screen-recorder-gtk

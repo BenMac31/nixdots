@@ -162,6 +162,7 @@ in {
         "$mainMod,A,exec,pkill aiclip; aiclip"
         "$mainMod,V,togglefloating,"
         "$mainMod,R,exec,pkill rofi || rofi -show drun"
+        "$mainMod,P,exec,pkill rofi || rofi-rbw -a copy"
         "$mainMod,H,movefocus,l"
         "$mainMod,L,movefocus,r"
         "$mainMod,K,movefocus,u"

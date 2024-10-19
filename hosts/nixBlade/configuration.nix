@@ -107,7 +107,6 @@ in
     extraSpecialArgs = {inherit inputs; inherit pkgs;};
     users."greencheetah" = import ./home.nix;
   };
-  services.tailscale.enable = true;
   networking.firewall = {
     enable = true;
     allowedTCPPortRanges = [
