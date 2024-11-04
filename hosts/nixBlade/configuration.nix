@@ -9,8 +9,6 @@ in
     inputs.home-manager.nixosModules.default
       ./hardware-configuration.nix
       ../../modules/nixos/gnome.nix
-      # ../../modules/nixos/cosmic.nix
-      # ../../modules/nixos/kde.nix
       ../../modules/nixos/laptop.nix
       ../../modules/nixos/plymouth.nix
     ];
@@ -21,15 +19,17 @@ in
   networking.hostName = "nixBlade";
   networking.networkmanager.enable = true;
 
+    time.timeZone = "America/New_York";
     services = {
       displayManager.sddm.enable = true;
       displayManager.sddm.wayland.enable = true;
-      displayManager.sddm.theme = "elegant-sddm";
+      displayManager.sddm.theme = "Elegant";
+      displayManager.sddm.extraPackages = [ pkgs.elegant-sddm ];
       flatpak = {
         enable = true;
       };
       ratbagd.enable = true;
-      automatic-timezoned.enable = true;
+      # automatic-timezoned.enable = true; # Re-Enable once https://github.com/NixOS/nixpkgs/issues/321121 closes
       printing = {
       enable = true;
         drivers = [
@@ -47,7 +47,6 @@ in
         enable = true;
       };
     };
-  time.timeZone = "America/New_York";
 
   i18n.supportedLocales = ["all"]; # Support all languages
 
@@ -62,7 +61,7 @@ in
 
   environment.systemPackages = with pkgs; [ #
     vim
-    pkgs.noto-fonts-cjk
+    pkgs.noto-fonts-cjk-sans
     elegant-sddm
     pciutils
     htop
@@ -94,7 +93,6 @@ in
     hyprland.enable = true;
     gnupg.agent.enable = true;
     zsh.enable = true;
-    kdeconnect.enable = true;
     nix-ld.enable = true;
   };
   nix.gc = {

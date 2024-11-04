@@ -4,6 +4,8 @@ let
 playerctl = "${pkgs.playerctl}/bin/playerctl";
 brightnessctl = "${pkgs.brightnessctl}/bin/brightnessctl";
 pactl = "${pkgs.pulseaudio}/bin/pactl";
+socat = "${pkgs.socat}/bin/socat";
+hyprctl = "${pkgs.hyprland}/bin/hyprctl";
 in {
   xdg = {
     desktopEntries."org.gnome.Settings" = {
@@ -21,16 +23,14 @@ in {
     NIXOS_OZONE_WL = "1";
   };
   home.packages = [ #
-    pkgs.swww
-    pkgs.wluma
+    pkgs.wlsunset
     pkgs.wlr-randr
-    pkgs.swayosd
     pkgs.networkmanagerapplet
+    pkgs.playerctl
     (pkgs.writeShellScriptBin "devbright" ''
      val=$(${brightnessctl} get)
      max=$(${brightnessctl} max)
-     h="$(printf "%02x\n" "$val")"
-     ${pkgs.polychromatic}/bin/polychromatic-cli -d laptop -o brightness -p "$((val*100/max))" &
+     h="$(printf "%02x\n" "$((val*255/max))")"
      mice=$(${pkgs.libratbag}/bin/ratbagctl | ${pkgs.coreutils-full}/bin/cut -d: -f1)
      if [[ -n $mice ]]; then
        while read -r mouse; do
@@ -38,39 +38,82 @@ in {
       done <<< "$mice"
      fi
      '')
+     (pkgs.writeShellScriptBin "bwfloat" ''
+     windowtitlev2() {
+  IFS=',' read -r -a args <<< "$1"
+  args[0]="''${args[0]#*>>}"
+
+  if [[ ''${args[1]} == "Extension: (Bitwarden Password Manager) - — Mozilla Firefox" ]]; then
+    ${hyprctl} --batch "\
+      dispatch setfloating address:0x''${args[0]}; \
+      dispatch resizewindowpixel exact 20% 50%, address:0x$\{args[0]}; \
+      dispatch centerwindow; \
+    "
+  fi
+}
+
+handle() {
+  case $1 in
+    windowtitlev2\>*) windowtitlev2 "$1" ;;
+  esac
+}
+
+${socat} -U - UNIX-CONNECT:"/$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock" \
+  | while read -r line; do handle "$line"; done
+  '')
      pkgs.grim
      pkgs.slurp
     (pkgs.writeShellScriptBin "qshot" ''
       ${pkgs.grim}/bin/grim -g "$(${pkgs.slurp}/bin/slurp)" "/tmp/clip.png" &&\
       ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/clip.png
      '')
+     (pkgs.writeShellScriptBin "hyprperf" ''
+HYPRGAMEMODE=$(hyprctl getoption animations:enabled | awk 'NR==1{print $2}')
+if [ "$HYPRGAMEMODE" = 1 ] ; then
+    hyprctl --batch "\
+        keyword animations:enabled 0;\
+        keyword decoration:drop_shadow 0;\
+        keyword decoration:blur:enabled 0;\
+        keyword general:gaps_in 0;\
+        keyword general:gaps_out 0;\
+        keyword general:border_size 1;\
+        keyword decoration:rounding 0"
+    exit
+fi
+hyprctl reload
+'')
   ];
   imports = 
     [
-    wm/hyprrazer.nix
     rofi/rofi.nix
+    wm/hyprpaper.nix
     wm/waybar/waybar.nix
     ];
   wayland.windowManager.hyprland = {
     enable = true;
-    # package = inputs.hyprland.packages."${pkgs.system}".hyprland;
     settings = {
-      monitor= lib.mkDefault ",preferred,auto,1.56667";
+      monitor = [
+        ",preferred,auto,1.56667"
+        "DP-3,preferred,auto,1.6"
+      ];
       exec-once = [
         "nmcli radio wifi off && nmcli radio wifi on" # wifi doesn't work without this.
-        "swww init"
-        "wluma"
-	"swayosd-server"
+	"bwfloat"
+	"swapwallpaper"
+	"nm-applet"
+	"${pkgs.wlsunset}/wlsunset -l 39.103119 -L -84.512016 -t 0 -g 0.7"
+	"${pkgs.plasma5Packages.kdeconnect-kde}/bin/kdeconnect-indicator"
       ];
       input = {
         kb_layout = "us";
+	kb_options = "caps:swapescape";
 
         touchpad = {
           natural_scroll = true;
         };
       };
 
-      general = with config.colorScheme.colors; {
+      general = with config.colorScheme.palette; {
         gaps_in = 8;
         gaps_out = 16;
         border_size = 2;
@@ -80,7 +123,7 @@ in {
         allow_tearing = false;
       };
 
-      decoration = with config.colorScheme.colors; {
+      decoration = with config.colorScheme.palette; {
 
         rounding = 10;
 
@@ -123,10 +166,12 @@ in {
       misc = {
         force_default_wallpaper = -1;
         enable_swallow = true;
+	swallow_regex = "^(Alacritty|kitty|footclient|foot)$";
       };
 
       windowrule = let 
         f = regex: "float, ^(${regex})$";
+	w = s: r: "workspace ${toString s} silent, ${r}";
       in [
         (f "org.gnome.Calculator")
           (f "org.gnome.Nautilus")
@@ -138,23 +183,20 @@ in {
           (f "xdg-desktop-portal")
           (f "xdg-desktop-portal-gnome")
           (f "com.github.Aylur.ags")
-          "workspace 5,title:^(Signal)$"
-          "workspace 8,class:^(steam)(.*)$"
-          "workspace 8,^(org.prismlauncher.PrismLauncher)$"
+          (w 5 "title:^(Signal)$")
+          (w 8 "class:^(steam)(.*)$")
+          (w 8 "^(org.prismlauncher.PrismLauncher)$")
           "float,title:(Bitwarden)$"
-          "fullscreen,title:(Bitwarden)$"
+      ];
+      layerrule = [
+	  "animation slide top, ^(rofi)$"
+	  "animation slide top, ^(waybar)$"
       ];
 
       "$mainMod" = "SUPER";
 
-      bindni = [
-        "SUPER,SUPER_L,exec,hyprrazer -f /home/greencheetah/.cache/hyprrazer/mainMod.csv"
-      ];
-      bindirnt = with config.colorScheme.colors; lib.mkDefault [
-        "SUPER,SUPER_L,exec,polychromatic-cli -d laptop -z main -o static -c ${base07}"
-      ];
       bind = [ #
-        "$mainMod,Q,exec,foot"
+        "$mainMod,Q,exec,footclient"
         "$mainMod,C,killactive,"
         "CTRLSHIFT$mainMod,C,exit,"
         "$mainMod,E,exec,nautilus"
@@ -179,10 +221,11 @@ in {
         "CTRLSHIFT$mainMod,S,exec,qshot"
         "$mainMod,F11,fullscreen,0"
         "$mainMod,M,fullscreen,1"
-        "CTRL$mainMod,F11,fullscreenstate,2"
+        "CTRL$mainMod,F11,fakefullscreen,2"
         "$mainMod,p,pin,"
         "$mainMod,b,exec,pkill waybar || waybar"
-        ] ++ [
+	"$mainMod,G,togglegroup"
+	"$mainMod,f1,exec,hyprperf"
         "$mainMod,1,workspace,1"
           "$mainMod,2,workspace,2"
           "$mainMod,3,workspace,3"
@@ -203,16 +246,30 @@ in {
           "$mainMod SHIFT,8,movetoworkspacesilent,8"
           "$mainMod SHIFT,9,movetoworkspacesilent,9"
           "$mainMod SHIFT,0,movetoworkspacesilent,10"
+          "$mainMod ALT,1,changegroupactive,1"
+          "$mainMod ALT,2,changegroupactive,2"
+          "$mainMod ALT,3,changegroupactive,3"
+          "$mainMod ALT,4,changegroupactive,4"
+          "$mainMod ALT,5,changegroupactive,5"
+          "$mainMod ALT,6,changegroupactive,6"
+          "$mainMod ALT,7,changegroupactive,7"
+          "$mainMod ALT,8,changegroupactive,8"
+          "$mainMod ALT,9,changegroupactive,9"
+          "$mainMod ALT,0,changegroupactive,10"
           ];
       bindle = [
         ",XF86MonBrightnessUp,   exec, ${brightnessctl} set +5%; devbright"
         ",XF86MonBrightnessDown, exec, ${brightnessctl} set  5%-; devbright"
         ",XF86AudioRaiseVolume,  exec, ${pactl} set-sink-volume @DEFAULT_SINK@ +5%"
         ",XF86AudioLowerVolume,  exec, ${pactl} set-sink-volume @DEFAULT_SINK@ -5%"
-        "CTRL$mainMod,H,resizeactive,-10 0"
-        "CTRL$mainMod,L,resizeactive,10 0"
-        "CTRL$mainMod,K,resizeactive,0 -10"
-        "CTRL$mainMod,J,resizeactive,0 10"
+        "CTRL $mainMod,H,resizeactive,-16 0"
+        "CTRL $mainMod,L,resizeactive,16 0"
+        "CTRL $mainMod,K,resizeactive,0 -16"
+        "CTRL $mainMod,J,resizeactive,0 16"
+        "SHIFT$mainMod,J,moveactive,0 16"
+        "SHIFT$mainMod,K,moveactive,0 -16"
+        "SHIFT$mainMod,H,moveactive,-16 0"
+        "SHIFT$mainMod,L,moveactive,16 0"
       ];
       bindl =  [
         ",XF86AudioPlay,    exec, ${playerctl} play-pause"
@@ -222,8 +279,9 @@ in {
           ",XF86AudioNext,    exec, ${playerctl} next"
           ",XF86AudioMicMute, exec, ${pactl} set-source-mute @DEFAULT_SOURCE@ toggle"
       ];
-      plugin = {
-      };
+      # plugins = [
+      # pkgs.hyprlandPlugins.hyprexpo
+      # ];
 
       bindm = [
         "$mainMod,mouse:272,movewindow"

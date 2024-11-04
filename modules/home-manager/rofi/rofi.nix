@@ -23,7 +23,7 @@
           inherit (config.lib.formats.rasi) mkLiteral;
         in
         {
-          "*" = with config.colorScheme.colors; {
+          "*" = with config.colorScheme.palette; {
             bg = lib.mkForce (mkLiteral "#${base00}");
             bg-alt = lib.mkForce (mkLiteral "#${base09}");
             foreground = lib.mkForce (mkLiteral "#${base01}");
@@ -67,7 +67,7 @@
               "dummy"
               "mode-switcher"
             ];
-            background-image = mkLiteral ''url("/tmp/wall.png", width)'';
+            background-image = mkLiteral ''url("~/.cache/wall.png", width)'';
           };
           "entry" = {
             enabled = true;

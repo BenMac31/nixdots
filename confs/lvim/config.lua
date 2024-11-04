@@ -3,12 +3,12 @@ vim.opt.shiftwidth = 2
 vim.opt.tabstop = 2
 vim.opt.relativenumber = true
 
-lvim.log.level = "info"
-lvim.format_on_save = {
-	enabled = true,
-	pattern = "*",
-	timeout = 1000,
-}
+-- lvim.log.level = "info"
+-- lvim.format_on_save = {
+-- 	enabled = true,
+-- 	pattern = "*",
+-- 	timeout = 1000,
+-- }
 -- keymappings <https://www.lunarvim.org/docs/configuration/keybindings>
 -- add your own keymapping
 

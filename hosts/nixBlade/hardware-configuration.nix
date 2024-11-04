@@ -10,7 +10,8 @@
 
   boot.initrd.availableKernelModules = [ "xhci_pci" "thunderbolt" "nvme" "usbhid" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-intel" ];
+  boot.kernelModules = [ "kvm-intel"];
+  boot.kernelParams = ["rcu_nocbs=all" "rcutree.enable_rcu_lazy=1"];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =

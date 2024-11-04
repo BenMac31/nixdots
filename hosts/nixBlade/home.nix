@@ -26,14 +26,18 @@
   home.packages = [ #
     pkgs.signal-desktop
     pkgs.element-desktop
+    # upkgs.nheko
     pkgs.kitty
     pkgs.brave
+    pkgs.unzip
+    pkgs.btop
+    pkgs.blueberry
+    pkgs.brightnessctl
     # pkgs.unfree.android-studio
     pkgs.piper
     pkgs.wl-clipboard
     pkgs.R
     pkgs.ripgrep
-    pkgs.gnome.gnome-tweaks
     pkgs.bitwarden
     pkgs.rbw
     pkgs.rofi-rbw-wayland
@@ -42,7 +46,6 @@
      '')
     pkgs.speedcrunch
     pkgs.pavucontrol
-    pkgs.gpu-screen-recorder-gtk
     pkgs.pass
     pkgs.neofetch
     pkgs.libnotify
@@ -61,6 +64,11 @@
     pkgs.nix-output-monitor
     pkgs.thunderbird
     ];
+  services.kdeconnect = {
+    enable = true;
+    indicator = true;
+  };
+
   services.flatpak = {
     update.auto = {
       enable = true;
@@ -69,8 +77,8 @@
     packages = [ #
       "net.ankiweb.Anki"
       "com.github.tchx84.Flatseal"
+      "im.nheko.Nheko"
       "org.qbittorrent.qBittorrent"
-      "com.github.bajoja.indicator-kdeconnect"
     ];
     overrides = {
       global = {
@@ -85,7 +93,7 @@
 
         Environment = {
           XCURSOR_PATH = "/run/host/user-share/icons:/run/host/share/icons";
-          GTK_THEME = "Gruvbox-Dark-BL";
+          # GTK_THEME = "Gruvbox-Dark-BL";
         };
       };
     };
@@ -93,10 +101,18 @@
 
   programs.home-manager.enable = true;
   home.stateVersion = "23.11"; # Do not change
-    services.gnome-keyring.enable = true;
+  # services.gnome.gnome-keyring.enable = true;
 
   programs = {
-  gpg.enable = true;
-  password-store.enable = true;
+    gpg.enable = true;
+    password-store.enable = true;
+    rbw.settings.pinentry = pkgs.pinentry-gnome3;
+  };
+  systemd.user.sessionVariables.SSH_AUTH_SOCK = "/run/user/1000/keyring/ssh"; # Makes ssh-agent work
+  home.pointerCursor = {
+    package = pkgs.graphite-cursors;
+    gtk.enable = true;
+    name = "graphite-dark";
+
   };
 }

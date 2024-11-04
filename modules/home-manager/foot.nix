@@ -8,7 +8,7 @@
         font = "FiraCodeNerdFont-Regular:size=10";
         dpi-aware = true;
       };
-      colors = with config.colorScheme.colors; {
+      colors = with config.colorScheme.palette; {
         regular0 = "${base00}";
         regular1 = "${base08}";
         regular2 = "${base09}";

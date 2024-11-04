@@ -8,10 +8,19 @@
   programs.zsh = {
     enable = true;
     history.extended = true;
+    syntaxHighlighting.enable = true;
+    enableCompletion = true;
+    defaultKeymap = "viins";
+      oh-my-zsh = {
+    enable = true;
+    plugins = [ "git" "thefuck" ];
+    theme = "robbyrussell";
+  };
     shellAliases = {
       nixswitch = "sudo nixos-rebuild switch --flake $HOME/nixos/#nixBlade";
       homeswitch = "home-manager switch --flake $HOME/nixos/#nixBlade";
       nixtest = "sudo nixos-rebuild test --fast --flake $HOME/nixos/#nixBlade";
+      nixwatch = "cd ~/nixos && dirwatch nixtest";
       cat = "bat";
       ls = "eza";
       vpnexit = "mullvad split-tunnel add \$\$";
@@ -32,6 +41,18 @@
 done
 }
     rep() {for i in $(seq 1 $2); do echo "$1"; done}
+
+    dirwatch() {
+    while [ true ]; do
+      local a="$(\ls -l -R)"
+      if [ "$a" != "$b" ]; then
+        eval "$@"
+        local b="$a"
+        echo "Waiting for next update"
+      fi
+      sleep 3
+    done
+    }
     '';
   };
 }

@@ -10,6 +10,9 @@
       reload
       webtorrent-mpv-hook
     ];
+    bindings = {
+      "Alt+," = "cycle-values play-dir - +";
+    };
     config = {
       osc = "no";
       slang = "en";

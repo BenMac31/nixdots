@@ -1,23 +1,27 @@
-{pkgs, config, ...}:
+{pkgs, inputs, config, ...}:
 {
   gtk = {
     enable = true;
     theme = {
       package = pkgs.gruvbox-gtk-theme;
-      name = "Gruvbox-Dark-BL";
+      name = "Gruvbox-Dark";
     };
     iconTheme = {
-      package = pkgs.morewaita-icon-theme;
-      name = "MoreWaita";
+      package = pkgs.gruvbox-dark-icons-gtk;
+      name = "Oomox-gruvbox-dark";
     };
   };
-  home.file.gruvbox-gtk = {
-    source = config.lib.file.mkOutOfStoreSymlink "${pkgs.gruvbox-gtk-theme}/share/themes/Gruvbox-Dark-BL";
-    target = "${config.xdg.dataHome}/themes/Gruvbox-Dark-BL";
-  };
+xdg.configFile = {
+      "Kvantum/gruvbox-kvantum/".source = "${inputs.gruvbox-kvantum}/gruvbox-kvantum/";
+      "Kvantum/kvantum.kvconfig".text = "[General]\ntheme=gruvbox-kvantum";
+    };
+  home.sessionVariables.QT_QPA_PLATFORM = "wayland";
   qt = {
     enable = true;
-    style.name = "adwaita-dark";
-    platformTheme = "adwaita";
+    platformTheme.name = "qt5ct";
+    style = {
+      # package = pkgs.adwaita-qt6;
+      name = "kvantum";
+    };
   };
 }

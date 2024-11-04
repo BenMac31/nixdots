@@ -8,7 +8,7 @@
     mappings = {
       "=" = "zoom in";
     };
-    options = with config.colorScheme.colors; {
+    options = with config.colorScheme.palette; {
       default-bg = "#${base00}";
       default-fg = "#${base0A}";
       adjust-open = "best fit";

@@ -1,7 +1,7 @@
 { config, lib, pkgs, inputs, ... }:
 {
   home.packages = [ #
-    pkgs.noto-fonts-cjk
+    pkgs.noto-fonts-cjk-sans
   ];
   i18n.inputMethod = {
     enabled = "fcitx5";

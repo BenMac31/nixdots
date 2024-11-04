@@ -22,6 +22,7 @@ window#waybar {
 #battery,
 #temperature,
 #clock,
+#mpris,
 #workspaces,
 #custom-rofi,
 #tray,
@@ -125,6 +126,12 @@ tooltip {
   color: #fb4934; /* bright_red */
   padding-left: 0;
   padding-right: 0;
+}
+
+#mpris {
+  color: #d3869b;
+  padding-left: 0;
+  padding-right: 19px;
 }
 
 #custom-right {

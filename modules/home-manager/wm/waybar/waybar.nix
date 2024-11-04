@@ -31,6 +31,7 @@
         modules-right = [
           "custom/left"
           "tray"
+	  "mpris"
           "clock"
           "custom/right"
         ];
@@ -139,6 +140,24 @@
           format = " {:%H:%M}";
           on-click = "~/.config/eww/scripts/toggle_control_center.sh";
         };
+
+	mpris = {
+	  format = "{player_icon} {dynamic}";
+	  format-paused = "{status icon} <i>{dynamic}</i>";
+	  player-icons = {
+	    "default" = "▶";
+	    "mpv" = "🎵";
+	  };
+	  status-icons = {
+	    "paused" = "⏸";
+	  };
+	  dynamic-len = 48;
+	  dynamic-order = [
+	    "artist"
+	    "title"
+	    "album"
+	  ];
+	};
 
         # Backlight Module
         backlight = {
