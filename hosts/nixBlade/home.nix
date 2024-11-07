@@ -1,7 +1,8 @@
 { config, lib, pkgs, inputs, ... }:
 
 {
-  imports = [ #
+  imports = [
+    #
     ../../modules/home-manager/nix-colors.nix
     ../../modules/home-manager/firefox.nix
     ../../modules/home-manager/gnome.nix
@@ -23,10 +24,10 @@
   home.homeDirectory = "/home/greencheetah";
 
 
-  home.packages = [ #
+  home.packages = [
+    #
     pkgs.signal-desktop
     pkgs.element-desktop
-    # upkgs.nheko
     pkgs.kitty
     pkgs.brave
     pkgs.unzip
@@ -43,7 +44,7 @@
     pkgs.rofi-rbw-wayland
     (pkgs.writeShellScriptBin "dmenu" ''
       ${pkgs.rofi}/bin/rofi -dmenu $@
-     '')
+    '')
     pkgs.speedcrunch
     pkgs.pavucontrol
     pkgs.pass
@@ -63,7 +64,8 @@
     pkgs.unfree.ytfzf
     pkgs.nix-output-monitor
     pkgs.thunderbird
-    ];
+    pkgs.fractal
+  ];
   services.kdeconnect = {
     enable = true;
     indicator = true;
@@ -74,7 +76,7 @@
       enable = true;
       onCalendar = "weekly";
     };
-    packages = [ #
+    packages = [
       "net.ankiweb.Anki"
       "com.github.tchx84.Flatseal"
       "im.nheko.Nheko"
@@ -83,12 +85,13 @@
     overrides = {
       global = {
         Context = {
-        filesystems = [
-        "xdg-config/gtk-4.0"
-        "xdg-config/gtk-3.0"
-        "${pkgs.gruvbox-gtk-theme}/share/themes/"
-        "xdg-config/themes/"
-        ];
+          filesystems = [
+            "xdg-config/gtk-4.0"
+            "xdg-config/gtk-3.0"
+            "${pkgs.gruvbox-gtk-theme}/share/themes/"
+            "xdg-config/Kvantum"
+            "xdg-config/themes/"
+          ];
         };
 
         Environment = {

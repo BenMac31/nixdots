@@ -13,7 +13,7 @@
   ];
   programs.neovim = {
     enable = true;
-    package = pkgs.unfree.neovim-unwrapped;
+    package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.neovim-unwrapped;
     defaultEditor = true;
     vimdiffAlias = true;
     withNodeJs = true;

@@ -582,6 +582,14 @@ require('lazy').setup({
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
+--       {
+--         "3rd/image.nvim",
+--         opts = {}
+--     },
+-- }, {
+--     rocks = {
+--         hererocks = true,  -- recommended if you do not have global installation of Lua 5.1.
+--     },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
