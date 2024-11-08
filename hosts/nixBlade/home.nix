@@ -72,10 +72,7 @@
   };
 
   services.flatpak = {
-    update.auto = {
-      enable = true;
-      onCalendar = "weekly";
-    };
+    update.onActivation = true;
     packages = [
       "net.ankiweb.Anki"
       "com.github.tchx84.Flatseal"
