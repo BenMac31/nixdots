@@ -107,8 +107,8 @@ in
   };
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 5900 ];
-    allowedUDPPorts = [ 5900 ];
+    allowedTCPPorts = [ 5900 36149 ];
+    allowedUDPPorts = [ 5900 36149 ];
     allowedTCPPortRanges = [
       { from = 1714; to = 1764; } # KDE Connect
     ];

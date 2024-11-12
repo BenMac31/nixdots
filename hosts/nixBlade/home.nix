@@ -27,6 +27,7 @@
   home.packages = [
     #
     pkgs.signal-desktop
+    pkgs.wayvnc
     pkgs.element-desktop
     pkgs.kitty
     pkgs.brave
