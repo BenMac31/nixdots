@@ -8,6 +8,7 @@
     settings = [
       {
         layer = "top";
+        outputs = [ "eDP-1" ];
         position = "top";
         mod = "dock";
         height = 40;
@@ -31,7 +32,7 @@
         modules-right = [
           "custom/left"
           "tray"
-	  "mpris"
+          "mpris"
           "clock"
           "custom/right"
         ];
@@ -62,19 +63,19 @@
 
         # Workspaces
         "hyprland/workspaces" = {
-	  format = "{icon}";
+          format = "{icon}";
           disable-scroll = true;
           on-click = "activate";
-	  all-outputs = true;
+          all-outputs = true;
           format-icons = {
-		  "1" = "󰖟";
-		  "2" = "";
-		  "5" = "";
-		  "6" = "󰝚";
-		  "8" = "󰮂";
-		  "urgent" = "";
-	  };
-	  sort-by-number = true;
+            "1" = "󰖟";
+            "2" = "";
+            "5" = "";
+            "6" = "󰝚";
+            "8" = "󰮂";
+            "urgent" = "";
+          };
+          sort-by-number = true;
         };
 
         # Battery Module
@@ -141,23 +142,23 @@
           on-click = "~/.config/eww/scripts/toggle_control_center.sh";
         };
 
-	mpris = {
-	  format = "{player_icon} {dynamic}";
-	  format-paused = "{status icon} <i>{dynamic}</i>";
-	  player-icons = {
-	    "default" = "▶";
-	    "mpv" = "🎵";
-	  };
-	  status-icons = {
-	    "paused" = "⏸";
-	  };
-	  dynamic-len = 48;
-	  dynamic-order = [
-	    "artist"
-	    "title"
-	    "album"
-	  ];
-	};
+        mpris = {
+          format = "{player_icon} {dynamic}";
+          format-paused = "{status icon} <i>{dynamic}</i>";
+          player-icons = {
+            "default" = "▶";
+            "mpv" = "🎵";
+          };
+          status-icons = {
+            "paused" = "⏸";
+          };
+          dynamic-len = 48;
+          dynamic-order = [
+            "artist"
+            "title"
+            "album"
+          ];
+        };
 
         # Backlight Module
         backlight = {

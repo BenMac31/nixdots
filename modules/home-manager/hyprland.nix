@@ -26,6 +26,7 @@ in
   home.packages = [
     #
     pkgs.wlsunset
+    pkgs.swaynotificationcenter
     pkgs.wlr-randr
     pkgs.networkmanagerapplet
     pkgs.playerctl
@@ -101,6 +102,7 @@ in
       exec-once = [
         "nmcli radio wifi off && nmcli radio wifi on" # wifi doesn't work without this.
         "bwfloat"
+        "swaync"
         "swapwallpaper"
         "nm-applet"
         "${pkgs.wlsunset}/wlsunset -l 39.103119 -L -84.512016 -t 0 -g 0.7"
@@ -209,6 +211,8 @@ in
         "$mainMod,W,exec,firefox"
         "$mainMod,A,exec,pkill aiclip; aiclip"
         "$mainMod,V,togglefloating,"
+        "$mainMod,n,exec,swaync-client --close-latest"
+        "$mainMod SHIFT,n,exec,swaync-client -t"
         "$mainMod,R,exec,pkill rofi || rofi -show drun"
         "$mainMod SHIFT, V, exec, mullvad reconnect"
         "$mainMod,P,exec,pkill rofi || rofi-rbw -a copy"

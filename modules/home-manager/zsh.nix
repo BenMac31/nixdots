@@ -38,6 +38,7 @@
         \cat * `rep $1 $2` |\
             awk '{if ($1 ~ /^[0-9]+$/) for(i=0; i<$1; i++) print $0; else print $0}' |\
             sed 's/^[0-9]* //g' |\
+            sed '/[0-9]/!p' |\
             shuf -n 1 >> /tmp/out
             echo '"""' >> /tmp/out
             zsh /tmp/out
