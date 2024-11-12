@@ -202,7 +202,7 @@ in
 
       bind = [
         #
-        "$mainMod,Q,exec,footclient"
+        "$mainMod,Q,exec,kitty"
         "$mainMod,C,killactive,"
         "CTRLSHIFT$mainMod,C,exit,"
         "$mainMod,E,exec,nautilus"
@@ -210,6 +210,7 @@ in
         "$mainMod,A,exec,pkill aiclip; aiclip"
         "$mainMod,V,togglefloating,"
         "$mainMod,R,exec,pkill rofi || rofi -show drun"
+        "$mainMod SHIFT, V, exec, mullvad reconnect"
         "$mainMod,P,exec,pkill rofi || rofi-rbw -a copy"
         "$mainMod,H,movefocus,l"
         "$mainMod,L,movefocus,r"
@@ -290,7 +291,7 @@ in
         ",XF86AudioMicMute, exec, ${pactl} set-source-mute @DEFAULT_SOURCE@ toggle"
       ];
       # plugins = [
-      # pkgs.hyprlandPlugins.hyprexpo
+      #   pkgs.hyprlandPlugins.hyprexpo
       # ];
 
       bindm = [

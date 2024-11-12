@@ -10,6 +10,7 @@
     ../../modules/home-manager/zsh.nix
     ../../modules/home-manager/hyprland.nix
     ../../modules/home-manager/foot.nix
+    ../../modules/home-manager/kitty.nix
     ../../modules/home-manager/zathura.nix
     ../../modules/home-manager/gtk.nix
     ../../modules/home-manager/mpv.nix
