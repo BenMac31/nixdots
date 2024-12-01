@@ -13,7 +13,7 @@ in
       name = "Settings";
       comment = "Gnome Control Center";
       icon = "org.gnome.Settings";
-      exec = "env XDG_CURRENT_DESKTOP=gnome ${pkgs.gnome.gnome-control-center}/bin/gnome-control-center";
+      exec = "env XDG_CURRENT_DESKTOP=gnome ${pkgs.gnome-control-center}/bin/gnome-control-center";
       categories = [ "X-Preferences" ];
       terminal = false;
     };
@@ -75,7 +75,7 @@ in
       if [ "$HYPRGAMEMODE" = 1 ] ; then
           hyprctl --batch "\
               keyword animations:enabled 0;\
-              keyword decoration:drop_shadow 0;\
+              keyword decoration:shadow:enabled 0;\
               keyword decoration:blur:enabled 0;\
               keyword general:gaps_in 0;\
               keyword general:gaps_out 0;\
@@ -138,10 +138,12 @@ in
           passes = 1;
         };
 
-        drop_shadow = true;
-        shadow_range = 4;
-        shadow_render_power = 3;
-        "col.shadow" = "rgba(${base01}ee)";
+        shadow = {
+          enabled = true;
+          range = 4;
+          render_power = 3;
+          color = "rgba(${base01}ee)";
+        };
       };
 
       animations = {
@@ -232,7 +234,7 @@ in
         "CTRLSHIFT$mainMod,S,exec,qshot"
         "$mainMod,F11,fullscreen,0"
         "$mainMod,M,fullscreen,1"
-        "CTRL$mainMod,F11,fakefullscreen,2"
+        "CTRL$mainMod,F11,fullscreenstate,2"
         "$mainMod,p,pin,"
         "$mainMod,b,exec,pkill waybar || waybar"
         "$mainMod,G,togglegroup"

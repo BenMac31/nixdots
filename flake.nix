@@ -2,9 +2,9 @@
   description = "Nixos config flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
     home-manager = {
-      url = "github:nix-community/home-manager/release-24.05";
+      url = "github:nix-community/home-manager/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs-master.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -21,11 +21,11 @@
     };
     ollama = {
       url = "github:abysssol/ollama-flake";
-      inputs.nixpkgs.follows = "nixpkgs"; 
-     };
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     firefox-css-hacks = { url = "github:MrOtherGuy/firefox-csshacks"; flake = false; };
     fcitx5-gruvbox = { url = "github:ayamir/fcitx5-gruvbox"; flake = false; };
-        hypr-darkwindow = {
+    hypr-darkwindow = {
       url = "github:micha4w/Hypr-DarkWindow/v0.44.0";
       inputs.hyprland.follows = "hyprland";
     };
@@ -35,47 +35,48 @@
 
   outputs = { self, nixpkgs, home-manager, nixpkgs-master, nixpkgs-unstable, ... }@inputs:
     let
-    system = "x86_64-linux";
-  pkgs = nixpkgs.legacyPackages.${system};
-  overlay-master = final: prev: {
-      master = nixpkgs-master.legacyPackages.${prev.system};
-  };
-  overlay-unstable = final: prev: {
-      unstable = nixpkgs-unstable.legacyPackages.${prev.system};
-  };
-  overlay-unfree = final: prev: {
-    unfree = import nixpkgs{
-      inherit system;
-      config.allowUnfree = true;
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+      overlay-master = final: prev: {
+        master = nixpkgs-master.legacyPackages.${prev.system};
+      };
+      overlay-unstable = final: prev: {
+        unstable = nixpkgs-unstable.legacyPackages.${prev.system};
+      };
+      overlay-unfree = final: prev: {
+        unfree = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        };
+      };
+      overlay-unstable-unfree = final: prev: {
+        unstable.unfree = import nixpkgs-unstable {
+          inherit system;
+          config.allowUnfree = true;
+        };
+      };
+      overlay-master-unfree = final: prev: {
+        master.unfree = import nixpkgs-master {
+          inherit system;
+          config.allowUnfree = true;
+        };
+      };
+    in
+    rec {
+      nixosConfigurations.nixBlade = nixpkgs.lib.nixosSystem rec {
+        specialArgs = { inherit inputs; };
+        modules = [
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ]; })
+          ./hosts/nixBlade/configuration.nix
+        ];
+      };
+      homeConfigurations.nixBlade = home-manager.lib.homeManagerConfiguration {
+        extraSpecialArgs = { inherit inputs; };
+        inherit pkgs;
+        modules = [
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-unstable overlay-unstable-unfree overlay-master overlay-master-unfree ]; })
+          ./hosts/nixBlade/home.nix
+        ];
+      };
     };
-  };
-  overlay-unstable-unfree = final: prev: {
-    unstable.unfree = import nixpkgs-unstable{
-      inherit system;
-      config.allowUnfree = true;
-    };
-  };
-  overlay-master-unfree = final: prev: {
-    master.unfree = import nixpkgs-master{
-      inherit system;
-      config.allowUnfree = true;
-    };
-  };
-  in rec {
-    nixosConfigurations.nixBlade = nixpkgs.lib.nixosSystem rec {
-      specialArgs = {inherit inputs;};
-      modules = [ 
-        ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ]; })
-        ./hosts/nixBlade/configuration.nix
-      ];
-    };
-    homeConfigurations.nixBlade = home-manager.lib.homeManagerConfiguration {
-      extraSpecialArgs = {inherit inputs;};
-      inherit pkgs;
-      modules = [
-        ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-unstable overlay-unstable-unfree overlay-master overlay-master-unfree ]; })
-        ./hosts/nixBlade/home.nix 
-      ];
-    };
-  };
 }

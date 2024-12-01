@@ -1,12 +1,12 @@
 { config, lib, pkgs, inputs, ... }:
 
 let
-upkgs = pkgs.unstable;
+  upkgs = pkgs.unstable;
 in
 {
   imports =
     [
-    inputs.home-manager.nixosModules.default
+      inputs.home-manager.nixosModules.default
       ./hardware-configuration.nix
       ../../modules/nixos/gnome.nix
       ../../modules/nixos/laptop.nix
@@ -19,36 +19,36 @@ in
   networking.hostName = "nixBlade";
   networking.networkmanager.enable = true;
 
-    time.timeZone = "America/New_York";
-    services = {
-      displayManager.sddm.enable = true;
-      displayManager.sddm.wayland.enable = true;
-      displayManager.sddm.theme = "Elegant";
-      displayManager.sddm.extraPackages = [ pkgs.elegant-sddm ];
-      flatpak = {
-        enable = true;
-      };
-      ratbagd.enable = true;
-      # automatic-timezoned.enable = true; # Re-Enable once https://github.com/NixOS/nixpkgs/issues/321121 closes
-      printing = {
+  time.timeZone = "America/New_York";
+  services = {
+    displayManager.sddm.enable = true;
+    displayManager.sddm.wayland.enable = true;
+    displayManager.sddm.theme = "Elegant";
+    displayManager.sddm.extraPackages = [ pkgs.elegant-sddm ];
+    flatpak = {
       enable = true;
-        drivers = [
-        pkgs.gutenprint
-        ];
-      };
-      avahi = {
-  enable = true;
-  nssmdns4 = true;
-  openFirewall = true;
-};
-      mullvad-vpn.enable = true;
-      fwupd.enable = true; # Firmware updater
-      fprintd = {
-        enable = true;
-      };
     };
+    ratbagd.enable = true;
+    # automatic-timezoned.enable = true; # Re-Enable once https://github.com/NixOS/nixpkgs/issues/321121 closes
+    printing = {
+      enable = true;
+      drivers = [
+        pkgs.gutenprint
+      ];
+    };
+    avahi = {
+      enable = true;
+      nssmdns4 = true;
+      openFirewall = true;
+    };
+    mullvad-vpn.enable = true;
+    fwupd.enable = true; # Firmware updater
+    fprintd = {
+      enable = true;
+    };
+  };
 
-  i18n.supportedLocales = ["all"]; # Support all languages
+  i18n.supportedLocales = [ "all" ]; # Support all languages
 
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
@@ -59,7 +59,8 @@ in
     pulse.enable = true;
   };
 
-  environment.systemPackages = with pkgs; [ #
+  environment.systemPackages = with pkgs; [
+    #
     vim
     pkgs.noto-fonts-cjk-sans
     elegant-sddm
@@ -67,7 +68,7 @@ in
     htop
     wget
     home-manager
-    libusb
+    libusb1
     pinentry
     lshw
     lsof
@@ -79,11 +80,11 @@ in
 
   system.stateVersion = "23.11"; # DO NOT CHANGE
 
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   users.users.greencheetah = {
     isNormalUser = true;
-    shell= pkgs.zsh;
+    shell = pkgs.zsh;
     extraGroups = [ "docker" "wheel" "uinput" "input" "video" ]; # Enable ‘sudo’ for the user.
   };
   hardware.uinput.enable = true;
@@ -101,8 +102,8 @@ in
     options = "--delete-older-than 7d";
   };
   home-manager = {
-# also pass inputs to home-manager modules
-    extraSpecialArgs = {inherit inputs; inherit pkgs;};
+    # also pass inputs to home-manager modules
+    extraSpecialArgs = { inherit inputs; inherit pkgs; };
     users."greencheetah" = import ./home.nix;
   };
   networking.firewall = {
@@ -117,20 +118,20 @@ in
     ];
   };
   services.nginx = {
-  enable = true;
-  additionalModules = [ pkgs.nginxModules.rtmp ];
-  appendConfig = ''
-  rtmp {
-        server {
-                listen 1935;
-                chunk_size 4096;
+    enable = true;
+    additionalModules = [ pkgs.nginxModules.rtmp ];
+    appendConfig = ''
+        rtmp {
+              server {
+                      listen 1935;
+                      chunk_size 4096;
 
-                application feed {
-                        live on;
-                        record off;
-                }
-        }
-}
-'';
+                      application feed {
+                              live on;
+                              record off;
+                      }
+              }
+      }
+    '';
   };
 }
