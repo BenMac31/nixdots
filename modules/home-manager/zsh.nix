@@ -11,6 +11,13 @@
     syntaxHighlighting.enable = true;
     enableCompletion = true;
     defaultKeymap = "viins";
+    autosuggestion = {
+      enable = true;
+      strategy = [
+        "history"
+        "completion"
+      ];
+    };
     zplug = {
       enable = true;
       plugins = [
@@ -35,13 +42,14 @@
       genpas() {tr -dc A-Za-z0-9 </dev/urandom | head -c $1; echo}
       std() {
         echo 'echo """' > /tmp/out
-        \cat * `rep $1 $2` |\
-            awk '{if ($1 ~ /^[0-9]+$/) for(i=0; i<$1; i++) print $0; else print $0}' |\
-            sed 's/^[0-9]* //g' |\
-            sed '/[0-9]/!p' |\
+        (`rep $1 $2`; ls) | xargs -n 1 nl -s$' ' -w1 |\
+            awk '{if ($2 ~ /^[0-9]+$/) for(i=0; i<$2; i++) print $0; else print $0}' |\
+            sed 's/^\([0-9]*\) [0-9]* /\1 /g' |\
+            sed '/^[0-9]* .*[0-9].*/!p' |\
             shuf -n 1 >> /tmp/out
             echo '"""' >> /tmp/out
             zsh /tmp/out
+            nvim `awk 'NR == 2 {print $2}' /tmp/out` +`awk 'NR == 2 {print $1}' /tmp/out`
             }
       gitrestore() {
       git log --diff-filter=D --summary | grep delete | awk '{print $4}' | fzf -m | while read -r file; do
