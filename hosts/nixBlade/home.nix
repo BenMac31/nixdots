@@ -29,10 +29,17 @@
     #
     pkgs.signal-desktop
     pkgs.wayvnc
+    (pkgs.python3.withPackages (python-pkgs: [
+      python-pkgs.matplotlib
+      python-pkgs.scipy
+      python-pkgs.numpy
+      python-pkgs.pandas
+    ]))
     pkgs.element-desktop
     pkgs.kitty
     pkgs.brave
     pkgs.unzip
+    pkgs.anki-bin
     pkgs.btop
     pkgs.blueberry
     pkgs.brightnessctl
@@ -50,7 +57,7 @@
     pkgs.speedcrunch
     pkgs.pavucontrol
     pkgs.pass
-    pkgs.neofetch
+    pkgs.fastfetch
     pkgs.libnotify
     pkgs.polychromatic
     pkgs.fzf
@@ -76,7 +83,6 @@
   services.flatpak = {
     update.onActivation = true;
     packages = [
-      "net.ankiweb.Anki"
       "com.github.tchx84.Flatseal"
       "im.nheko.Nheko"
       "org.qbittorrent.qBittorrent"
@@ -90,6 +96,9 @@
             "${pkgs.gruvbox-gtk-theme}/share/themes/"
             "xdg-config/Kvantum"
             "xdg-config/themes/"
+            "/run/current-system/sw/share/X11/fonts:ro"
+            "/nix/store:ro"
+            "xdg-data/fonts/"
           ];
         };
 
