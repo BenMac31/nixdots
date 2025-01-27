@@ -27,6 +27,8 @@ in
     #
     pkgs.wlsunset
     pkgs.swaynotificationcenter
+    pkgs.grimblast
+    pkgs.ydotool
     pkgs.wlr-randr
     pkgs.networkmanagerapplet
     pkgs.playerctl
@@ -97,7 +99,7 @@ in
     settings = {
       monitor = [
         ",preferred,auto,1.56667"
-        "DP-3,preferred,auto,1.6"
+        "DP-2,preferred,auto,1.6"
       ];
       exec-once = [
         "nmcli radio wifi off && nmcli radio wifi on" # wifi doesn't work without this.
@@ -236,6 +238,7 @@ in
         "$mainMod,M,fullscreen,1"
         "CTRL$mainMod,F11,fullscreenstate,2"
         "$mainMod,p,pin,"
+        "$mainMod CTRL,s,exec,grimblast copy area"
         "$mainMod,b,exec,pkill waybar || waybar"
         "$mainMod,G,togglegroup"
         "$mainMod,f1,exec,hyprperf"
@@ -307,6 +310,12 @@ in
 
       master = {
         new_on_top = false;
+      };
+      debug = {
+        disable_scale_checks = true;
+      };
+      xwayland = {
+        force_zero_scaling = true;
       };
     };
   };
