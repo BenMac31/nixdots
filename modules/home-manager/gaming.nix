@@ -9,16 +9,20 @@
   services.flatpak = {
     packages = [
       #
-      "com.valvesoftware.Steam"
-      "net.lutris.Lutris"
-      "org.prismlauncher.PrismLauncher"
-      "net.veloren.airshipper"
+      " com.valvesoftware.Steam "
+      "
+    net.lutris.Lutris "
+      "
+    org.prismlauncher.PrismLauncher "
+      "
+    net.veloren.airshipper "
     ];
     overrides = {
-      "org.prismlauncher.PrismLauncher" = {
+      "
+    org.prismlauncher.PrismLauncher " = {
         Context = {
           filesystems = [
-            "xdg-data/applications:create"
+            " xdg-data/applications:create"
           ];
         };
       };
@@ -38,9 +42,14 @@
         Context = {
           filesystems = [
             "xdg-data/icons:create"
+            "~/.var/app/com.valvesoftware.Steam:create"
+            "~/.steam:create"
+            "xdg-desktop:create"
           ];
         };
       };
     };
   };
+  programs.zsh.shellAliases.stardewmacro = "hyprctl keyword bind ',mouse:276,exec,env YDOTOOL_SOCKET=/run/user/1000/.ydotool_socket ydotool key 54:1 111:1 19:1 19:0 54:0 111:0' && ydotoold";
 }
+
