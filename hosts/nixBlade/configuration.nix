@@ -62,7 +62,12 @@ in
   environment.systemPackages = with pkgs; [
     #
     vim
-    pkgs.noto-fonts-cjk-sans
+    noto-fonts-cjk-sans
+    source-han-sans
+    source-han-mono
+    source-han-serif
+    source-han-sans-vf-ttf
+    source-han-sans-vf-otf
     elegant-sddm
     pciutils
     htop
@@ -134,4 +139,9 @@ in
       }
     '';
   };
+   fonts.fontDir.enable = true;
+#   fileSystems."/usr/share/fonts" = {
+#   device = "/run/curren-system/sw/share/X11/fonts";
+#   fsType = "btrfs";
+# };
 }
