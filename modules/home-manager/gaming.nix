@@ -8,14 +8,10 @@
   ];
   services.flatpak = {
     packages = [
-      #
       " com.valvesoftware.Steam "
-      "
-    net.lutris.Lutris "
-      "
-    org.prismlauncher.PrismLauncher "
-      "
-    net.veloren.airshipper "
+      " net.lutris.Lutris "
+      " org.prismlauncher.PrismLauncher "
+      " net.veloren.airshipper "
     ];
     overrides = {
       "
