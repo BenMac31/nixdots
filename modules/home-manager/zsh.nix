@@ -1,9 +1,11 @@
 { pkgs, config, inputs, ... }:
 
 {
+  # To escape bashisms use ''${}
   home.packages = with pkgs; [
     bat
     eza
+    bc
   ];
   programs.zsh = {
     completionInit = "";
@@ -14,16 +16,8 @@
       ignoreSpace = true;
       path = "$HOME/.local/share/zsh/history";
     };
-    # syntaxHighlighting.enable = true;
     enableCompletion = false;
     defaultKeymap = "viins";
-    # autosuggestion = {
-    #   enable = true;
-    #   strategy = [
-    #     "history"
-    #     "completion"
-    #   ];
-    # };
     shellAliases = {
       nixswitch = "sudo nixos-rebuild switch --flake $HOME/nixos/#nixBlade && notify-send 'updated'";
       homeswitch = "home-manager switch --flake $HOME/nixos/#nixBlade && notify-send 'updated'";
@@ -33,6 +27,8 @@
       cat = "bat";
       ls = "eza";
       vpnexit = "mullvad split-tunnel add \$\$";
+      hexdec = "printf '%x\n' \$1";
+
     };
     initExtraBeforeCompInit = ''
             # Set the root name of the plugins files (.txt and .zsh) antidote will use.
@@ -56,6 +52,10 @@
     initExtra = ''
             source $HOME/.p10k.zsh
             rn() {${pkgs.coreutils}/bin/shuf -i 1-$1 -n 1} # Random number
+            dechex() {echo "$((16#$1))"} # Decimal to Hex
+            bindec() {echo "$((2#$1))"} # Binary to Decimal
+            binhex() {echo "obase=16; ibase=2; ''${(U)1}" | bc} # Binary to Hex
+            hexbin() {echo "obase=2; ibase=16; ''${(U)1}" | bc} # Hex to Binary
             getip() { ${pkgs.curl}/bin/curl -s https://json.geoiplookup.io/"$1" | ${pkgs.jq}/bin/jq '.ip, .city, .isp' }
             genpas() {tr -dc A-Za-z0-9 </dev/urandom | head -c $1; echo}
             std() {
