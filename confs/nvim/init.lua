@@ -335,7 +335,9 @@ require('lazy').setup({
       capabilities = vim.tbl_deep_extend('force', capabilities, require('cmp_nvim_lsp').default_capabilities())
 
       local servers = {
-        clangd = {},
+        clangd = {
+          mason = false,
+        },
         pyright = {},
 
         lua_ls = {
@@ -582,14 +584,14 @@ require('lazy').setup({
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
---       {
---         "3rd/image.nvim",
---         opts = {}
---     },
--- }, {
---     rocks = {
---         hererocks = true,  -- recommended if you do not have global installation of Lua 5.1.
---     },
+  --       {
+  --         "3rd/image.nvim",
+  --         opts = {}
+  --     },
+  -- }, {
+  --     rocks = {
+  --         hererocks = true,  -- recommended if you do not have global installation of Lua 5.1.
+  --     },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
