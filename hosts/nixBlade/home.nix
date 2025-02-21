@@ -104,6 +104,7 @@
 
         Environment = {
           XCURSOR_PATH = "/run/host/user-share/icons:/run/host/share/icons";
+          ANKI_WAYLAND = "1";
           # GTK_THEME = "Gruvbox-Dark-BL";
         };
       };
