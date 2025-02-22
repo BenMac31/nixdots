@@ -26,10 +26,10 @@
       homewatch = "cd ~/nixos && dirwatch homeswitch";
       powerinfo = "upower -i /org/freedesktop/UPower/devices/battery_BAT1";
       cat = "bat";
+      neofetch = "fastfetch";
       ls = "eza";
-      vpnexit = "mullvad split-tunnel add \$\$";
+      vpnexit = "mullvad split-tunnel add \$$";
       hexdec = "printf '%x\n' \$1";
-
     };
     initExtraBeforeCompInit = /*bash*/ ''
             # Set the root name of the plugins files (.txt and .zsh) antidote will use.
@@ -55,18 +55,49 @@
             rn() {${pkgs.coreutils}/bin/shuf -i 1-$1 -n 1} # Random number
             dechex() {echo "$(
         (16#$1))"} # Decimal to Hex
-          bindec
-          () {
-            echo "$((2#$1))"} # Binary to Decimal
+            stopwatch() { local counter=0; while :; do printf "\\r%03d" "$counter"; tput el; counter=$((counter + 1)); sleep 1; done }
+            bindec() {echo "$((2#$1))"} # Binary to Decimal
             binhex() {echo "obase=16; ibase=2; ''${(U)1}" | bc} # Binary to Hex
             hexbin() {echo "obase=2; ibase=16; ''${(U)1}" | bc} # Hex to Binary
             getip() { ${pkgs.curl}/bin/curl -s https://json.geoiplookup.io/"$1" | ${pkgs.jq}/bin/jq '.ip, .city, .isp' }
             genpas() {tr -dc A-Za-z0-9 </dev/urandom | head -c $1; echo}
+            timer() {
+              function usage() {
+                echo "Usage: timer <seconds> <minutes> <hours>"
+                echo "  seconds: Optional number of seconds (default 0)"
+                echo "  minutes: Optional number of minutes (default 0)"
+                echo "  hours: Optional number of hours (default 0)"
+                return 1
+              }
+                    
+              # Read input values
+              local sec="''${1:-0}"
+              local min="''${2:-0}"
+              local hour="''${3:-0}"
+      
+              # Validate input values
+              [[ "$sec" =~ ^[0-9]+$ ]] && [[ "$min" =~ ^[0-9]+$ ]] && [[ "$hour" =~ ^[0-9]+$ ]] || usage
+      
+              # Calculate total time in seconds
+              local total_seconds=$((sec + min * 60 + hour * 3600))
+      
+              echo "Starting timer for $hour hours, $min minutes, and $sec seconds."
+      
+              while [ $total_seconds -gt 0 ]; do
+                printf "\rTime remaining: %02d:%02d:%02d" $((total_seconds / 3600)) $(((total_seconds / 60) % 60)) $((total_seconds % 60))
+                sleep 1
+                total_seconds=$((total_seconds - 1))
+              done
+                    
+              # Sound alert when the timer finishes
+              printf "\nTime's up!\n"
+              while true; do tput bel; sleep 0.25; done # Avoid echoing new lines by using `tput bel` for the beep
+            }
             std() {
             echo 'echo """' > /tmp/out
               (`rep $1 $2`; ls) | xargs -n 1 nl -s$' ' -w1 |\
                   awk '{if ($2 ~ /^[0-9]+$/) for(i=0; i<$2; i++) print $0; else print $0}' |\
-                  sed 's/^\([0-9]*\) [0-9]* /\1 /g' |\
+                  sed 's/^([0-9]*) [0-9]* /\1 /g' |\
                   sed '/^[0-9]* .*[0-9].*/!p' |\
                   shuf -n 1 >> /tmp/out
                   echo '"""' >> /tmp/out
@@ -129,4 +160,3 @@
     romkatv/powerlevel10k
   '';
 }
-
