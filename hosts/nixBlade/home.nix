@@ -1,120 +1,53 @@
-{ config, lib, pkgs, inputs, ... }:
+{ config, lib, pkgs, inputs, osConfig, ... }:
 
 {
   imports = [
     #
-    ../../modules/home-manager/nix-colors.nix
-    ../../modules/home-manager/firefox.nix
-    ../../modules/home-manager/gnome.nix
+    ../../modules/home-manager/desktop.nix
     ../../modules/home-manager/ai.nix
     ../../modules/home-manager/zsh.nix
-    ../../modules/home-manager/hyprland.nix
-    ../../modules/home-manager/foot.nix
-    ../../modules/home-manager/kitty.nix
-    ../../modules/home-manager/zathura.nix
-    ../../modules/home-manager/gtk.nix
-    ../../modules/home-manager/mpv.nix
     ../../modules/home-manager/xdg.nix
-    ../../modules/home-manager/gaming.nix
-    ../../modules/home-manager/latex.nix
     ../../modules/home-manager/vim.nix
-    ../../modules/home-manager/japanese.nix
     inputs.nix-flatpak.homeManagerModules.nix-flatpak
   ];
   home.username = "greencheetah";
   home.homeDirectory = "/home/greencheetah";
+  sync.enable = true;
+  gaming.enable = true;
 
 
   home.packages = [
     #
-    pkgs.signal-desktop
-    pkgs.wayvnc
     (pkgs.python3.withPackages (python-pkgs: [
       python-pkgs.matplotlib
       python-pkgs.scipy
       python-pkgs.numpy
       python-pkgs.pandas
     ]))
-    pkgs.element-desktop
-    pkgs.kitty
-    pkgs.brave
     pkgs.unzip
-    pkgs.anki-bin
     pkgs.btop
-    pkgs.blueberry
-    pkgs.brightnessctl
     # pkgs.unfree.android-studio
-    pkgs.piper
-    pkgs.wl-clipboard
     pkgs.R
     pkgs.ripgrep
-    pkgs.bitwarden
     pkgs.rbw
-    pkgs.rofi-rbw-wayland
-    (pkgs.writeShellScriptBin "dmenu" ''
-      ${pkgs.rofi}/bin/rofi -dmenu $@
-    '')
-    pkgs.speedcrunch
-    pkgs.pavucontrol
-    pkgs.pass
     pkgs.fastfetch
     pkgs.libnotify
-    pkgs.polychromatic
     pkgs.fzf
-    pkgs.unfree.ffmpeg-full
     pkgs.yt-dlp
     pkgs.mullvad-vpn
     pkgs.jq
     (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" "FiraCode" "DroidSansMono" ]; })
     pkgs.sxiv
     pkgs.libsixel
-    pkgs.imagemagick
     pkgs.newsboat
-    pkgs.unfree.ytfzf
     pkgs.nix-output-monitor
-    pkgs.thunderbird
     pkgs.fractal
-    pkgs.gimp
   ];
-  services.kdeconnect = {
-    enable = true;
-    indicator = true;
-  };
 
-  services.flatpak = {
-    update.onActivation = true;
-    packages = [
-      "com.github.tchx84.Flatseal"
-      "im.nheko.Nheko"
-      "org.qbittorrent.qBittorrent"
-    ];
-    overrides = {
-      global = {
-        Context = {
-          filesystems = [
-            "xdg-config/gtk-4.0"
-            "xdg-config/gtk-3.0"
-            "${pkgs.gruvbox-gtk-theme}/share/themes/"
-            "xdg-config/Kvantum"
-            "xdg-config/themes/"
-            "/run/current-system/sw/share/X11/fonts:ro"
-            "/nix/store:ro"
-            "xdg-data/fonts/"
-          ];
-        };
-
-        Environment = {
-          XCURSOR_PATH = "/run/host/user-share/icons:/run/host/share/icons";
-          ANKI_WAYLAND = "1";
-          # GTK_THEME = "Gruvbox-Dark-BL";
-        };
-      };
-    };
-  };
+  services.flatpak.update.onActivation = true;
 
   programs.home-manager.enable = true;
   home.stateVersion = "23.11"; # Do not change
-  # services.gnome.gnome-keyring.enable = true;
 
   programs = {
     gpg.enable = true;
@@ -122,10 +55,4 @@
     rbw.settings.pinentry = pkgs.pinentry-gnome3;
   };
   systemd.user.sessionVariables.SSH_AUTH_SOCK = "/run/user/1000/keyring/ssh"; # Makes ssh-agent work
-  home.pointerCursor = {
-    package = pkgs.graphite-cursors;
-    gtk.enable = true;
-    name = "graphite-dark";
-
-  };
 }
