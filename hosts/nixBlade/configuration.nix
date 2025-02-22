@@ -21,10 +21,12 @@ in
 
   time.timeZone = "America/New_York";
   services = {
-    displayManager.sddm.enable = true;
-    displayManager.sddm.wayland.enable = true;
-    displayManager.sddm.theme = "Elegant";
-    displayManager.sddm.extraPackages = [ pkgs.elegant-sddm ];
+    displayManager.sddm = {
+      enable = true;
+      wayland.enable = true;
+      theme = "sugar-dark";
+      extraPackages = [ pkgs.sddm-sugar-dark ];
+    };
     flatpak = {
       enable = true;
     };
