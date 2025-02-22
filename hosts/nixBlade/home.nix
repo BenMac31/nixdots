@@ -74,6 +74,7 @@
     pkgs.nix-output-monitor
     pkgs.thunderbird
     pkgs.fractal
+    pkgs.gimp
   ];
   services.kdeconnect = {
     enable = true;
