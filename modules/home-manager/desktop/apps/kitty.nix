@@ -1,7 +1,6 @@
 { pkgs, config, ... }:
 {
   programs.kitty = {
-    enable = true;
     settings = with config.colorScheme.palette; {
       font_family = "FiraCodeNerdFont-Regular";
       font_size = 10;

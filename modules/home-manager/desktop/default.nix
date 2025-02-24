@@ -1,5 +1,10 @@
 { config, lib, pkgs, inputs, osConfig, ... }:
 {
+  options = {
+    desktop = {
+      enable = lib.mkEnableOption "Enable desktop";
+    };
+  };
   imports = [
     ./apps
     ./env
@@ -10,13 +15,7 @@
     ./office.nix
     ./media.nix
   ];
-  options = {
-    desktop = {
-      enable = lib.mkEnableOption "Enable desktop";
-    };
-  };
-  config = {
-    desktop.enable = true;
+  config = lib.mkIf config.desktop.enable {
     comms.enable = lib.mkDefault true;
     office.enable = lib.mkDefault true;
     media.enable = lib.mkDefault true;

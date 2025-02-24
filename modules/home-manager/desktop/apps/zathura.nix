@@ -1,10 +1,9 @@
-{pkgs, config, ...}:
+{ pkgs, lib, config, ... }:
 {
-  xdg.mimeApps.defaultApplications = {
+  xdg.mimeApps.defaultApplications = lib.mkIf config.programs.zathura.enable {
     "application/pdf" = "org.pwmt.zathura.desktop";
   };
   programs.zathura = {
-    enable = true;
     mappings = {
       "=" = "zoom in";
     };
@@ -34,14 +33,14 @@
       statusbar-bg = "#${base02}";
       statusbar-fg = "#${base0F}";
       highlight-color = "#${base02}7F";
-      highlight-active-color= "#${base0D}7F";
-      render-loading= "true";
+      highlight-active-color = "#${base0D}7F";
+      render-loading = "true";
       render-loading-fg = "#${base02}";
       render-loading-bg = "#${base02}";
       recolor = "true";
       recolor-lightcolor = "#${base00}";
       recolor-darkcolor = "#${base05}";
-      recolor-keephue = "true" ;
+      recolor-keephue = "true";
       selection-clipboard = "clipboard";
     };
   };

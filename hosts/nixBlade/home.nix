@@ -11,6 +11,7 @@
   gaming.enable = true;
   programming.enable = true;
   ai.enable = true;
+  desktop.enable = true;
 
   home.packages = [
     # pkgs.unfree.android-studio

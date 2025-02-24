@@ -7,10 +7,19 @@
     ./mpv.nix
     ./zathura.nix
   ];
-  home.packages = with pkgs; [
-    brave
-    pkgs.bitwarden
-    (lib.mkIf osConfig.services.pipewire.enable pkgs.helvum)
-    (lib.mkIf osConfig.services.pipewire.pulse.enable pkgs.pavucontrol)
-  ];
+  config = lib.mkIf config.desktop.enable {
+    home.packages = with pkgs; [
+      brave
+      bitwarden
+      (lib.mkIf osConfig.services.pipewire.enable helvum)
+      (lib.mkIf osConfig.services.pipewire.pulse.enable pavucontrol)
+    ];
+    desktop.firefox = lib.mkDefault true;
+    programs = {
+      foot.enable = lib.mkDefault true;
+      kitty.enable = lib.mkDefault true;
+      zathura.enable = lib.mkDefault true;
+      mpv.enable = lib.mkIf config.media.enable (lib.mkDefault true);
+    };
+  };
 }

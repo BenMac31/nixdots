@@ -6,9 +6,9 @@
     };
   };
   config = lib.mkIf config.office.enable {
+    programs.zathura.enable = lib.mkDefault true;
     home.packages = with pkgs; [
       speedcrunch
-      zathura
       texliveFull
       libreoffice-qt
       hunspell
