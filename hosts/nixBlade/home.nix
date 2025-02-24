@@ -10,6 +10,7 @@
   sync.enable = true;
   gaming.enable = true;
   programming.enable = true;
+  ai.enable = true;
 
   home.packages = [
     # pkgs.unfree.android-studio

@@ -13,7 +13,7 @@ in
   config = lib.mkIf config.head.enable {
     boot.plymouth.enable = lib.mkDefault true;
     services = {
-      displayManagersddm.enable = lib.mkDefault true;
+      displayManager.sddm.enable = lib.mkDefault true;
       pipewire = {
         enable = true;
         alsa.enable = true;
