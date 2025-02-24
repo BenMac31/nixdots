@@ -118,11 +118,11 @@
 
               dirwatch() {
               while [ true ]; do
-              local a = "$(\ls -l -R)"
+              local a="$(\ls -l -R)"
                 if [ "$a" != "$b" ];
               then
               eval "$@"
-              local b = "$a"
+              local b="$a"
                 echo "Waiting for next update"
                 fi
                 sleep 3
