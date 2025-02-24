@@ -22,7 +22,9 @@
     "Kvantum/gruvbox-kvantum/".source = "${inputs.gruvbox-kvantum}/gruvbox-kvantum/";
     "Kvantum/kvantum.kvconfig".text = "[General]\ntheme=gruvbox-kvantum";
   };
-  home.sessionVariables.QT_QPA_PLATFORM = lib.mkIf config.desktop.enable "wayland";
+  home.sessionVariables = lib.mkIf config.desktop.enable {
+    QT_QPA_PLATFORM = "wayland";
+  };
   qt = {
     enable = lib.mkIf config.desktop.enable true;
     platformTheme.name = "qt5ct";
