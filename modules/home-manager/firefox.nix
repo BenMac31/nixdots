@@ -79,6 +79,8 @@ in
                 ];
               }];
               definedAliases = [ "!br" ];
+              iconUpdateURL = "https://brave.com/favicon.ico";
+              updateInterval = 7 * 24 * 60 * 60 * 1000;
             };
             "nyaa" = {
               urls = [{
@@ -88,6 +90,8 @@ in
                   { name = "c"; value = "0_0"; }
                   { name = "q"; value = "{searchTerms}"; }
                 ];
+                iconUpdateURL = "https://nyaa.si/static/favicon.png";
+                updateInterval = 7 * 24 * 60 * 60 * 1000;
               }];
               definedAliases = [ "!ny" ];
             };
@@ -98,7 +102,9 @@ in
                   { name = "q"; value = "{searchTerms}"; }
                 ];
               }];
+              iconUpdateURL = "https://thepiratebay.org/favicon.ico";
               definedAliases = [ "!tpb" ];
+              updateInterval = 7 * 24 * 60 * 60 * 1000;
             };
           };
         };
