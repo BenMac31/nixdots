@@ -4,7 +4,7 @@
 
 {
   home.packages = lib.mkIf config.programs.rofi.enable [
-    pkgs.rofi-rbw-wayland
+    (lib.mkIf config.programs.rbw.enable pkgs.rofi-rbw-wayland)
     (pkgs.writeShellScriptBin "dmenu" ''
       ${pkgs.rofi}/bin/rofi -dmenu $@
     '')

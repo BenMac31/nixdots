@@ -1,11 +1,14 @@
-{ pkgs, inputs, config, ... }:
+{ pkgs, inputs, lib, config, ... }:
 {
-  imports = [
-    inputs.nix-colors.homeManagerModules.default
+  imports = with inputs; [
+    nix-colors.homeManagerModules.default
   ];
-  colorScheme = inputs.nix-colors.colorSchemes.gruvbox-dark-medium;
+  home.packages = with pkgs; [
+    (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" "FiraCode" "DroidSansMono" ]; })
+  ];
+  colorScheme = lib.mkDefault inputs.nix-colors.colorSchemes.gruvbox-dark-medium;
   gtk = {
-    enable = true;
+    enable = lib.mkIf config.desktop.enable true;
     theme = {
       package = pkgs.gruvbox-gtk-theme;
       name = "Gruvbox-Dark";
@@ -15,13 +18,13 @@
       name = "Oomox-gruvbox-dark";
     };
   };
-  xdg.configFile = {
+  xdg.configFile = lib.mkIf config.desktop.enable {
     "Kvantum/gruvbox-kvantum/".source = "${inputs.gruvbox-kvantum}/gruvbox-kvantum/";
     "Kvantum/kvantum.kvconfig".text = "[General]\ntheme=gruvbox-kvantum";
   };
-  home.sessionVariables.QT_QPA_PLATFORM = "wayland";
+  home.sessionVariables.QT_QPA_PLATFORM = lib.mkIf config.desktop.enable "wayland";
   qt = {
-    enable = true;
+    enable = lib.mkIf config.desktop.enable true;
     platformTheme.name = "qt5ct";
     style = {
       # package = pkgs.adwaita-qt6;

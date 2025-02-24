@@ -1,9 +1,13 @@
 { config, lib, pkgs, inputs, ... }:
 {
-  home.packages = [
-    #
-    # pkgs.noto-fonts-cjk-sans
-    pkgs.mokuro
+  home.packages = with pkgs; [
+    (lib.mkIf config.media.enable mokuro)
+    noto-fonts-cjk-sans
+    source-han-sans
+    source-han-mono
+    source-han-serif
+    source-han-sans-vf-ttf
+    source-han-sans-vf-otf
   ];
   i18n.inputMethod = {
     enabled = "fcitx5";

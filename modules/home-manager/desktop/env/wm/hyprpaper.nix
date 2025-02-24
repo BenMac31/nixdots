@@ -1,6 +1,6 @@
 { lib, pkgs, inputs, config, ... }:
 {
-  xdg.dataFile."wallpapers".source = inputs.gruvbox-wallpapers;
+  xdg.dataFile."wallpapers".source = lib.mkIf config.desktop.enable inputs.gruvbox-wallpapers;
   services.hyprpaper = {
     settings = {
       # ipc = "off";

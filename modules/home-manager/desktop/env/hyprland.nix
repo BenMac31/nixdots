@@ -9,9 +9,9 @@ let
 in
 {
   imports = [
-    rofi/rofi.nix
+    wm/rofi
     wm/hyprpaper.nix
-    wm/waybar/waybar.nix
+    wm/waybar
   ];
   config = lib.mkIf osConfig.programs.hyprland.enable {
     programs.rofi.enable = true;
@@ -222,7 +222,7 @@ in
           "$mainMod SHIFT,n,exec,swaync-client -t"
           "$mainMod,R,exec,pkill rofi || rofi -show drun"
           "$mainMod SHIFT, V, exec, mullvad reconnect"
-          "$mainMod,P,exec,pkill rofi || rofi-rbw -a copy"
+          (lib.mkIf config.programs.rbw.enable "$mainMod,P,exec,pkill rofi || rofi-rbw -a copy")
           "$mainMod,H,movefocus,l"
           "$mainMod,L,movefocus,r"
           "$mainMod,K,movefocus,u"
