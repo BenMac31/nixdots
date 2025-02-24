@@ -1,4 +1,4 @@
-{ pkgs, config, inputs, ... }:
+{ pkgs, config, inputs, lib, osConfig, ... }:
 
 {
   # To escape bashisms use ''${}
@@ -28,7 +28,7 @@
       cat = "bat";
       neofetch = "fastfetch";
       ls = "eza";
-      vpnexit = "mullvad split-tunnel add \$$";
+      vpnexit = lib.mkIf osConfig.services.mullvad-vpn.enable "mullvad split-tunnel add \$$";
       hexdec = "printf '%x\n' \$1";
     };
     initExtraBeforeCompInit = /*bash*/ ''

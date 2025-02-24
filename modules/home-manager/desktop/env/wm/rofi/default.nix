@@ -1,11 +1,16 @@
-{pkgs,lib,inputs,config,...}:
+{ pkgs, lib, inputs, config, ... }:
 
 # Yoinked from: https://github.com/vasujain275/rudra
 
 {
+  home.packages = lib.mkIf config.programs.rofi.enable [
+    (lib.mkIf config.programs.rbw.enable pkgs.rofi-rbw-wayland)
+    (pkgs.writeShellScriptBin "dmenu" ''
+      ${pkgs.rofi}/bin/rofi -dmenu $@
+    '')
+  ];
   programs = {
     rofi = {
-      enable = true;
       package = pkgs.rofi-wayland;
       extraConfig = {
         modi = "drun,filebrowser,run";
