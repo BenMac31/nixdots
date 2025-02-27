@@ -74,6 +74,8 @@ in
       Your answer should be a single word or phrase. If there are multiple answers, separate them with commas.
       Your explanation should be as brief as possible (ideally less than 2 sentences.)
       The answer and explanation should be on two separate lines. The entirety of the answer is specified should be on the first line. The entire explanation should be on the second.
+      In the event that multiple answer choices are presented, please add the letter of the answer choice to the beginning of the answer. EX: (a) <answer>
+      If multiple answers are correct, provide the numbers of the correct answers at the beginning of the answer choice seperated by commas. EX: (1,3) <answer>
     '';
   };
 }
