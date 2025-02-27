@@ -11,7 +11,10 @@
   gaming.enable = true;
   programming.enable = true;
   ai.enable = true;
-  desktop.enable = true;
+  desktop = {
+    enable = true;
+    japanese.enable = true;
+  };
 
   home.packages = [
     # pkgs.unfree.android-studio
