@@ -8,10 +8,9 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "xhci_pci" "thunderbolt" "nvme" "usbhid" ];
+  boot.initrd.availableKernelModules = [ "xhci_pci" "thunderbolt" "nvme" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-intel"];
-  boot.kernelParams = ["rcu_nocbs=all" "rcutree.enable_rcu_lazy=1"];
+  boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
@@ -34,16 +33,16 @@
       options = [ "subvol=home" ];
     };
 
-  fileSystems."/home/greencheetah/Desktop" =
-    { device = "/home/home/greencheetah/.local/share/applications";
-      fsType = "none";
-      options = [ "bind" ];
-    };
-
   fileSystems."/swap" =
     { device = "/dev/disk/by-uuid/d89aa6f6-efec-458f-a8d7-23bed9ec888e";
       fsType = "btrfs";
       options = [ "subvol=swap" ];
+    };
+
+  fileSystems."/home/greencheetah/Desktop" =
+    { device = "/swap/home/home/greencheetah/.local/share/applications";
+      fsType = "none";
+      options = [ "bind" ];
     };
 
   fileSystems."/boot" =
@@ -52,21 +51,14 @@
       options = [ "fmask=0022" "dmask=0022" ];
     };
 
-   swapDevices = [ {
-    device = "/var/lib/swapfile";
-    size = 16*1024;
-  } ];
+  swapDevices = [ ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
   # still possible to use this option, but it's recommended to use it in conjunction
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
-  # networking.interfaces.br-06d972a1250d.useDHCP = lib.mkDefault true;
-  # networking.interfaces.br-2623dba4e17d.useDHCP = lib.mkDefault true;
-  # networking.interfaces.br-3ee3d2f2c736.useDHCP = lib.mkDefault true;
-  # networking.interfaces.br-8c02ad6a5263.useDHCP = lib.mkDefault true;
-  # networking.interfaces.docker0.useDHCP = lib.mkDefault true;
+  # networking.interfaces.wg0-mullvad.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlp170s0.useDHCP = lib.mkDefault true;
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";

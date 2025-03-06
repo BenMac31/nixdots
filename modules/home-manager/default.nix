@@ -11,7 +11,4 @@
       enable = lib.mkEnableOption "Enable media";
     };
   };
-  config = {
-    services.flatpak.update.onActivation = true;
-  };
 }

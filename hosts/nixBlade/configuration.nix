@@ -49,5 +49,8 @@ in
   home-manager = {
     users."greencheetah" = import ./home.nix;
   };
+
+  nix.package = pkgs.lix;
+
   system.stateVersion = "23.11"; # DO NOT CHANGE
 }

@@ -8,11 +8,11 @@
   home.username = "greencheetah";
   home.homeDirectory = "/home/greencheetah";
   sync.enable = true;
-  gaming.enable = true;
   programming.enable = true;
   ai.enable = true;
   desktop = {
     enable = true;
+    gaming.enable = true;
     japanese.enable = true;
   };
 

@@ -8,9 +8,6 @@
     ./media.nix
   ];
   config = {
-    services.flatpak.packages = [
-      "com.github.tchx84.Flatseal"
-    ];
     tui.enable = lib.mkDefault true;
     home.packages = with pkgs; [
       (lib.mkIf config.desktop.enable brightnessctl)

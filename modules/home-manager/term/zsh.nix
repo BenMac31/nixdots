@@ -19,9 +19,9 @@
     enableCompletion = false;
     defaultKeymap = "viins";
     shellAliases = {
-      nixswitch = "sudo nixos-rebuild switch --flake $HOME/nixos/#nixBlade && notify-send 'updated'";
-      homeswitch = "home-manager switch --flake $HOME/nixos/#nixBlade && notify-send 'updated'";
-      nixtest = "sudo nixos-rebuild test --fast --flake $HOME/nixos/#nixBlade && notify-send 'updated'";
+      nixswitch = "sudo nixos-rebuild switch --flake $HOME/nixos/#nixBlade --cores 6 && notify-send 'updated'";
+      homeswitch = "home-manager switch --flake $HOME/nixos/#nixBlade --cores 6&& notify-send 'updated'";
+      nixtest = "sudo nixos-rebuild test --fast --flake $HOME/nixos/#nixBlade --cores 6 && notify-send 'updated'";
       nixwatch = "cd ~/nixos && dirwatch nixtest";
       homewatch = "cd ~/nixos && dirwatch homeswitch";
       powerinfo = "upower -i /org/freedesktop/UPower/devices/battery_BAT1";

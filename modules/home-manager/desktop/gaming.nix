@@ -1,11 +1,10 @@
-{ pkgs, config, lib, ... }:
+{ pkgs, config, lib, osConfig, ... }:
+let
+  ydotoold = "${pkgs.ydotool}/bin/ydotoold";
+in
 {
-  options = {
-    gaming = {
-      enable = lib.mkEnableOption "Enable gaming";
-    };
-  };
-  config = lib.mkIf config.gaming.enable {
+  options.desktop.gaming.enable = lib.mkEnableOption "Enable gaming";
+  config = lib.mkIf config.desktop.gaming.enable {
     home.packages = with pkgs; [
       pkgs.r2modman
       (pkgs.writeShellScriptBin "steam" ''
@@ -20,11 +19,10 @@
         " net.veloren.airshipper "
       ];
       overrides = {
-        "
-    org.prismlauncher.PrismLauncher " = {
+        "org.prismlauncher.PrismLauncher" = {
           Context = {
             filesystems = [
-              " xdg-data/applications:create"
+              "xdg-data/applications:create"
             ];
           };
         };
@@ -52,7 +50,7 @@
         };
       };
     };
-    programs.zsh.shellAliases.stardewmacro = "hyprctl keyword bind ',mouse:276,exec,env YDOTOOL_SOCKET=/run/user/1000/.ydotool_socket ydotool key 54:1 111:1 19:1 19:0 54:0 111:0' && ydotoold";
+    programs.zsh.shellAliases.stardewmacro = lib.mkIf osConfig.programs.hyprland.enable "hyprctl keyword bind ',mouse:276,exec,env YDOTOOL_SOCKET=/run/user/1000/.$ ydotool key 54:1 111:1 19:1 19:0 54:0 111:0' && ${ydotoold}";
   };
 }
 
