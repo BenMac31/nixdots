@@ -12,7 +12,7 @@
       texliveFull
       libreoffice-qt
       hunspell
-      pkgs.anki-bin
+      anki-bin
     ];
   };
 }

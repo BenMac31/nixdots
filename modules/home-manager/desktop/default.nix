@@ -24,7 +24,7 @@
     ];
     home.packages = with pkgs; [
       brightnessctl
-      pkgs.wl-clipboard
+      wl-clipboard
     ];
   };
 }

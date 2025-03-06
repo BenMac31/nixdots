@@ -15,22 +15,25 @@ let
   };
 in
 {
-  options.desktop.firefox = lib.mkEnableOption "Enable Firefox";
-  config = lib.mkIf config.desktop.firefox {
+  config = lib.mkIf config.programs.librewolf.enable {
+    home.packages = [
+      (pkgs.writeShellScriptBin "nixffext" ''
+        wl-copy "(extension \"$(printf "$1" | awk -F '/' '{printf $7 }')\" \"$(curl -s "$1" | tr ',' '\n' | grep byGUID | tail -n 1 | awk -F '"' '{printf $4}')\")" && notify-send "ext copied"
+      '')
+    ];
     xdg.mimeApps.defaultApplications = {
-      "text/html" = "firefox.desktop";
-      "x-scheme-handler/http" = "firefox.desktop";
-      "x-scheme-handler/https" = "firefox.desktop";
-      "x-scheme-handler/about" = "firefox.desktop";
-      "x-scheme-handler/unknown" = "firefox.desktop";
+      "text/html" = "librewolf.desktop";
+      "x-scheme-handler/http" = "librewolf.desktop";
+      "x-scheme-handler/https" = "librewolf.desktop";
+      "x-scheme-handler/about" = "librewolf.desktop";
+      "x-scheme-handler/unknown" = "librewolf.desktop";
     };
     home.file.csshacks = {
       source = inputs.firefox-css-hacks;
-      target = ".mozilla/firefox/default/chrome/css-hacks";
+      target = ".mozilla/librewolf/default/chrome/css-hacks";
     };
-    programs.firefox = {
-      enable = true;
-      package = pkgs.firefox.override {
+    programs.librewolf = {
+      package = pkgs.librewolf.override {
         cfg = {
           enableGnomeExtensions = true;
         };
@@ -52,17 +55,31 @@ in
           "browser.newtabpage.activity-stream.showSponsoredTopSites" = lock-false;
           "browser.search.defaultenginename" = "brave";
           "browser.search.order.1" = "brave";
+          "privacy.resistFingerprinting.block_mozAddonManager" = lock-true;
+          "extensions.webextensions.restrictedDomains" = lock-empty-string;
         };
-        ExtensionSettings = {
-          "uBlock0@raymondhill.net" = {
-            install_url = "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi";
-            installation_mode = "force_installed";
+        ExtensionSettings = with builtins;
+          let extension = shortId: uuid: {
+            name = uuid;
+            value = {
+              install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/${shortId}/latest.xpi";
+              installation_mode = "force_installed";
+            };
           };
-          "{446900e4-71c2-419f-a6a7-df9c091e268b}" = {
-            install_url = "https://addons.mozilla.org/firefox/downloads/latest/bitwarden-password-manager/latest.xpi";
-            installation_mode = "force_installed";
-          };
-        };
+          in
+          listToAttrs [
+            (extension "ublock-origin" "uBlock0@raymondhill.net")
+            (extension "bitwarden-password-manager" "{446900e4-71c2-419f-a6a7-df9c091e268b}")
+            (extension "sponsorblock" "uMatrix@raymondhill.net")
+            (extension "libredirect" "7esoorv3@alefvanoon.anonaddy.me")
+            (extension "darkreader" "addon@darkreader.org")
+            (extension "deep-fake-detector" "{ddd3c206-589e-431d-93d0-897378f9200a}")
+            (extension "tridactyl-vim" "tridactyl.vim@cmcaine.co.uk")
+            # lib.mkIf config.desktop.japanese.enable (extension "furiganaize" "{a2503cd4-4083-4c2f-bef2-37767a569867}")
+            # lib.mkIf config.desktop.japanese.enable (extension "yomitan" "{6b733b82-9261-47ee-a595-2dda294a4d08}")
+            (extension "furiganaize" "{a2503cd4-4083-4c2f-bef2-37767a569867}")
+            (extension "yomitan" "{6b733b82-9261-47ee-a595-2dda294a4d08}")
+          ];
       };
 
       profiles = {
@@ -159,10 +176,17 @@ in
 
       command translate js let googleTranslateCallback = document.createElement('script'); googleTranslateCallback.innerHTML = "function googleTranslateElementInit(){ new google.translate.TranslateElement(); }"; document.body.insertBefore(googleTranslateCallback, document.body.firstChild); let googleTranslateScript = document.createElement('script'); googleTranslateScript.charset="UTF-8"; googleTranslateScript.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit&tl=&sl=&hl="; document.body.insertBefore(googleTranslateScript, document.body.firstChild);
 
+      " quickly get ext
+      command nixext composite get_current_url | ! nixffext
+
       " autocmd DocStart ^http(s?)://www.reddit.com js tri.excmds.urlmodify("-t", "www", "old")
       set smoothscroll true
       bind J tabnext
       bind K tabprev
+
+      "Redirects
+      autocmd DocStart ^http(s?)://youtube.com js tri.excmds.urlmodify("-t", "youtube.com", "inv.nadeko.net")
+      autocmd DocStart ^http(s?):// js tri.excmds.urlmodify("-t", "youtube.com", "inv.nadeko.net")
     '';
   };
 }

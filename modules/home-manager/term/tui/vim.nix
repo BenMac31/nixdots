@@ -1,4 +1,4 @@
-{lib, config, inputs, pkgs, ...}:
+{ lib, config, inputs, pkgs, ... }:
 {
   config = lib.mkIf config.programs.neovim.enable {
     programs.neovim = {
@@ -16,7 +16,7 @@
       pkgs.rustup
       pkgs.gcc
       pkgs.tree-sitter
-      pkgs.luajitPackages.magick 
+      pkgs.luajitPackages.magick
       pkgs.clang-tools
     ];
     xdg.configFile."lvim" = {

@@ -38,10 +38,10 @@
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       overlay-master = final: prev: {
-        master = nixpkgs-master.legacyPackages.${prev.system};
+        master = import nixpkgs-master.legacyPackages.${system};
       };
       overlay-unstable = final: prev: {
-        unstable = nixpkgs-unstable.legacyPackages.${prev.system};
+        unstable = import nixpkgs-unstable.legacyPackages.${system};
       };
       overlay-unfree = final: prev: {
         unfree = import nixpkgs {

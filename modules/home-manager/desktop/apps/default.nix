@@ -14,8 +14,8 @@
       (lib.mkIf osConfig.services.pipewire.enable helvum)
       (lib.mkIf osConfig.services.pipewire.pulse.enable pavucontrol)
     ];
-    desktop.firefox = lib.mkDefault true;
     programs = {
+      librewolf.enable = lib.mkDefault true;
       foot.enable = lib.mkDefault true;
       kitty.enable = lib.mkDefault true;
       zathura.enable = lib.mkDefault true;

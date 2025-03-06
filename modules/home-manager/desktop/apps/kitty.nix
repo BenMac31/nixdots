@@ -1,5 +1,6 @@
 { pkgs, config, ... }:
 {
+  home.sessionVariables."TERMINAL" = "kitty";
   programs.kitty = {
     settings = with config.colorScheme.palette; {
       font_family = "FiraCodeNerdFont-Regular";
