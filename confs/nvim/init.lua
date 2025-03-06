@@ -651,6 +651,16 @@ require('lazy').setup({
       require('startup').setup()
     end,
   },
+  {
+    'jmbuhr/otter.nvim',
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter',
+    },
+    config = function()
+      require('otter').activate()
+    end,
+  };
+    'jamessan/vim-gnupg'
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
@@ -671,7 +681,8 @@ require('lazy').setup({
       lazy = '💤 ',
     },
   },
-})
+}
+)
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
