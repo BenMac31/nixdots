@@ -8,7 +8,6 @@
     desktop.japanese.input.enable = lib.mkDefault true;
     home.packages = with pkgs;
       [
-        noto-fonts-cjk-sans
         (lib.mkIf config.media.enable mokuro)
         noto-fonts-cjk-sans
         source-han-sans

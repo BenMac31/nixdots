@@ -30,7 +30,7 @@ in
     };
     home.file.csshacks = {
       source = inputs.firefox-css-hacks;
-      target = ".mozilla/librewolf/default/chrome/css-hacks";
+      target = ".librewolf/default/chrome/css-hacks";
     };
     programs.librewolf = {
       package = pkgs.librewolf.override {
@@ -53,8 +53,12 @@ in
           "browser.newtabpage.activity-stream.showSponsored" = lock-false;
           "browser.newtabpage.activity-stream.system.showSponsored" = lock-false;
           "browser.newtabpage.activity-stream.showSponsoredTopSites" = lock-false;
+
+          browser.search.separatePrivateDefault = lock-false;
           "browser.search.defaultenginename" = "brave";
           "browser.search.order.1" = "brave";
+
+          "browser.startup.page" = 3;
           "privacy.resistFingerprinting.block_mozAddonManager" = lock-true;
           "extensions.webextensions.restrictedDomains" = lock-empty-string;
         };
@@ -68,6 +72,8 @@ in
           };
           in
           listToAttrs [
+            # EXTENSIONS
+            (extension "multi-account-containers" "@testpilot-containers")
             (extension "ublock-origin" "uBlock0@raymondhill.net")
             (extension "bitwarden-password-manager" "{446900e4-71c2-419f-a6a7-df9c091e268b}")
             (extension "sponsorblock" "uMatrix@raymondhill.net")
@@ -131,13 +137,37 @@ in
             "browser.search.defaultenginename" = "brave";
             "browser.search.order.1" = "brave";
             "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+            "sidebar.revamp" = lock-true;
+            "sidebar.verticalTabs" = lock-true;
+            "sidebar.main.tools" = "";
+            "browser.tabs.groups.enabled" = true;
           };
           userChrome = ''
-            @import url(verttabs/userChrome.css);
             @import url(css-hacks/chrome/blank_page_background.css);
             @import url(css-hacks/chrome/hide_toolbox_top_bottom_borders.css);
             @import url(css-hacks/chrome/minimal_popup_scrollbars.css);
             @import url(css-hacks/chrome/urlbar_centered_text.css);
+            hbox.titlebar-spacer {
+              display: none !important;
+            }
+            hbox#page-action-buttons {
+              display: none !important;
+            }
+            hbox#nav-bar-customization-target {
+              padding-left: var(--tab-inline-padding) !important;
+            }
+            toolbarbutton.titlebar-close {
+              display: none !important;
+            }
+            toolbarbutton#back-button {
+              display: none !important;
+            }
+            toolbarbutton#forward-button {
+              display: none !important;
+            }
+            toolbarbutton#tabs-newtab-button {
+              display: none !important;
+            }
           '';
         };
       };

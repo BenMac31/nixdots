@@ -57,7 +57,7 @@ in
           IFS=',' read -r -a args <<< "$1"
           args[0]="''${args[0]#*>>}"
 
-          if [[ ''${args[1]} == "Extension: (Bitwarden Password Manager) - — Mozilla Firefox" ]]; then
+          if [[ ''${args[1]} == "Extension: (Bitwarden Password Manager) - — LibreWolf" ]]; then
             ${hyprctl} --batch "\
               dispatch setfloating address:0x''${args[0]}; \
               dispatch resizewindowpixel exact 20% 50%, address:0x$\{args[0]}; \

@@ -11,7 +11,7 @@
       pkgs.aichat
       (pkgs.writeShellApplication
         {
-          name = "ainotif";
+          name = "aiclip";
           runtimeInputs = [ pkgs.aichat pkgs.libnotify pkgs.wl-clipboard pkgs.coreutils pkgs.expect ];
           text = ''
                     lockfile="/tmp/aiclip.lock.$$"

@@ -7,8 +7,8 @@
       url = "github:nix-community/home-manager/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixpkgs-master.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/master";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-master.url = "github:nixos/nixpkgs/master";
     nix-flatpak = {
       url = "github:gmodena/nix-flatpak";
     };
@@ -31,6 +31,10 @@
     };
     gruvbox-wallpapers = { url = "github:AngelJumbo/gruvbox-wallpapers"; flake = false; };
     gruvbox-kvantum = { url = "github:isouravgope/Gruvbox-Kvantum"; flake = false; };
+    patched-sddm-sugar-dark = {
+      url = "github:BenMac31/sddm-sugar-dark";
+      flake = false;
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, nixpkgs-master, nixpkgs-unstable, ... }@inputs:
@@ -66,7 +70,20 @@
       nixosConfigurations.nixBlade = nixpkgs.lib.nixosSystem rec {
         specialArgs = { inherit inputs; };
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ]; })
+          ({ config, pkgs, ... }: {
+            nixpkgs.overlays = [
+              overlay-unfree
+              overlay-master
+              overlay-master-unfree
+              overlay-unstable
+              overlay-unstable-unfree
+              (final: prev: {
+                sddm-sugar-dark = prev.sddm-sugar-dark.overrideAttrs {
+                  src = inputs.patched-sddm-sugar-dark;
+                };
+              })
+            ];
+          })
           ./hosts/nixBlade/configuration.nix
         ];
       };

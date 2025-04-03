@@ -1012,16 +1012,16 @@
     },
     "nixpkgs-master": {
       "locked": {
-        "lastModified": 1739866667,
-        "narHash": "sha256-EO1ygNKZlsAC9avfcwHkKGMsmipUk1Uc0TbrEZpkn64=",
+        "lastModified": 1741360096,
+        "narHash": "sha256-EWRKWPrvyUAjInG0t0+fAqpn6ZeLm90O9A6y7E1aSMo=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "73cf49b8ad837ade2de76f87eb53fc85ed5d4680",
+        "rev": "b18dc74d13e4cb727778eddf9a89f3f55d189fa0",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "nixos-unstable",
+        "ref": "master",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -1049,16 +1049,16 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1740194378,
-        "narHash": "sha256-Wy6wZC832zyHsZWgocBWLHBDg/F99opJygsHmbpLtkU=",
+        "lastModified": 1741246872,
+        "narHash": "sha256-Q6pMP4a9ed636qilcYX8XUguvKl/0/LGXhHcRI91p0U=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "d8b348c8ed187ee1c1a83c2987a6b7a93d6799b5",
+        "rev": "10069ef4cf863633f57238f179a0297de84bd8d3",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "master",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -1180,6 +1180,22 @@
         "type": "github"
       }
     },
+    "patched-sddm-sugar-dark": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1741366900,
+        "narHash": "sha256-17PiH5kUEZzm8Me0Sa90dxnbooWOw0vGj4M0isV+kGE=",
+        "owner": "BenMac31",
+        "repo": "sddm-sugar-dark",
+        "rev": "42f7965b15cbb42edd3d2ae8d57264c3c3b6e703",
+        "type": "github"
+      },
+      "original": {
+        "owner": "BenMac31",
+        "repo": "sddm-sugar-dark",
+        "type": "github"
+      }
+    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -1243,6 +1259,7 @@
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "ollama": "ollama",
+        "patched-sddm-sugar-dark": "patched-sddm-sugar-dark",
         "xremap-flake": "xremap-flake"
       }
     },

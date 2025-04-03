@@ -16,7 +16,9 @@ in
   };
   programs = {
     hyprland.enable = true;
+    adb.enable = true;
     kdeconnect.enable = true;
+    noisetorch.enable = true;
   };
 
   time.timeZone = "America/New_York";
@@ -43,8 +45,11 @@ in
   users.users.greencheetah = {
     isNormalUser = true;
     shell = pkgs.zsh;
-    extraGroups = [ "docker" "wheel" "uinput" "input" "video" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "adbusers" "docker" "wheel" "uinput" "input" "video" ]; # Enable ‘sudo’ for the user.
   };
+  boot.extraModulePackages = with config.boot.kernelPackages; [
+    v4l2loopback
+  ];
 
   home-manager = {
     users."greencheetah" = import ./home.nix;
