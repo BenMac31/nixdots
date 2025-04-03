@@ -8,6 +8,7 @@ in
     [
       inputs.home-manager.nixosModules.default
       ./head
+      ./serv
     ];
 
   boot.loader.systemd-boot.enable = true;
@@ -22,11 +23,11 @@ in
         pkgs.gutenprint
       ];
     };
-    avahi = {
-      # Networking stuff
-      enable = true;
-      nssmdns4 = true;
-    };
+    # avahi = {
+    #   # Networking stuff
+    #   enable = true;
+    #   nssmdns4 = true;
+    # };
   };
 
   i18n.supportedLocales = [ "all" ]; # Support all languages
@@ -61,7 +62,7 @@ in
     extraSpecialArgs = { inherit inputs; inherit pkgs; };
   };
   networking.firewall = {
-    enable = true;
+    enable = lib.mkDefault true;
   };
   fonts.fontDir.enable = true;
 }

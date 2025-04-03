@@ -78,5 +78,20 @@
           ./hosts/nixBlade/home.nix
         ];
       };
+      nixosConfigurations.nixos = nixpkgs.lib.nixosSystem rec {
+        specialArgs = { inherit inputs; };
+        modules = [
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ]; })
+          ./hosts/phantomServ/configuration.nix
+        ];
+      };
+      homeConfigurations.nixos = home-manager.lib.homeManagerConfiguration {
+        extraSpecialArgs = { inherit inputs; };
+        inherit pkgs;
+        modules = [
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-unstable overlay-unstable-unfree overlay-master overlay-master-unfree ]; })
+          ./hosts/phantomServ/home.nix
+        ];
+      };
     };
 }
