@@ -96,6 +96,15 @@ in
         fi
         hyprctl reload
       '')
+      (pkgs.writeShellScriptBin "swapcaps" ''
+        HYPRGAMEMODE=$(hyprctl getoption input:kb_options | awk 'NR==1{print $2}')
+        if [ "$HYPRGAMEMODE" = "caps:swapescape" ] ; then
+            hyprctl keyword input:kb_options ""
+            exit
+        fi
+        hyprctl reload
+      '')
+
     ];
     wayland.windowManager.hyprland = {
       enable = true;
@@ -189,7 +198,7 @@ in
           [
             (f "org.gnome.Calculator")
             (f "org.gnome.Nautilus")
-            (f "pavucontrol")
+            (f "org.pulseaudio.pavucontrol")
             (f "nm-connection-editor")
             (f "org.gnome.Settings")
             (f "org.gnome.design.Palette")
@@ -245,6 +254,7 @@ in
           "$mainMod,b,exec,pkill waybar || waybar"
           "$mainMod,G,togglegroup"
           "$mainMod,f1,exec,hyprperf"
+          "$mainMod,f2,exec,swapcaps"
           "$mainMod,1,workspace,1"
           "$mainMod,2,workspace,2"
           "$mainMod,3,workspace,3"
@@ -279,6 +289,8 @@ in
           "$mainMod ALT,8,changegroupactive,8"
           "$mainMod ALT,9,changegroupactive,9"
           "$mainMod ALT,0,changegroupactive,10"
+          "$mainMod SHIFT,<,exec, ${playerctl} previous"
+          "$mainMod SHIFT,>,exec, ${playerctl} next"
         ];
         bindle = [
           ",XF86MonBrightnessUp,   exec, ${brightnessctl} set +5%; devbright"

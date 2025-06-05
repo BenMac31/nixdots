@@ -27,7 +27,7 @@
       powerinfo = "upower -i /org/freedesktop/UPower/devices/battery_BAT1";
       cat = "bat";
       neofetch = "fastfetch";
-      ls = "eza";
+      ls = "eza --icons=auto";
       vpnexit = lib.mkIf osConfig.services.mullvad-vpn.enable "mullvad split-tunnel add \$$";
       hexdec = "printf '%x\n' \$1";
     };
@@ -60,6 +60,7 @@
             binhex() {echo "obase=16; ibase=2; ''${(U)1}" | bc} # Binary to Hex
             hexbin() {echo "obase=2; ibase=16; ''${(U)1}" | bc} # Hex to Binary
             getip() { ${pkgs.curl}/bin/curl -s https://json.geoiplookup.io/"$1" | ${pkgs.jq}/bin/jq '.ip, .city, .isp' }
+            0x0() { curl -F"file=@$1" https://0x0.st }
             genpas() {tr -dc A-Za-z0-9 </dev/urandom | head -c $1; echo}
             timer() {
               function usage() {

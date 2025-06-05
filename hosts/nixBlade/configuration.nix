@@ -17,6 +17,14 @@ in
   programs = {
     hyprland.enable = true;
     adb.enable = true;
+    nix-ld.enable = true;
+    nix-ld.libraries = with pkgs; [
+
+      # Add any missing dynamic libraries for unpackaged programs
+
+      # here, NOT in environment.systemPackages
+
+    ];
     kdeconnect.enable = true;
     noisetorch.enable = true;
   };

@@ -249,7 +249,6 @@ lvim.plugins = {
 			})
 		end,
 	},
-<<<<<<< Updated upstream
 	{ "mateuszwieloch/automkdir.nvim" },
 	{
 		"HakonHarnes/img-clip.nvim",
@@ -259,6 +258,4 @@ lvim.plugins = {
 			{ "<leader>p", "<cmd>PasteImage<cr>", desc = "Paste image from system clipboard" },
 		},
 	},
-=======
->>>>>>> Stashed changes
 }
