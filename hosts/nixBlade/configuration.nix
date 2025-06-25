@@ -29,6 +29,19 @@ in
     noisetorch.enable = true;
   };
 
+  fonts.packages = with pkgs; [
+    nerd-fonts.fira-code
+    nerd-fonts.droid-sans-mono
+    nerd-fonts.jetbrains-mono
+    noto-fonts-cjk-sans
+    source-han-sans
+    source-han-mono
+    source-han-serif
+    source-han-sans-vf-ttf
+    source-han-sans-vf-otf
+
+  ];
+
   time.timeZone = "America/New_York";
   services = {
     flatpak.enable = true;

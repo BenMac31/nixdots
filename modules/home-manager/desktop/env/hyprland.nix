@@ -192,7 +192,7 @@ in
 
         windowrule =
           let
-            f = regex: "float, ^(${regex})$";
+            f = regex: "float, class:^(${regex})$";
             w = s: r: "workspace ${toString s} silent, ${r}";
           in
           [
@@ -208,7 +208,7 @@ in
             (f "com.github.Aylur.ags")
             (w 5 "title:^(Signal)$")
             (w 8 "class:^(steam)(.*)$")
-            (w 8 "^(org.prismlauncher.PrismLauncher)$")
+            (w 8 "class:^(org.prismlauncher.PrismLauncher)$")
             "float,title:(Bitwarden)$"
           ];
         layerrule = [

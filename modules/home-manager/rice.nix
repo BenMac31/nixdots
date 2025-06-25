@@ -3,9 +3,6 @@
   imports = with inputs; [
     nix-colors.homeManagerModules.default
   ];
-  home.packages = with pkgs; [
-    (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" "FiraCode" "DroidSansMono" ]; })
-  ];
   colorScheme = lib.mkDefault inputs.nix-colors.colorSchemes.gruvbox-dark-medium;
   gtk = {
     enable = lib.mkIf config.desktop.enable true;
