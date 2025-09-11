@@ -4,6 +4,7 @@
   programs.kitty = {
     settings = with config.colorScheme.palette; {
       font_family = "FiraCodeNerdFont-Regular";
+      enable_audio_bell = true;
       font_size = 10;
       color0 = "#${base00}";
       color1 = "#${base08}";

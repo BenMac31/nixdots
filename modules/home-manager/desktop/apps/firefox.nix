@@ -85,6 +85,7 @@ in
             # lib.mkIf config.desktop.japanese.enable (extension "yomitan" "{6b733b82-9261-47ee-a595-2dda294a4d08}")
             (extension "furiganaize" "{a2503cd4-4083-4c2f-bef2-37767a569867}")
             (extension "yomitan" "{6b733b82-9261-47ee-a595-2dda294a4d08}")
+            (extension "sponsorblock" "sponsorBlocker@ajay.app")
           ];
       };
 
@@ -137,12 +138,13 @@ in
             "browser.search.defaultenginename" = "brave";
             "browser.search.order.1" = "brave";
             "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-            "sidebar.revamp" = lock-true;
-            "sidebar.verticalTabs" = lock-true;
+            "sidebar.revamp" = true;
+            "sidebar.verticalTabs" = true;
             "sidebar.main.tools" = "";
+            "sidebar.expandOnHover" = true;
             "browser.tabs.groups.enabled" = true;
           };
-          userChrome = ''
+          userChrome = /*css*/ ''
             @import url(css-hacks/chrome/blank_page_background.css);
             @import url(css-hacks/chrome/hide_toolbox_top_bottom_borders.css);
             @import url(css-hacks/chrome/minimal_popup_scrollbars.css);

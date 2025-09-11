@@ -77,7 +77,7 @@
               local hour="''${3:-0}"
       
               # Validate input values
-              [[ "$sec" =~ ^[0-9]+$ ]] && [[ "$min" =~ ^[0-9]+$ ]] && [[ "$hour" =~ ^[0-9]+$ ]] || usage
+              [[ "$sec" =~ ^[0-9]+$ ]] && [[ "$min" =~ ^[0-9]+$ ]] && [[ "$hour" =~ ^[0-9]+$ ]] || usage || return 1
       
               # Calculate total time in seconds
               local total_seconds=$((sec + min * 60 + hour * 3600))
@@ -92,7 +92,7 @@
                     
               # Sound alert when the timer finishes
               printf "\nTime's up!\n"
-              while true; do tput bel; sleep 0.25; done # Avoid echoing new lines by using `tput bel` for the beep
+              while true; do mpv ~/.local/share/sounds/Ping.ogg; sleep 0.25; done # Avoid echoing new lines by using `tput bel` for the beep
             }
             std() {
             echo 'echo """' > /tmp/out
