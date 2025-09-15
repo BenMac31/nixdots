@@ -117,7 +117,6 @@ in
           "nmcli radio wifi off && nmcli radio wifi on" # wifi doesn't work without this.
           "bwfloat"
           "swaync"
-          "swapwallpaper"
           "nm-applet"
           "${pkgs.wlsunset}/wlsunset -l 39.103119 -L -84.512016 -t 0 -g 0.7"
           "${pkgs.plasma5Packages.kdeconnect-kde}/bin/kdeconnect-indicator"
