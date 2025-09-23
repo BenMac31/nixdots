@@ -27,25 +27,17 @@
       ./anime/Kita.png
       ./anime/Mandalorian.jpg
       ./anime/after_school_stroll_gruvbox.png
-      ./anime/anime_skull.png
       ./anime/classroom.jpg
       ./anime/elias.jpg
       ./anime/gankutsuou.jpg
       ./anime/grey_lain_wallpaper.jpg
       ./anime/kurotani.jpg
-      ./anime/light/DemonChild.png
-      ./anime/light/cherry-blossom.png
-      ./anime/light/cyber-asian-girl-1080.png
-      ./anime/light/frieren_gruvbox.png
-      ./anime/light/ghibli-japanese-walled-garden.png
-      ./anime/light/my-neighbor-totoro-sunflowers.png
       ./anime/sushi.jpg
       ./brands/firefox.png
       ./brands/gnu.jpg
       ./brands/gruvbox-nix.png
       ./brands/gruvbox-rainbow-nix.png
       ./brands/gruvbox_kubuntuGear.jpg
-      ./brands/light/gruvbox_light_linux.png
       ./brands/nix.png
       ./brands/nixos.png
       ./brands/nvim.png
@@ -97,14 +89,6 @@
       ./minimalistic/husky.png
       ./minimalistic/iuh3jkasndjans.jpg
       ./minimalistic/kiddae.jpg
-      ./minimalistic/light/Knights.png
-      ./minimalistic/light/Tranquility.png
-      ./minimalistic/light/bird.png
-      ./minimalistic/light/buildings.png
-      ./minimalistic/light/clouds.png
-      ./minimalistic/light/cocoa.png
-      ./minimalistic/light/code_blocks_light.png
-      ./minimalistic/light/gruv-buildings.png
       ./minimalistic/moon.png
       ./minimalistic/nasa-2.png
       ./minimalistic/nasa-3.png
@@ -162,11 +146,6 @@
       ./mix/gruvy.jpg
       ./mix/hotline-miami.jpg
       ./mix/houses.png
-      ./mix/landscape0.png
-      ./mix/light/8207838.png
-      ./mix/light/Sif.png
-      ./mix/light/alien_landscape0.png
-      ./mix/light/anatomy.jpg
       ./mix/mad.jpg
       ./mix/mountain.jpg
       ./mix/night_moon.png
@@ -187,7 +166,6 @@
       ./painting/Cat_at_Play.png
       ./painting/Driving_Home_The_Flock.png
       ./painting/View_of_Vent_in_the_Ventertal.jpg
-      ./painting/light/squirrel.jpg
       ./photography/Colors.png
       ./photography/Pages.png
       ./photography/White-Mountain.jpg
@@ -225,7 +203,6 @@
       ./photography/forest-cabin.jpg
       ./photography/hannu-keski-hakuni-vgxIfXwsUAE.jpg
       ./photography/herb-notebook.png
-      ./photography/house.jpg
       ./photography/jake-weirick-EsvpmQ4zp5Y.jpg
       ./photography/jakub-sejkora-utqJcneoFjo.jpg
       ./photography/jars.jpg
@@ -266,7 +243,6 @@
       ./photography/saso-tusar-s-k-2N90yuY.jpg
       ./photography/sunforest.jpg
       ./photography/tangerines.jpg
-      ./photography/teapot-2.jpg
       ./photography/teapots.jpg
       ./photography/timbers.jpg
       ./photography/tools.jpg
