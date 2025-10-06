@@ -11,6 +11,7 @@
         matplotlib
         scipy
         numpy
+        sympy
         pandas
       ]))
     ];

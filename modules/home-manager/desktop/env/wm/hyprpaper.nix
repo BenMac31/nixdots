@@ -212,6 +212,7 @@
       ./renders/5.jpg
       ./renders/8.jpg
       ./renders/9.jpg
+      gruvb_solarsys.png
     '';
   };
 }
