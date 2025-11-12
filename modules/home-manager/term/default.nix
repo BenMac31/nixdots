@@ -20,6 +20,7 @@
     ];
     programs = {
       gpg.enable = true;
+      ssh.enable = lib.mkDefault true;
     };
   };
 }
