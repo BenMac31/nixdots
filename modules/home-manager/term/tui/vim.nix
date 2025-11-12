@@ -7,6 +7,9 @@
       vimdiffAlias = true;
       withNodeJs = true;
       withPython3 = true;
+      extraPackages = [
+        pkgs.uv
+      ];
     };
     home.packages = [
       pkgs.lunarvim

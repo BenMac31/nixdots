@@ -46,6 +46,5 @@
     password-store.enable = true;
     rbw.enable = true;
   };
-  systemd.user.sessionVariables.SSH_AUTH_SOCK = "/run/user/1000/keyring/ssh"; # Makes ssh-agent work
   home.stateVersion = "23.11"; # Do not change
 }
