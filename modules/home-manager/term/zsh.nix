@@ -51,6 +51,7 @@
       source ''${zsh_plugins}.zsh
     '';
     initExtra = /*bash*/ ''
+            export SSH_AUTH_SOCK="/run/user/$(id -u)/ssh-agent"
             source $HOME/.p10k.zsh
             rn() {${pkgs.coreutils}/bin/shuf -i 1-$1 -n 1} # Random number
             dechex() {echo "$(
