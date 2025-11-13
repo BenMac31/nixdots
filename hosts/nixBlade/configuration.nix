@@ -56,6 +56,10 @@ in
       enable = true;
       desktopManager.gnome.enable = true;
     };
+    logind = {
+      lidSwitch = "hibernate";
+      lidSwitchExternalPower = "hibernate";
+    };
   };
   environment.systemPackages = with pkgs; [
     libusb1
@@ -71,6 +75,8 @@ in
   boot.extraModulePackages = with config.boot.kernelPackages; [
     v4l2loopback
   ];
+  boot.resumeDevice = "/dev/disk/by-uuid/d89aa6f6-efec-458f-a8d7-23bed9ec888e";
+  boot.kernelParams = [ "resume=/dev/disk/by-uuid/d89aa6f6-efec-458f-a8d7-23bed9ec888e" ];
 
   home-manager = {
     users."greencheetah" = import ./home.nix;
