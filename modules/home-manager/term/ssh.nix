@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, osConfig, ... }:
 
 {
   config = lib.mkIf config.programs.ssh.enable {
@@ -17,9 +17,7 @@
     # Enable SSH agent service to cache passphrases during session
     services.ssh-agent.enable = true;
 
-    # Ensure SSH_AUTH_SOCK is set in zsh
-    programs.zsh.initExtra = lib.mkBefore ''
-      export SSH_AUTH_SOCK="/run/user/$(id -u)/ssh-agent"
-    '';
+    # Ensure SSH_AUTH_SOCK is set globally
   };
 }
+
