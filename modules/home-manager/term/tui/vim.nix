@@ -1,4 +1,4 @@
-{ lib, config, inputs, pkgs, ... }:
+{ lib, config, inputs, upgks, pkgs, ... }:
 {
   config = lib.mkIf config.programs.neovim.enable {
     programs.neovim = {
@@ -8,7 +8,8 @@
       withNodeJs = true;
       withPython3 = true;
       extraPackages = [
-        pkgs.uv
+        pkgs.lsof
+        inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.opencode
       ];
     };
     home.packages = [
