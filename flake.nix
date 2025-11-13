@@ -19,6 +19,10 @@
       url = "github:hyprwm/Hyprland";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    ollama = {
+      url = "github:abysssol/ollama-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     firefox-css-hacks = { url = "github:MrOtherGuy/firefox-csshacks"; flake = false; };
     fcitx5-gruvbox = { url = "github:ayamir/fcitx5-gruvbox"; flake = false; };
     hypr-darkwindow = {

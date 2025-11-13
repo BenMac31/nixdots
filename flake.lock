@@ -1059,6 +1059,27 @@
         "type": "github"
       }
     },
+    "nixpkgs-unfree": {
+      "inputs": {
+        "nixpkgs": [
+          "ollama",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1727984955,
+        "narHash": "sha256-vP3XzXfQLaxy2QYipK5teKFzgWBeSkv9hByCvrMEL1c=",
+        "owner": "numtide",
+        "repo": "nixpkgs-unfree",
+        "rev": "deab889228cedd7bca43e71ea4f61f9ea12c260e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "nixpkgs-unfree",
+        "type": "github"
+      }
+    },
     "nixpkgs-unstable": {
       "locked": {
         "lastModified": 1762844143,
@@ -1171,6 +1192,27 @@
         "type": "github"
       }
     },
+    "ollama": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "nixpkgs-unfree": "nixpkgs-unfree"
+      },
+      "locked": {
+        "lastModified": 1733618642,
+        "narHash": "sha256-6eeRQLOffhyCRIhiO64WMePktPA5v7Az0KzdNwAywRs=",
+        "owner": "abysssol",
+        "repo": "ollama-flake",
+        "rev": "edca8d46ff125aafb63825b82d0f7fefc1b308cb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "abysssol",
+        "repo": "ollama-flake",
+        "type": "github"
+      }
+    },
     "patched-sddm-sugar-dark": {
       "flake": false,
       "locked": {
@@ -1249,6 +1291,7 @@
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-unstable": "nixpkgs-unstable",
+        "ollama": "ollama",
         "patched-sddm-sugar-dark": "patched-sddm-sugar-dark",
         "xremap-flake": "xremap-flake"
       }
