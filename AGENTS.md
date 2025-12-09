@@ -23,6 +23,7 @@ Future AI agents working on this NixOS/home-manager configuration should adhere 
 - Keep configurations clean and readable
 - Use comments to explain non-obvious configurations
 - Avoid duplication by leveraging shared options and imports
+- Group code with the most similar code in a file instead of adding it at the bottom
 
 ### Security and Best Practices
 - Never introduce code that exposes secrets or logs sensitive information
