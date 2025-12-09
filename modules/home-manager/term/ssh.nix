@@ -16,8 +16,6 @@
 
     # Enable SSH agent service to cache passphrases during session
     services.ssh-agent.enable = true;
-
-    # Ensure SSH_AUTH_SOCK is set globally
   };
 }
 

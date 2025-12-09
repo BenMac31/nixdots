@@ -10,6 +10,7 @@
       extraPackages = [
         pkgs.lsof
         inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.opencode
+        pkgs.jdk21
       ];
     };
     home.packages = [
