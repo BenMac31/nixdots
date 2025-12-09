@@ -35,6 +35,10 @@
       url = "github:BenMac31/sddm-sugar-dark";
       flake = false;
     };
+    waybar-pomodoro = {
+      url = "github:Andeskjerf/waybar-module-pomodoro";
+      flake = false;
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, nixpkgs-master, nixpkgs-unstable, ... }@inputs:
@@ -77,11 +81,14 @@
               overlay-master-unfree
               overlay-unstable
               overlay-unstable-unfree
-              (final: prev: {
-                sddm-sugar-dark = prev.sddm-sugar-dark.overrideAttrs {
-                  src = inputs.patched-sddm-sugar-dark;
-                };
-              })
+               (final: prev: {
+                 sddm-sugar-dark = prev.sddm-sugar-dark.overrideAttrs {
+                   src = inputs.patched-sddm-sugar-dark;
+                 };
+               })
+                 (final: prev: {
+                   waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+                 })
             ];
           })
           ./hosts/nixBlade/configuration.nix
@@ -90,10 +97,21 @@
       homeConfigurations.nixBlade = home-manager.lib.homeManagerConfiguration {
         extraSpecialArgs = { inherit inputs; };
         inherit pkgs;
-        modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-unstable overlay-unstable-unfree overlay-master overlay-master-unfree ]; })
-          ./hosts/nixBlade/home.nix
-        ];
+          modules = [
+            ({ config, pkgs, ... }: {
+              nixpkgs.overlays = [
+                overlay-unfree
+                overlay-unstable
+                overlay-unstable-unfree
+                overlay-master
+                overlay-master-unfree
+                (final: prev: {
+                  waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+                })
+              ];
+            })
+            ./hosts/nixBlade/home.nix
+          ];
       };
       nixosConfigurations.nixos = nixpkgs.lib.nixosSystem rec {
         specialArgs = { inherit inputs; };
@@ -106,7 +124,18 @@
         extraSpecialArgs = { inherit inputs; };
         inherit pkgs;
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-unstable overlay-unstable-unfree overlay-master overlay-master-unfree ]; })
+          ({ config, pkgs, ... }: {
+            nixpkgs.overlays = [
+              overlay-unfree
+              overlay-unstable
+              overlay-unstable-unfree
+              overlay-master
+              overlay-master-unfree
+               (final: prev: {
+                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+               })
+            ];
+          })
           ./hosts/phantomServ/home.nix
         ];
       };

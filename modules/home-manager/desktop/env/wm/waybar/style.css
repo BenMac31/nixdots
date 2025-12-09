@@ -1,18 +1,5 @@
 @define-color bar-bg rgba(0, 0, 0, 0);
 /* Keep transparent */
-@define-color main-bg #282828;
-/* dark0 */
-@define-color main-fg #ebdbb2;
-/* light1 */
-@define-color wb-act-bg #83a598;
-/* bright_blue */
-@define-color wb-act-fg #8ec07c;
-/* bright_aqua */
-@define-color wb-hvr-bg #fb4934;
-/* bright_red */
-@define-color wb-hvr-fg #fabd2f;
-/* bright_yellow */
-
 * {
   border: none;
   border-radius: 0px;
@@ -36,33 +23,28 @@ window#waybar {
 #pulseaudio,
 #backlight,
 #network,
+#custom-pomodoro,
 #custom-right,
 #custom-left {
-  color: #d5c4a1;
-  /* light2 for better visibility */
-  background: #1d2021;
-  /* dark0_hard for a darker background */
+  color: @base06;
+  background: @base00;
   margin: 4px 0;
   opacity: 1;
-  border: 0 solid #1d2021;
-  /* dark0_hard */
+  border: 0 solid @base00;
 }
 
 tooltip {
-  background: #282828;
-  /* dark0 */
-  color: #ebdbb2;
-  /* light1 */
+  background: @base00;
+  color: @base07;
   border-radius: 22px;
   border-width: 2px;
   border-style: solid;
-  border-color: #3c3836;
-  /* dark1 */
+  border-color: @base01;
 }
 
 #workspaces button {
   box-shadow: none;
-  background: #282828;
+  background: @base00;
   text-shadow: none;
   padding: 0;
   border-radius: 9px;
@@ -72,20 +54,16 @@ tooltip {
   padding-right: 6px;
   margin-left: 6px;
   margin-right: 3px;
-  color: #7c6f64;
-  /* dark4 */
+  color: @base04;
 }
 
 #workspaces button.active {
-  background: #3c3836;
-  /* dark4 */
-  color: #c4a7e7;
-  /* light3 */
+  background: @base01;
+  color: @base0E;
 }
 
 #workspaces button:hover {
-  background: #3c3836;
-  /* dark1 */
+  background: @base01;
   border: none;
 }
 
@@ -94,43 +72,37 @@ tooltip {
 }
 
 #custom-rofi {
-  color: #fb4934;
-  /* bright_red */
+  color: @base08;
   padding-left: 0;
   padding-right: 10px;
 }
 
 #temperature {
-  color: #8ec07c;
-  /* bright_aqua */
+  color: @base0C;
   padding-left: 0;
   padding-right: 19px;
 }
 
 #temperature.critical {
-  color: #fb4934;
-  /* bright_red */
+  color: @base08;
   padding-left: 0;
   padding-right: 19px;
 }
 
 #backlight {
-  color: #fabd2f;
-  /* bright_yellow */
+  color: @base0A;
   padding-left: 0;
   padding-right: 19px;
 }
 
 #pulseaudio {
-  color: #c4a7e7;
-  /* light3 */
+  color: @base0E;
   padding-left: 0;
   padding-right: 19px;
 }
 
 #battery {
-  color: #83a598;
-  /* bright_blue */
+  color: @base0D;
   padding-left: 0;
   padding-right: 0;
 }
@@ -146,14 +118,19 @@ tooltip {
 }
 
 #clock {
-  color: #fb4934;
-  /* bright_red */
+  color: @base0E;
   padding-left: 0;
   padding-right: 0;
 }
 
 #mpris {
-  color: #d3869b;
+  color: @base0E;
+  padding-left: 0;
+  padding-right: 19px;
+}
+
+#custom-pomodoro {
+  color: @base08;
   padding-left: 0;
   padding-right: 19px;
 }
