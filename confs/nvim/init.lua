@@ -402,6 +402,8 @@ require("lazy").setup({
 			local luasnip = require("luasnip")
 			luasnip.config.setup({ enable_autosnippets = true })
 
+			require("luasnip.loaders.from_lua").load({ paths = "./lua/luasnip" })
+
 			cmp.setup({
 				snippet = {
 					expand = function(args)
