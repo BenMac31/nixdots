@@ -81,46 +81,20 @@
               overlay-master-unfree
               overlay-unstable
               overlay-unstable-unfree
-               (final: prev: {
-                 sddm-sugar-dark = prev.sddm-sugar-dark.overrideAttrs {
-                   src = inputs.patched-sddm-sugar-dark;
-                 };
-               })
-                 (final: prev: {
-                   waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
-                 })
+              (final: prev: {
+                sddm-sugar-dark = prev.sddm-sugar-dark.overrideAttrs {
+                  src = inputs.patched-sddm-sugar-dark;
+                };
+              })
+              (final: prev: {
+                waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+              })
             ];
           })
           ./hosts/nixBlade/configuration.nix
         ];
       };
       homeConfigurations.nixBlade = home-manager.lib.homeManagerConfiguration {
-        extraSpecialArgs = { inherit inputs; };
-        inherit pkgs;
-          modules = [
-            ({ config, pkgs, ... }: {
-              nixpkgs.overlays = [
-                overlay-unfree
-                overlay-unstable
-                overlay-unstable-unfree
-                overlay-master
-                overlay-master-unfree
-                (final: prev: {
-                  waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
-                })
-              ];
-            })
-            ./hosts/nixBlade/home.nix
-          ];
-      };
-      nixosConfigurations.nixos = nixpkgs.lib.nixosSystem rec {
-        specialArgs = { inherit inputs; };
-        modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ]; })
-          ./hosts/phantomServ/configuration.nix
-        ];
-      };
-      homeConfigurations.nixos = home-manager.lib.homeManagerConfiguration {
         extraSpecialArgs = { inherit inputs; };
         inherit pkgs;
         modules = [
@@ -131,12 +105,64 @@
               overlay-unstable-unfree
               overlay-master
               overlay-master-unfree
-               (final: prev: {
-                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
-               })
+              (final: prev: {
+                waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+              })
+            ];
+          })
+          ./hosts/nixBlade/home.nix
+        ];
+      };
+      nixosConfigurations.phantomServ = nixpkgs.lib.nixosSystem rec {
+        specialArgs = { inherit inputs; };
+        modules = [
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ]; })
+          ./hosts/phantomServ/configuration.nix
+        ];
+      };
+      homeConfigurations.phantomServ = home-manager.lib.homeManagerConfiguration {
+        extraSpecialArgs = { inherit inputs; };
+        inherit pkgs;
+        modules = [
+          ({ config, pkgs, ... }: {
+            nixpkgs.overlays = [
+              overlay-unfree
+              overlay-unstable
+              overlay-unstable-unfree
+              overlay-master
+              overlay-master-unfree
+              (final: prev: {
+                waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+              })
             ];
           })
           ./hosts/phantomServ/home.nix
+        ];
+      };
+      nixosConfigurations.omegaServ = nixpkgs.lib.nixosSystem rec {
+        specialArgs = { inherit inputs; };
+        modules = [
+          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ]; })
+          ./hosts/omegaServ/configuration.nix
+        ];
+      };
+      homeConfigurations.omegaServ = home-manager.lib.homeManagerConfiguration {
+        extraSpecialArgs = { inherit inputs; };
+        inherit pkgs;
+        modules = [
+          ({ config, pkgs, ... }: {
+            nixpkgs.overlays = [
+              overlay-unfree
+              overlay-unstable
+              overlay-unstable-unfree
+              overlay-master
+              overlay-master-unfree
+              (final: prev: {
+                waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+              })
+            ];
+          })
+          ./hosts/omegaServ/home.nix
         ];
       };
     };

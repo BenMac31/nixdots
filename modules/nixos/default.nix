@@ -41,6 +41,7 @@ in
     home-manager
     pinentry
     git
+    git-crypt
     unzip
     ripgrep
     fzf
