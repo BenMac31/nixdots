@@ -1,4 +1,4 @@
-{ config, lib, inputs, pkgs, ... }:
+{ config, inputs, pkgs, ... }:
 {
   environment.systemPackages = with pkgs; lib.mkIf config.services.displayManager.sddm.enable [
     (pkgs.sddm-sugar-dark.override {
@@ -19,10 +19,7 @@
     })
   ];
   services.displayManager.sddm = {
-    wayland = {
-      enable = true;
-      compositor = lib.mkDefault "hyprland";
-    };
+    wayland.enable = true;
     theme = "sugar-dark";
     autoLogin = {
       enable = true;
