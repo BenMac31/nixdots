@@ -1,4 +1,4 @@
-{ config, inputs, pkgs, ... }:
+{ config, lib, inputs, pkgs, ... }:
 {
   environment.systemPackages = with pkgs; lib.mkIf config.services.displayManager.sddm.enable [
     (pkgs.sddm-sugar-dark.override {
@@ -19,8 +19,15 @@
     })
   ];
   services.displayManager.sddm = {
-    wayland.enable = true;
+    wayland = {
+      enable = true;
+      compositor = lib.mkDefault "hyprland";
+    };
     theme = "sugar-dark";
+    autoLogin = {
+      enable = true;
+      user = "greencheetah";
+    };
     extraPackages = [ pkgs.sddm-sugar-dark pkgs.noto-fonts-cjk-sans pkgs.libsForQt5.qt5.qtgraphicaleffects ];
   };
 }
