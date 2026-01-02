@@ -26,6 +26,7 @@
       homewatch = "cd ~/nixos && dirwatch homeswitch";
       powerinfo = "upower -i /org/freedesktop/UPower/devices/battery_BAT1";
       cat = "bat";
+      cp = "cp -r";
       neofetch = "fastfetch";
       ls = "eza --icons=auto";
       vpnexit = lib.mkIf osConfig.services.mullvad-vpn.enable "mullvad split-tunnel add \$$";
