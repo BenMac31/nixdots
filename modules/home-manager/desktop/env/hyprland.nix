@@ -77,9 +77,16 @@ in
       '')
       pkgs.grim
       pkgs.slurp
+      pkgs.libnotify
       (pkgs.writeShellScriptBin "qshot" ''
         ${pkgs.grim}/bin/grim -g "$(${pkgs.slurp}/bin/slurp)" "/tmp/clip.png" &&\
-        ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/clip.png
+        ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/clip.png &&\
+        ${pkgs.libnotify}/bin/notify-send -i /tmp/clip.png "Screenshot taken" "Put on clipboard or /tmp/clip.png"
+      '')
+      (pkgs.writeShellScriptBin "sshot" ''
+        ${pkgs.grim}/bin/grim "/tmp/clip.png" &&\
+        ${pkgs.wl-clipboard}/bin/wl-copy < /tmp/clip.png &&\
+        ${pkgs.libnotify}/bin/notify-send -i /tmp/clip.png "Screenshot taken" "Put on clipboard or /tmp/clip.png"
       '')
       (pkgs.writeShellScriptBin "hyprperf" ''
         HYPRGAMEMODE=$(hyprctl getoption animations:enabled | awk 'NR==1{print $2}')
@@ -245,6 +252,7 @@ in
           "SHIFT$mainMod,t,exec,todo"
           "$mainMod,mouse_down,workspace,e+1"
           "$mainMod,mouse_up,workspace,e-1"
+          ",Print,exec,sshot"
           "CTRLSHIFT$mainMod,S,exec,qshot"
           "$mainMod,F11,fullscreen,0"
           "$mainMod,M,fullscreen,1"
