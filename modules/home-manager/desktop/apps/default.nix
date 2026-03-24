@@ -16,6 +16,7 @@
     ];
     programs = {
       librewolf.enable = lib.mkDefault true;
+      qutebrowser.enable = lib.mkDefault true;
       foot.enable = lib.mkDefault true;
       kitty.enable = lib.mkDefault true;
       zathura.enable = lib.mkDefault true;

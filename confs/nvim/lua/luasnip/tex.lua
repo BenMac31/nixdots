@@ -16,8 +16,10 @@ local dl = require("luasnip.extras").dynamic_lambda
 local fmt = require("luasnip.extras.fmt").fmt
 local fmta = require("luasnip.extras.fmt").fmta
 local types = require("luasnip.util.types")
-local conds = require("luasnip.extras.conditions")
-local conds_expand = require("luasnip.extras.conditions.expand")
+local in_mathzone = function()
+	-- The `in_mathzone` function requires the VimTeX plugin
+	return vim.fn["vimtex#syntax#in_mathzone"]() == 1
+end
 
 return {
 	-- HTML-based
@@ -43,7 +45,7 @@ return {
 			{ i(1) }
 		)
 	),
-	s({ trig = ";li", snippetType = "autosnippet" }, { t("\\item\n    "), i(1) }),
+	s({ trig = ";li", snippetType = "autosnippet" }, fmta([[\item ]], {})),
 	s({ trig = ";b", snippetType = "autosnippet" }, fmta([[\textbf{<>}]], { i(1) })),
 	s({ trig = ";i", snippetType = "autosnippet" }, fmta([[\textit{<>}]], { i(1) })),
 	s({ trig = ";h1", snippetType = "autosnippet" }, fmta([[\section{<>}]], { i(1, "Title") })),
@@ -51,4 +53,7 @@ return {
 	s({ trig = ";h3", snippetType = "autosnippet" }, fmta([[\subsubsection{<>}]], { i(1, "Title") })),
 	s({ trig = ";h4", snippetType = "autosnippet" }, fmta([[\paragraph{<>}]], { i(1, "Title") })),
 	s({ trig = ";h5", snippetType = "autosnippet" }, fmta([[\subparagraph{<>}]], { i(1, "Title") })),
+	s({ trig = ";P(", snippetType = "autosnippet", condition = in_mathzone }, fmta([[\mathscr{P}(<>]], { i(1) })),
+	s({ trig = "or", snippetType = "autosnippet", condition = in_mathzone }, fmta([[\vee]], {})),
+	s({ trig = "and", snippetType = "autosnippet", condition = in_mathzone }, fmta([[\implies]], {})),
 }

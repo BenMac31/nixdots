@@ -7,8 +7,11 @@
       vimdiffAlias = true;
       withNodeJs = true;
       withPython3 = true;
+      extraLuaPackages = ps: [ ps.magick ];
       extraPackages = [
         pkgs.lsof
+        pkgs.librsvg
+        pkgs.imagemagick
         inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.opencode
         pkgs.jdk21
       ];

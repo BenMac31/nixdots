@@ -615,10 +615,36 @@ require("lazy").setup({
 			--  Check out: https://github.com/echasnovski/mini.nvim
 		end,
 	},
-	--       {
-	--         "3rd/image.nvim",
-	--         opts = {}
-	--     },
+	{
+		"3rd/image.nvim",
+		opts = {},
+	},
+	{
+		"Thiago4532/mdmath.nvim",
+		dependencies = {
+			"nvim-treesitter/nvim-treesitter",
+		},
+		opts = { ... },
+	},
+	{
+		"HakonHarnes/img-clip.nvim",
+		event = "VeryLazy",
+		opts = {
+			-- add options here
+			-- or leave it empty to use the default settings
+		},
+		keys = {
+			-- suggested keymap
+			{ "<leader>p", "<cmd>PasteImage<cr>", desc = "Paste image from system clipboard" },
+		},
+	},
+	-- {
+	-- 	"OXY2DEV/markview.nvim",
+	-- 	lazy = false,
+	--
+	-- 	-- Completion for `blink.cmp`
+	-- 	-- dependencies = { "saghen/blink.cmp" },
+	-- },
 	-- }, {
 	--     rocks = {
 	--         hererocks = true,  -- recommended if you do not have global installation of Lua 5.1.

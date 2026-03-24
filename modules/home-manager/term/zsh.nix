@@ -63,6 +63,8 @@
             getip() { ${pkgs.curl}/bin/curl -s https://json.geoiplookup.io/"$1" | ${pkgs.jq}/bin/jq '.ip, .city, .isp' }
             0x0() { curl -F"file=@$1" https://0x0.st }
             genpas() {tr -dc A-Za-z0-9 </dev/urandom | head -c $1; echo}
+            tmult() { printf '%*s\n' "$2" "" | sed "s/ /$1/g" }
+            echos() {echo "\e]66;s=$1;$2\a$(tmult "\\\n" $(($1-1)))"}
             timer() {
               function usage() {
                 echo "Usage: timer <seconds> <minutes> <hours>"

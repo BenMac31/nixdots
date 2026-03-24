@@ -16,7 +16,7 @@
   home = lib.mkIf config.services.hyprpaper.enable {
     packages = [
       (pkgs.writeShellScriptBin "swapwallpaper" /*sh*/ ''
-        paper="''${1:-$(find $HOME/.local/share/wallpapers/wallpapers -type f | grep -v -f '/tmp/badwps' | shuf -n 1)}"
+        paper="''${1:-$(find $HOME/.local/share/wallpapers/wallpapers -type f | grep -v -f "$XDG_CONFIG_HOME/badwps" | shuf -n 1)}"
         paper="$(readlink -f $paper)"
         rm ~/.cache/wall.png
         ln -s "$paper" ~/.cache/wall.png

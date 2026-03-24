@@ -9,7 +9,7 @@ in
       ../../modules/nixos
       ./hardware-configuration.nix
     ];
-  networking.hostName = "nixBlade";
+  networking.hostName = "nixWorks";
   head = {
     enable = true;
     gaming = true;
