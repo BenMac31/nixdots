@@ -25,6 +25,6 @@
       enable = true;
       user = "greencheetah";
     };
-    extraPackages = [ pkgs.sddm-sugar-dark pkgs.noto-fonts-cjk-sans pkgs.libsForQt5.qt5.qtgraphicaleffects ];
+    extraPackages = [ pkgs.sddm-sugar-dark pkgs.noto-fonts-cjk-sans ];
   };
 }

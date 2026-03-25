@@ -5,13 +5,14 @@
 {
   home.packages = lib.mkIf config.programs.rofi.enable [
     (lib.mkIf config.programs.rbw.enable pkgs.rofi-rbw-wayland)
+    pkgs.pinentry-rofi
     (pkgs.writeShellScriptBin "dmenu" ''
       ${pkgs.rofi}/bin/rofi -dmenu $@
     '')
   ];
   programs = {
     rofi = {
-      package = pkgs.rofi-wayland;
+      package = pkgs.rofi;
       extraConfig = {
         modi = "drun,filebrowser,run";
         show-icons = true;

@@ -39,7 +39,7 @@ in
     htop
     wget
     home-manager
-    pinentry
+    pinentry-curses
     git
     git-crypt
     unzip
