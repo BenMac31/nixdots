@@ -58,6 +58,18 @@ in
     dates = "weekly";
     options = "--delete-older-than 7d";
   };
+
+  system.autoUpgrade = {
+    enable = lib.mkDefault true;
+    flake = inputs.self.outPath;
+    flags = [
+      "--update-input"
+      "nixpkgs"
+      "-L" # print build logs
+    ];
+    dates = "02:00";
+    randomizedDelaySec = "45min";
+  };
   home-manager = {
     # also pass inputs to home-manager modules
     extraSpecialArgs = { inherit inputs; inherit pkgs; };

@@ -8,10 +8,12 @@ let
   hyprctl = "${pkgs.hyprland}/bin/hyprctl";
 in
 {
-  imports = [
-    wm/rofi
-    wm/hyprpaper.nix
-    wm/waybar
+  # Only merge Waybar / rofi / hyprpaper when the OS enables Hyprland; otherwise
+  # headless hosts still pulled these modules in and built e.g. waybar-pomodoro.
+  imports = lib.optionals osConfig.programs.hyprland.enable [
+    ./wm/rofi
+    ./wm/hyprpaper.nix
+    ./wm/waybar
   ];
   config = lib.mkIf osConfig.programs.hyprland.enable {
     programs.rofi.enable = true;

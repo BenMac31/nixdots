@@ -9,17 +9,17 @@ in
       ./hardware-configuration.nix
       ../../modules/nixos
     ];
-  services.home-assistant.enable = true;
-  services.mullvad-vpn.enable = true;
+  # services.home-assistant.enable = true;
+  # services.mullvad-vpn.enable = true;
   serv = {
     enable = true;
-    media.enable = true;
+    # media.enable = true;
   };
   services.openssh = {
     enable = true;
     ports = [ 22 ];
     settings = {
-      PasswordAuthentication = true;
+      PasswordAuthentication = false;
       AllowUsers = [ "carol" ];
       UseDns = true;
       X11Forwarding = false;
@@ -43,15 +43,5 @@ in
     users."carol" = import ./home.nix;
   };
   system.stateVersion = "23.11"; # DO NOT CHANGE
-  system.autoUpgrade = {
-    enable = true;
-    flake = inputs.self.outPath;
-    flags = [
-      "--update-input"
-      "nixpkgs"
-      "-L" # print build logs
-    ];
-    dates = "02:00";
-    randomizedDelaySec = "45min";
-  };
+  nix.settings.trusted-users = [ "root" "carol" ];
 }
