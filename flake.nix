@@ -31,10 +31,6 @@
     };
     gruvbox-wallpapers = { url = "github:AngelJumbo/gruvbox-wallpapers"; flake = false; };
     gruvbox-kvantum = { url = "github:isouravgope/Gruvbox-Kvantum"; flake = false; };
-    patched-sddm-sugar-dark = {
-      url = "github:BenMac31/sddm-sugar-dark";
-      flake = false;
-    };
     waybar-pomodoro = {
       url = "github:Andeskjerf/waybar-module-pomodoro";
       flake = false;
@@ -82,11 +78,6 @@
               overlay-unstable
               overlay-unstable-unfree
               (final: prev: {
-                sddm-sugar-dark = prev.sddm-sugar-dark.overrideAttrs {
-                  src = inputs.patched-sddm-sugar-dark;
-                };
-              })
-              (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
               })
             ];
@@ -95,7 +86,7 @@
         ];
       };
       homeConfigurations.nixBlade = home-manager.lib.homeManagerConfiguration {
-        extraSpecialArgs = { inherit inputs; };
+        extraSpecialArgs = { inherit inputs; osConfig = nixosConfigurations.nixBlade.config; };
         inherit pkgs;
         modules = [
           ({ config, pkgs, ... }: {
@@ -121,7 +112,7 @@
         ];
       };
       homeConfigurations.phantomServ = home-manager.lib.homeManagerConfiguration {
-        extraSpecialArgs = { inherit inputs; };
+        extraSpecialArgs = { inherit inputs; osConfig = nixosConfigurations.phantomServ.config; };
         inherit pkgs;
         modules = [
           ({ config, pkgs, ... }: {
@@ -147,7 +138,7 @@
         ];
       };
       homeConfigurations.omegaServ = home-manager.lib.homeManagerConfiguration {
-        extraSpecialArgs = { inherit inputs; };
+        extraSpecialArgs = { inherit inputs; osConfig = nixosConfigurations.omegaServ.config; };
         inherit pkgs;
         modules = [
           ({ config, pkgs, ... }: {

@@ -89,9 +89,9 @@ in
         ${pkgs.libnotify}/bin/notify-send -i /tmp/clip.png "Screenshot taken" "Put on clipboard or /tmp/clip.png"
       '')
       (pkgs.writeShellScriptBin "hyprperf" ''
-        HYPRGAMEMODE=$(hyprctl getoption animations:enabled | awk 'NR==1{print $2}')
-        if [ "$HYPRGAMEMODE" = 1 ] ; then
-            hyprctl --batch "\
+        HYPRGAMEMODE=$(${hyprctl} -j getoption animations:enabled | ${pkgs.jq}/bin/jq -r '.int')
+        if [ "$HYPRGAMEMODE" = "1" ] ; then
+            ${hyprctl} --batch "\
                 keyword animations:enabled 0;\
                 keyword decoration:shadow:enabled 0;\
                 keyword decoration:blur:enabled 0;\
@@ -101,15 +101,15 @@ in
                 keyword decoration:rounding 0"
             exit
         fi
-        hyprctl reload
+        ${hyprctl} reload
       '')
       (pkgs.writeShellScriptBin "swapcaps" ''
-        HYPRGAMEMODE=$(hyprctl getoption input:kb_options | awk 'NR==1{print $2}')
-        if [ "$HYPRGAMEMODE" = "caps:swapescape" ] ; then
-            hyprctl keyword input:kb_options ""
+        HYPRKBOPTIONS=$(${hyprctl} -j getoption input:kb_options | ${pkgs.jq}/bin/jq -r '.str')
+        if [ "$HYPRKBOPTIONS" = "caps:swapescape" ] ; then
+            ${hyprctl} keyword input:kb_options ""
             exit
         fi
-        hyprctl reload
+        ${hyprctl} reload
       '')
 
     ];
@@ -186,9 +186,11 @@ in
         };
 
         gestures = {
-          workspace_swipe = true;
           workspace_swipe_forever = true;
         };
+        gesture = [
+          "3, horizontal, workspace"
+        ];
 
         misc = {
           force_default_wallpaper = -1;

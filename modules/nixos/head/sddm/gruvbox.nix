@@ -1,0 +1,85 @@
+{
+  ScreenWidth = "1920";
+  ScreenHeight = "1080";
+  ScreenPadding = "";
+  Font = "Open Sans";
+  FontSize = "13";
+  KeyboardSize = "0.4";
+  RoundCorners = "20";
+  Locale = "ja_JP.UTF-8";
+  HourFormat = "aphh時mm分";
+  DateFormat = "yyyy年MM月dd日, dddd";
+  HeaderText = "へようこそ!";
+
+  BackgroundPlaceholder = "";
+  Background = "Backgrounds/astronaut.png";
+  BackgroundSpeed = "";
+  PauseBackground = "";
+  DimBackground = "0.0";
+  CropBackground = "true";
+  BackgroundHorizontalAlignment = "center";
+  BackgroundVerticalAlignment = "center";
+
+  HeaderTextColor = "#ebdbb2";
+  DateTextColor = "#ebdbb2";
+  TimeTextColor = "#ebdbb2";
+  FormBackgroundColor = "#282828";
+  BackgroundColor = "#282828";
+  DimBackgroundColor = "#282828";
+  LoginFieldBackgroundColor = "#3c3836";
+  PasswordFieldBackgroundColor = "#3c3836";
+  LoginFieldTextColor = "#ebdbb2";
+  PasswordFieldTextColor = "#ebdbb2";
+  UserIconColor = "#ebdbb2";
+  PasswordIconColor = "#ebdbb2";
+  PlaceholderTextColor = "#a89984";
+  WarningColor = "#928374";
+  LoginButtonTextColor = "#ebdbb2";
+  LoginButtonBackgroundColor = "#d65d0e";
+  SystemButtonsIconsColor = "#ebdbb2";
+  SessionButtonTextColor = "#ebdbb2";
+  VirtualKeyboardButtonTextColor = "#ebdbb2";
+  DropdownTextColor = "#ebdbb2";
+  DropdownSelectedBackgroundColor = "#d65d0e";
+  DropdownBackgroundColor = "#282828";
+  HighlightTextColor = "#ebdbb2";
+  HighlightBackgroundColor = "#d65d0e";
+  HighlightBorderColor = "#d65d0e";
+  HoverUserIconColor = "#fabd2f";
+  HoverPasswordIconColor = "#fabd2f";
+  HoverSystemButtonsIconsColor = "#fabd2f";
+  HoverSessionButtonTextColor = "#fabd2f";
+  HoverVirtualKeyboardButtonTextColor = "#fabd2f";
+
+  PartialBlur = "false";
+  FullBlur = "";
+  BlurMax = "";
+  Blur = "";
+  HaveFormBackground = "false";
+  FormPosition = "center";
+  VirtualKeyboardPosition = "center";
+
+  HideVirtualKeyboard = "false";
+  HideSystemButtons = "false";
+  HideLoginButton = "false";
+  ForceLastUser = "true";
+  PasswordFocus = "true";
+  HideCompletePassword = "true";
+  AllowEmptyPassword = "false";
+  AllowUppercaseLettersInUsernames = "false";
+  BypassSystemButtonsChecks = "false";
+  RightToLeftLayout = "false";
+
+  TranslatePlaceholderUsername = "ユーザー";
+  TranslatePlaceholderPassword = "パスワード";
+  TranslateLogin = "ログイン";
+  TranslateLoginFailedWarning = "";
+  TranslateCapslockWarning = "";
+  TranslateSuspend = "";
+  TranslateHibernate = "";
+  TranslateReboot = "";
+  TranslateShutdown = "";
+  TranslateSessionSelection = "";
+  TranslateVirtualKeyboardButtonOn = "";
+  TranslateVirtualKeyboardButtonOff = "";
+}

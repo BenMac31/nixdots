@@ -11,6 +11,12 @@
     '')
   ];
   programs = {
+    rbw = {
+      settings = {
+        pinentry = pkgs.pinentry-rofi;
+        email = "benjaminmcintyre06@protonmail.com";
+      };
+    };
     rofi = {
       package = pkgs.rofi;
       extraConfig = {

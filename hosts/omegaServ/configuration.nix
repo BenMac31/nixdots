@@ -20,7 +20,7 @@ in
     ports = [ 22 ];
     settings = {
       PasswordAuthentication = true;
-      AllowUsers = [ "ghastly" ];
+      AllowUsers = [ "carol" ];
       UseDns = true;
       X11Forwarding = false;
     };
@@ -30,14 +30,17 @@ in
 
   time.timeZone = "America/New_York";
 
-  users.users.ghastly = {
+  users.users.carol = {
     isNormalUser = true;
     shell = pkgs.zsh;
     extraGroups = [ "wheel" ];
+    openssh.authorizedKeys.keys = [
+      ''ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQChQYMz+Q2dzTLTISmBlFHPUDRAzvupt3Sw/u2fpjZXjM3VLVU/VFq8gjmMMVVKTJBXUHwbdJiiNzvx0CobBYYXz5dMjV5Q3dubC2iikS70CX1M13n1yFzIebMsL8vTQaM/g5g0Sg9woAW8b74uWH5r6h6xmXOR7tfFi8m2tDmIllpRxXe49G9Hcmr4NQaHs3hb/A/31JTFjJDTvFqRN9BNUYgC4OR51FNFRsj2TZ8ecaYsSTcFioRG4jBYpU6URbFHLVrs3C5g9Fh8LKW6ISSd3G9XFnEYYXFAp0C8SiEZR02VYvU61N68IeDRikscjQ1JOm8r2HKGhi+Nv4Mc22qxPrpn4bg4jbAPzwms2OTX2rkI6ghZYhzXYOHzqszqe+J7bPXUdHmDLzXIb1mTNy9dAU1FY3UqbCUXb4Hqx0CjvTzbCE7R8ME537qfy0QkvtjLFek9Azh36iKzGnH7rVdmKQuzShVkYCnUqItPViamm7Py1Rbv1HPO7X4eIrsy2vc= greencheetah@fedora''
+    ];
   };
 
   home-manager = {
-    users."ghastly" = import ./home.nix;
+    users."carol" = import ./home.nix;
   };
   system.stateVersion = "23.11"; # DO NOT CHANGE
   system.autoUpgrade = {

@@ -62,8 +62,13 @@ in
     # also pass inputs to home-manager modules
     extraSpecialArgs = { inherit inputs; inherit pkgs; };
   };
-  networking.firewall = {
-    enable = lib.mkDefault true;
+  networking.firewall = rec {
+    enable = lib.mkDefault false;
+    allowedTCPPortRanges = [
+      { from = 22; to = 22; }
+      { from = 1714; to = 1764; }
+    ];
+    allowedUDPPortRanges = allowedTCPPortRanges;
   };
   fonts.fontDir.enable = true;
 }
