@@ -133,7 +133,18 @@
       nixosConfigurations.omegaServ = nixpkgs.lib.nixosSystem rec {
         specialArgs = { inherit inputs; };
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ]; })
+          ({ config, pkgs, ... }: {
+            nixpkgs.overlays = [
+              overlay-unfree
+              overlay-master
+              overlay-master-unfree
+              overlay-unstable
+              overlay-unstable-unfree
+              (final: prev: {
+                waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+              })
+            ];
+          })
           ./hosts/omegaServ/configuration.nix
         ];
       };

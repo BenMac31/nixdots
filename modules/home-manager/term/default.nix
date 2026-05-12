@@ -21,6 +21,13 @@
     programs = {
       gpg.enable = true;
       ssh.enable = lib.mkDefault true;
+      direnv = {
+        enable = true;
+        nix-direnv.enable = true;
+        enableBashIntegration = true;
+        enableZshIntegration = true;
+        enableFishIntegration = true;
+      };
     };
   };
 }
