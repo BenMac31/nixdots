@@ -26,7 +26,7 @@ in
     };
   };
 
-  networking.hostName = "nixos";
+  networking.hostName = "omegaServ";
 
   time.timeZone = "America/New_York";
 

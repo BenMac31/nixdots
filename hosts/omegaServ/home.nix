@@ -4,6 +4,10 @@
   imports = [
     ../../modules/home-manager
   ];
+
+  # IDK, but it makes it work
+  dconf.enable = lib.mkForce false;
+
   programs.home-manager.enable = true;
   home.username = "carol";
   home.homeDirectory = "/home/carol";
