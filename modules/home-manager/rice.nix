@@ -30,19 +30,29 @@
       name = "kvantum";
     };
   };
-  services.flatpak.overrides.global = {
-    Context.filesystems = [
-      "xdg-config/gtk-4.0:ro"
-      "xdg-config/gtk-3.0:ro"
-      "${pkgs.gruvbox-gtk-theme}/share/themes/:ro"
-      "xdg-config/Kvantum:ro"
-      "xdg-config/themes/:ro"
-      "/run/current-system/sw/share/X11/fonts:ro"
-      "/nix/store:ro"
-      "xdg-data/fonts/:ro"
+  services.flatpak = lib.mkIf config.desktop.enable {
+    # Kvantum is a Flatpak extension, not a regular app — it must match the KDE
+    # platform version used by Qt flatpaks (e.g. qBittorrent on org.kde.Platform//6.10).
+    packages = [
+      "org.kde.KStyle.Kvantum//6.10"
     ];
-    Environment = {
-      XCURSOR_PATH = "/run/host/user-share/icons:/run/host/share/icons";
+    overrides.global = {
+      Context.filesystems = [
+        "xdg-config/gtk-4.0:ro"
+        "xdg-config/gtk-3.0:ro"
+        "${pkgs.gruvbox-gtk-theme}/share/themes/:ro"
+        "xdg-config/Kvantum:ro"
+        "xdg-config/qt5ct:ro"
+        "xdg-config/themes/:ro"
+        "/run/current-system/sw/share/X11/fonts:ro"
+        "/nix/store:ro"
+        "xdg-data/fonts/:ro"
+      ];
+      Environment = {
+        XCURSOR_PATH = "/run/host/user-share/icons:/run/host/share/icons";
+        QT_STYLE_OVERRIDE = "kvantum";
+        QT_QPA_PLATFORMTHEME = "qt5ct";
+      };
     };
   };
   home.pointerCursor = {
