@@ -27,6 +27,7 @@ in
   };
 
   networking.hostName = "omegaServ";
+  custom.flakeAttr = "omegaServ";
 
   time.timeZone = "America/New_York";
 
@@ -44,4 +45,7 @@ in
   };
   system.stateVersion = "23.11"; # DO NOT CHANGE
   nix.settings.trusted-users = [ "root" "carol" ];
+  virtualisation.docker.enable = true;
+  virtualisation.docker.daemon.settings."data-root" = "/home/docker";
+  networking.firewall.allowedTCPPorts = [ 80 8080 8443 3478 ];
 }

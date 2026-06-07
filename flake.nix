@@ -86,7 +86,11 @@
         ];
       };
       homeConfigurations.nixBlade = home-manager.lib.homeManagerConfiguration {
-        extraSpecialArgs = { inherit inputs; osConfig = nixosConfigurations.nixBlade.config; };
+        extraSpecialArgs = {
+          inherit inputs;
+          osConfig = nixosConfigurations.nixBlade.config;
+          flakeAttr = "nixBlade";
+        };
         inherit pkgs;
         modules = [
           ({ config, pkgs, ... }: {
@@ -112,7 +116,11 @@
         ];
       };
       homeConfigurations.phantomServ = home-manager.lib.homeManagerConfiguration {
-        extraSpecialArgs = { inherit inputs; osConfig = nixosConfigurations.phantomServ.config; };
+        extraSpecialArgs = {
+          inherit inputs;
+          osConfig = nixosConfigurations.phantomServ.config;
+          flakeAttr = "phantomServ";
+        };
         inherit pkgs;
         modules = [
           ({ config, pkgs, ... }: {
@@ -149,7 +157,11 @@
         ];
       };
       homeConfigurations.omegaServ = home-manager.lib.homeManagerConfiguration {
-        extraSpecialArgs = { inherit inputs; osConfig = nixosConfigurations.omegaServ.config; };
+        extraSpecialArgs = {
+          inherit inputs;
+          osConfig = nixosConfigurations.omegaServ.config;
+          flakeAttr = "omegaServ";
+        };
         inherit pkgs;
         modules = [
           ({ config, pkgs, ... }: {

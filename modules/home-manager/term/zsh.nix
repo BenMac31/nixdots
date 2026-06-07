@@ -1,4 +1,4 @@
-{ pkgs, config, inputs, lib, osConfig, ... }:
+{ pkgs, config, inputs, lib, osConfig, flakeAttr, ... }:
 
 {
   # To escape bashisms use ''${}
@@ -18,20 +18,29 @@
     };
     enableCompletion = false;
     defaultKeymap = "viins";
-    shellAliases = {
-      nixswitch = "st=\"$(date +%s)\"; sudo nixos-rebuild switch --flake $HOME/nixos/#nixBlade --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
-      homeswitch = "st=\"$(date +%s)\"; home-manager switch --flake $HOME/nixos/#nixBlade --cores 6&& notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
-      nixtest = "st=\"$(date +%s)\"; sudo nixos-rebuild test --fast --flake $HOME/nixos/#nixBlade --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
-      nixwatch = "cd ~/nixos && dirwatch nixtest";
-      homewatch = "cd ~/nixos && dirwatch homeswitch";
-      powerinfo = "upower -i /org/freedesktop/UPower/devices/battery_BAT1";
-      cat = "bat";
-      cp = "cp -r";
-      neofetch = "fastfetch";
-      ls = "eza --icons=auto";
-      vpnexit = lib.mkIf osConfig.services.mullvad-vpn.enable "mullvad split-tunnel add \$$";
-      hexdec = "printf '%x\n' \$1";
-    };
+    shellAliases = lib.mkMerge [
+      (lib.mkIf config.desktop.enable {
+        nixswitch = "st=\"$(date +%s)\"; sudo nixos-rebuild switch --flake $HOME/nixos/#${flakeAttr} --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
+        homeswitch = "st=\"$(date +%s)\"; home-manager switch --flake $HOME/nixos/#${flakeAttr} --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
+        nixtest = "st=\"$(date +%s)\"; sudo nixos-rebuild test --fast --flake $HOME/nixos/#${flakeAttr} --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
+      })
+      (lib.mkIf (!config.desktop.enable) {
+        nixswitch = "sudo nixos-rebuild switch --flake $HOME/nixos/#${flakeAttr} --cores 6";
+        homeswitch = "home-manager switch --flake $HOME/nixos/#${flakeAttr} --cores 6";
+        nixtest = "sudo nixos-rebuild test --fast --flake $HOME/nixos/#${flakeAttr} --cores 6";
+      })
+      {
+        nixwatch = "cd ~/nixos && dirwatch nixtest";
+        homewatch = "cd ~/nixos && dirwatch homeswitch";
+        powerinfo = "upower -i /org/freedesktop/UPower/devices/battery_BAT1";
+        cat = "bat";
+        cp = "cp -r";
+        neofetch = "fastfetch";
+        ls = "eza --icons=auto";
+        vpnexit = lib.mkIf osConfig.services.mullvad-vpn.enable "mullvad split-tunnel add \$$";
+        hexdec = "printf '%x\n' \$1";
+      }
+    ];
     initExtraBeforeCompInit = /*bash*/ ''
             # Set the root name of the plugins files (.txt and .zsh) antidote will use.
       zsh_plugins=''${ZDOTDIR:-~}/.zsh_plugins
@@ -53,6 +62,7 @@
     '';
     initExtra = /*bash*/ ''
             source $HOME/.p10k.zsh
+            [[ $TERM == xterm-kitty ]] && alias ssh='kitten ssh'
             rn() {${pkgs.coreutils}/bin/shuf -i 1-$1 -n 1} # Random number
             dechex() {echo "$(
         (16#$1))"} # Decimal to Hex

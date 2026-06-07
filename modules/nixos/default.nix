@@ -4,6 +4,11 @@ let
   upkgs = pkgs.unstable;
 in
 {
+  options.custom.flakeAttr = lib.mkOption {
+    type = lib.types.str;
+    description = "Flake output name for this machine (matches nixosConfigurations.* / homeConfigurations.*). Used by home-manager shell rebuild aliases.";
+  };
+
   imports =
     [
       inputs.home-manager.nixosModules.default
@@ -72,7 +77,10 @@ in
   };
   home-manager = {
     # also pass inputs to home-manager modules
-    extraSpecialArgs = { inherit inputs; inherit pkgs; };
+    extraSpecialArgs = {
+      inherit inputs pkgs;
+      flakeAttr = config.custom.flakeAttr;
+    };
   };
   networking.firewall = rec {
     enable = lib.mkDefault false;

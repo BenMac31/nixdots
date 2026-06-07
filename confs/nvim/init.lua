@@ -638,10 +638,10 @@ require("lazy").setup({
 			--  Check out: https://github.com/echasnovski/mini.nvim
 		end,
 	},
-	{
-		"3rd/image.nvim",
-		opts = {},
-	},
+	-- {
+	-- 	"3rd/image.nvim",
+	-- 	opts = {},
+	-- },
 	{
 		"Thiago4532/mdmath.nvim",
 		dependencies = {

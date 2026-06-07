@@ -27,6 +27,7 @@ in
   };
 
   networking.hostName = "nixos";
+  custom.flakeAttr = "phantomServ";
 
   time.timeZone = "America/New_York";
 
