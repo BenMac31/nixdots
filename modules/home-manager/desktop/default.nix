@@ -14,8 +14,10 @@
     ./sync.nix
     ./office.nix
     ./media.nix
+    ../health-alerts.nix
   ];
   config = lib.mkIf config.desktop.enable {
+    healthAlerts.enable = lib.mkDefault true;
     comms.enable = lib.mkDefault true;
     office.enable = lib.mkDefault true;
     media.enable = lib.mkDefault true;
