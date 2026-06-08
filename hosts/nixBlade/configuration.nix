@@ -17,7 +17,6 @@ in
   };
   programs = {
     hyprland.enable = true;
-    adb.enable = true;
     nix-ld.enable = true;
     nix-ld.libraries = with pkgs; [
 
@@ -54,16 +53,15 @@ in
     fprintd.enable = true;
     thermald.enable = true;
 
-    xserver = {
-      enable = true;
-      desktopManager.gnome.enable = true;
-    };
+    xserver.enable = true;
+    desktopManager.gnome.enable = true;
     logind = {
       lidSwitch = "hibernate";
       lidSwitchExternalPower = "hibernate";
     };
   };
   environment.systemPackages = with pkgs; [
+    android-tools
     libusb1
     powertop
     numworks-udev-rules

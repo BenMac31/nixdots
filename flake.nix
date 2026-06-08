@@ -2,9 +2,9 @@
   description = "Nixos config flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -40,7 +40,15 @@
   outputs = { self, nixpkgs, home-manager, nixpkgs-master, nixpkgs-unstable, ... }@inputs:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      nixpkgsConfig = {
+        permittedInsecurePackages = [
+          "electron-39.8.10"
+        ];
+      };
+      pkgs = import nixpkgs {
+        inherit system;
+        config = nixpkgsConfig;
+      };
       overlay-master = final: prev: {
         master = import nixpkgs-master.legacyPackages.${system};
       };
@@ -50,19 +58,25 @@
       overlay-unfree = final: prev: {
         unfree = import nixpkgs {
           inherit system;
-          config.allowUnfree = true;
+          config = nixpkgsConfig // {
+            allowUnfree = true;
+          };
         };
       };
       overlay-unstable-unfree = final: prev: {
         unstable.unfree = import nixpkgs-unstable {
           inherit system;
-          config.allowUnfree = true;
+          config = nixpkgsConfig // {
+            allowUnfree = true;
+          };
         };
       };
       overlay-master-unfree = final: prev: {
         master.unfree = import nixpkgs-master {
           inherit system;
-          config.allowUnfree = true;
+          config = nixpkgsConfig // {
+            allowUnfree = true;
+          };
         };
       };
     in
@@ -71,6 +85,7 @@
         specialArgs = { inherit inputs; };
         modules = [
           ({ config, pkgs, ... }: {
+            nixpkgs.config = nixpkgsConfig;
             nixpkgs.overlays = [
               overlay-unfree
               overlay-master
@@ -94,6 +109,7 @@
         inherit pkgs;
         modules = [
           ({ config, pkgs, ... }: {
+            nixpkgs.config = nixpkgsConfig;
             nixpkgs.overlays = [
               overlay-unfree
               overlay-unstable
@@ -111,7 +127,7 @@
       nixosConfigurations.phantomServ = nixpkgs.lib.nixosSystem rec {
         specialArgs = { inherit inputs; };
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ]; })
+          ({ config, pkgs, ... }: { nixpkgs.config = nixpkgsConfig; nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ]; })
           ./hosts/phantomServ/configuration.nix
         ];
       };
@@ -124,6 +140,7 @@
         inherit pkgs;
         modules = [
           ({ config, pkgs, ... }: {
+            nixpkgs.config = nixpkgsConfig;
             nixpkgs.overlays = [
               overlay-unfree
               overlay-unstable
@@ -142,6 +159,7 @@
         specialArgs = { inherit inputs; };
         modules = [
           ({ config, pkgs, ... }: {
+            nixpkgs.config = nixpkgsConfig;
             nixpkgs.overlays = [
               overlay-unfree
               overlay-master
@@ -165,6 +183,7 @@
         inherit pkgs;
         modules = [
           ({ config, pkgs, ... }: {
+            nixpkgs.config = nixpkgsConfig;
             nixpkgs.overlays = [
               overlay-unfree
               overlay-unstable

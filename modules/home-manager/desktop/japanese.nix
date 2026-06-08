@@ -20,7 +20,8 @@
       QT_IM_MODULE = "fcitx";
     };
     i18n.inputMethod = lib.mkIf config.desktop.japanese.input.enable {
-      enabled = "fcitx5";
+      enable = true;
+      type = "fcitx5";
       fcitx5.addons = with pkgs; [
         fcitx5-mozc-ut
         fcitx5-gtk

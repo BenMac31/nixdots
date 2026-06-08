@@ -6,6 +6,7 @@ let
   pactl = "${pkgs.pulseaudio}/bin/pactl";
   socat = "${pkgs.socat}/bin/socat";
   hyprctl = "${pkgs.hyprland}/bin/hyprctl";
+  jq = "${pkgs.jq}/bin/jq";
 in
 {
   # Only merge Waybar / rofi / hyprpaper when the OS enables Hyprland; otherwise
@@ -91,7 +92,7 @@ in
         ${pkgs.libnotify}/bin/notify-send -i /tmp/clip.png "Screenshot taken" "Put on clipboard or /tmp/clip.png"
       '')
       (pkgs.writeShellScriptBin "hyprperf" ''
-        HYPRGAMEMODE=$(${hyprctl} -j getoption animations:enabled | ${pkgs.jq}/bin/jq -r '.int')
+        HYPRGAMEMODE=$(${hyprctl} -j getoption animations:enabled | ${jq} -r '.int')
         if [ "$HYPRGAMEMODE" = "1" ] ; then
             ${hyprctl} --batch "\
                 keyword animations:enabled 0;\
@@ -106,17 +107,26 @@ in
         ${hyprctl} reload
       '')
       (pkgs.writeShellScriptBin "swapcaps" ''
-        HYPRKBOPTIONS=$(${hyprctl} -j getoption input:kb_options | ${pkgs.jq}/bin/jq -r '.str')
+        HYPRKBOPTIONS=$(${hyprctl} -j getoption input:kb_options | ${jq} -r '.str')
         if [ "$HYPRKBOPTIONS" = "caps:swapescape" ] ; then
             ${hyprctl} keyword input:kb_options ""
             exit
         fi
         ${hyprctl} reload
       '')
+      (pkgs.writeShellScriptBin "toggle-monocle" ''
+        read -r ws layout < <(${hyprctl} activeworkspace -j | ${jq} -r '[.name,.tiledLayout]|@tsv')
+        if [ "$layout" = "monocle" ]; then
+          ${hyprctl} keyword "workspace name:$ws,layout:master"
+        else
+          ${hyprctl} keyword "workspace name:$ws,layout:monocle"
+        fi
+      '')
 
     ];
     wayland.windowManager.hyprland = {
       enable = true;
+      configType = "hyprlang";
       settings = {
         monitor = [
           ",preferred,auto,1.56667"
@@ -183,7 +193,6 @@ in
         };
 
         dwindle = {
-          pseudotile = true;
           preserve_split = true;
         };
 
@@ -202,8 +211,9 @@ in
 
         windowrule =
           let
-            f = regex: "float, class:^(${regex})$";
-            w = s: r: "workspace ${toString s} silent, ${r}";
+            f = regex: "match:class ^(${regex})$, float on";
+            wClass = s: regex: "match:class ^(${regex})$, workspace ${toString s} silent";
+            wTitle = s: regex: "match:title ^(${regex})$, workspace ${toString s} silent";
           in
           [
             (f "org.gnome.Calculator")
@@ -216,14 +226,14 @@ in
             (f "xdg-desktop-portal")
             (f "xdg-desktop-portal-gnome")
             (f "com.github.Aylur.ags")
-            (w 5 "title:^(Signal)$")
-            (w 8 "class:^(steam)(.*)$")
-            (w 8 "class:^(org.prismlauncher.PrismLauncher)$")
-            "float,title:(Bitwarden)$"
+            (wTitle 5 "Signal")
+            (wClass 8 "steam(.*)")
+            (wClass 8 "org.prismlauncher.PrismLauncher")
+            "match:title (Bitwarden), float on"
           ];
         layerrule = [
-          "animation slide top, ^(rofi)$"
-          "animation slide top, ^(waybar)$"
+          "match:namespace ^(rofi)$, animation slide top"
+          "match:namespace ^(waybar)$, animation slide top"
         ];
 
         "$mainMod" = "SUPER";
@@ -259,7 +269,7 @@ in
           ",Print,exec,sshot"
           "CTRLSHIFT$mainMod,S,exec,qshot"
           "$mainMod,F11,fullscreen,0"
-          "$mainMod,M,fullscreen,1"
+          "$mainMod,M,exec,toggle-monocle"
           "CTRL$mainMod,F11,fullscreenstate,2"
           "$mainMod,p,pin,"
           "$mainMod CTRL,s,exec,grimblast copy area"

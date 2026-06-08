@@ -20,7 +20,7 @@
         paper="$(readlink -f $paper)"
         rm ~/.cache/wall.png
         ln -s "$paper" ~/.cache/wall.png
-        hyprctl monitors -j | jq -r '.[].name' | xargs -I '{}' hyprctl hyprpaper reload "{},$paper"
+        hyprctl monitors -j | jq -r '.[].name' | xargs -I '{}' hyprctl hyprpaper wallpaper "{},$paper"
       '')
     ];
     file.".config/badwps".text = ''

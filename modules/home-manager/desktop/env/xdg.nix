@@ -1,4 +1,10 @@
 { pkgs, config, lib, osConfig, ... }:
+
+let
+  gnomeEnabled =
+    (lib.attrByPath [ "services" "desktopManager" "gnome" "enable" ] false osConfig)
+    || (lib.attrByPath [ "services" "xserver" "desktopManager" "gnome" "enable" ] false osConfig);
+in
 {
   config = lib.mkIf config.desktop.enable {
     systemd.user.settings.Manager.DefaultEnvironment = {
@@ -10,10 +16,10 @@
         enable = true;
         xdgOpenUsePortal = true;
         configPackages = with pkgs; [
-          (lib.mkIf osConfig.services.xserver.desktopManager.gnome.enable gnome-session)
+          (lib.mkIf gnomeEnabled gnome-session)
         ];
         extraPortals = with pkgs; [
-          (lib.mkIf osConfig.services.xserver.desktopManager.gnome.enable xdg-desktop-portal-gtk)
+          (lib.mkIf gnomeEnabled xdg-desktop-portal-gtk)
           (lib.mkIf osConfig.programs.hyprland.enable xdg-desktop-portal-hyprland)
         ];
       };

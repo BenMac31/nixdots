@@ -14,7 +14,7 @@ in
       services.openssh = {
         enable = true;
         settings = {
-          PasswordAuthentication = false;
+          PasswordAuthentication = lib.mkDefault false;
           UseDns = true;
           PermitRootLogin = "no"; # "yes", "without-password", "prohibit-password", "forced-commands-only", "no"
         };

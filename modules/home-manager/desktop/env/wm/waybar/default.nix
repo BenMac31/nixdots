@@ -5,7 +5,7 @@
   ];
   programs.waybar = {
     systemd.enable = true;
-    systemd.target = "graphical-session.target";
+    systemd.targets = [ "graphical-session.target" ];
 
     settings = [
       {

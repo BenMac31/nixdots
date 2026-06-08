@@ -11,7 +11,7 @@
     home.packages = with pkgs; [
       brave
       bitwarden-desktop
-      (lib.mkIf osConfig.services.pipewire.enable helvum)
+      (lib.mkIf osConfig.services.pipewire.enable crosspipe)
       (lib.mkIf osConfig.services.pipewire.pulse.enable pavucontrol)
     ];
     programs = {

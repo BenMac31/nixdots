@@ -7,7 +7,7 @@
   };
   config = lib.mkIf config.sync.enable {
     home.packages = [
-      pkgs.blueberry
+      pkgs.blueman
     ];
     services.kdeconnect = {
       enable = true;

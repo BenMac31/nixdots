@@ -6,6 +6,7 @@
   colorScheme = lib.mkDefault inputs.nix-colors.colorSchemes.gruvbox-dark-medium;
   gtk = {
     enable = lib.mkIf config.desktop.enable true;
+    gtk4.theme = lib.mkIf config.desktop.enable config.gtk.theme;
     theme = {
       package = pkgs.gruvbox-gtk-theme;
       name = "Gruvbox-Dark";
