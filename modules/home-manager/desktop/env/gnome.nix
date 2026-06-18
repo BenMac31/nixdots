@@ -2,8 +2,7 @@
 
 let
   gnomeEnabled =
-    (lib.attrByPath [ "services" "desktopManager" "gnome" "enable" ] false osConfig)
-    || (lib.attrByPath [ "services" "xserver" "desktopManager" "gnome" "enable" ] false osConfig);
+    lib.attrByPath [ "services" "desktopManager" "gnome" "enable" ] false osConfig;
 in
 {
   dconf = {
