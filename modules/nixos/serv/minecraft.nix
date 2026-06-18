@@ -15,6 +15,14 @@
         description = "Minecraft server in screen session";
         after = [ "network.target" ];
         wantedBy = [ "multi-user.target" ];
+        path = with pkgs; [
+          jdk21
+          udev
+        ];
+        environment = {
+          JAVA_HOME = "${pkgs.jdk21.home}";
+          LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.udev ];
+        };
         serviceConfig = {
           User = "sistermcserver";
           Group = "sistermcserver";
