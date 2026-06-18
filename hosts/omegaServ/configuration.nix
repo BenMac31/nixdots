@@ -19,7 +19,7 @@ in
   };
   services.openssh = {
     enable = true;
-    ports = [ 22 ];
+    ports = [ 23 ];
     settings = {
       PasswordAuthentication = false;
       AllowUsers = [ "carol" ];
@@ -49,5 +49,5 @@ in
   nix.settings.trusted-users = [ "root" "carol" ];
   virtualisation.docker.enable = true;
   virtualisation.docker.daemon.settings."data-root" = "/home/docker";
-  networking.firewall.allowedTCPPorts = [ 80 8080 8443 3478 ];
+  networking.firewall.allowedTCPPorts = [ 23 80 8080 8443 3478 ];
 }
