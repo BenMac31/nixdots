@@ -95,4 +95,7 @@ in
   nix.package = pkgs.lix;
 
   system.stateVersion = "23.11"; # DO NOT CHANGE
+  services.udev.extraRules = ''
+  SUBSYSTEM=="usb", ATTR{idVendor}=="0483", MODE="0666"
+'';
 }
