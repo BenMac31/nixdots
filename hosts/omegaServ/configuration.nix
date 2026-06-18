@@ -13,6 +13,7 @@ in
   # services.mullvad-vpn.enable = true;
   serv = {
     enable = true;
+    wireguard.enable = true;
     # media.enable = true;
   };
   services.openssh = {
