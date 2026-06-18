@@ -14,6 +14,7 @@ in
   serv = {
     enable = true;
     wireguard.enable = true;
+    minecraft.enable = true;
     # media.enable = true;
   };
   services.openssh = {

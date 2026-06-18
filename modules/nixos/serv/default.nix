@@ -7,6 +7,7 @@ in
   imports = [
     ./home-assistant.nix
     ./media.nix
+    ./minecraft.nix
     ./wireguard.nix
   ];
   options.serv.enable = lib.mkEnableOption "Enable the serv module";
