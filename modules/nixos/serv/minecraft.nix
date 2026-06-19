@@ -11,6 +11,9 @@
       };
       users.groups.sistermcserver = { };
 
+      networking.firewall.allowedTCPPorts = [ 25565 ];
+      networking.firewall.allowedUDPPorts = [ 24454 ];
+
       systemd.services.minecraft-server = {
         description = "Minecraft server in screen session";
         after = [ "network.target" ];
