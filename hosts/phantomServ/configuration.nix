@@ -29,7 +29,7 @@ in
   networking.hostName = "nixos";
   custom.flakeAttr = "phantomServ";
 
-  time.timeZone = "America/New_York";
+  time.timeZone = lib.mkDefault "America/New_York";
 
   users.users.ghastly = {
     isNormalUser = true;

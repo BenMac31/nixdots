@@ -42,7 +42,7 @@ in
 
   ];
 
-  time.timeZone = "America/New_York";
+  time.timeZone = lib.mkDefault "America/New_York";
   services = {
     displayManager.defaultSession = "hyprland";
     flatpak.enable = true;
