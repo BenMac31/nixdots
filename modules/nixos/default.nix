@@ -23,7 +23,7 @@ in
     networking.networkmanager.enable = true;
 
     services = {
-      # automatic-timezoned.enable = true; # Re-Enable once https://github.com/NixOS/nixpkgs/issues/321121 closes
+      automatic-timezoned.enable = true;
       printing = {
         drivers = [
           pkgs.gutenprint
