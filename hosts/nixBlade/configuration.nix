@@ -104,4 +104,7 @@ in
   services.udev.extraRules = ''
   SUBSYSTEM=="usb", ATTR{idVendor}=="0483", MODE="0666"
 '';
+  networking.extraHosts = ''
+  127.0.0.1 host.docker.internal
+'';
 }
