@@ -4,6 +4,7 @@
     ./programming
     ./tui
     ./ai.nix
+    ./git.nix
     ./zsh.nix
     ./media.nix
     ./ssh.nix
