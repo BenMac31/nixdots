@@ -9,6 +9,7 @@
 
     home.packages = [
       pkgs.thunderbird
+      pkgs.fluffychat
       (lib.mkIf config.desktop.japanese.input.enable (pkgs.symlinkJoin
         {
           name = "element-desktop";
