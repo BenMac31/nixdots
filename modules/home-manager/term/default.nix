@@ -5,6 +5,7 @@
     ./tui
     ./ai.nix
     ./git.nix
+    ./omnigent.nix
     ./zsh.nix
     ./media.nix
     ./ssh.nix
