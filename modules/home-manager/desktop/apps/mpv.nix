@@ -1,6 +1,18 @@
 { config, lib, pkgs, inputs, ... }:
 {
   config = lib.mkIf config.programs.mpv.enable {
+    xdg.configFile."mpv/scripts/speed-breakpoints.lua".source =
+      ./mpv-scripts/speed-breakpoints.lua;
+
+    programs.mpv.config = {
+      # Software-only decode can't keep up with the large speed swings
+      # speed-breakpoints.lua produces (e.g. 45x+ on 1080p h264), causing
+      # dropped frames and A/V desync that make applied speed changes look
+      # like they didn't take effect. mpv's own desync warning suggests
+      # this exact fix.
+      hwdec = "auto-safe";
+    };
+
     # programs.mpv = {
     #   scripts = with pkgs.mpvScripts; [
     #     sponsorblock
