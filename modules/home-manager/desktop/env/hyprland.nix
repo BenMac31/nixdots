@@ -15,6 +15,7 @@ in
     ./wm/rofi
     ./wm/hyprpaper.nix
     ./wm/waybar
+    ./swaync.nix
   ];
   config = lib.mkIf osConfig.programs.hyprland.enable {
     programs.rofi.enable = true;
@@ -38,7 +39,6 @@ in
     home.packages = [
       #
       pkgs.wlsunset
-      pkgs.swaynotificationcenter
       pkgs.grimblast
       pkgs.ydotool
       pkgs.wlr-randr
@@ -135,7 +135,6 @@ in
         exec-once = [
           "nmcli radio wifi off && nmcli radio wifi on" # wifi doesn't work without this.
           "bwfloat"
-          "swaync"
           "nm-applet"
           "${pkgs.wlsunset}/wlsunset -l 39.103119 -L -84.512016 -t 0 -g 0.7"
           "${pkgs.kdePackages.kdeconnect-kde}/bin/kdeconnect-indicator"
@@ -234,6 +233,7 @@ in
         layerrule = [
           "match:namespace ^(rofi)$, animation slide top"
           "match:namespace ^(waybar)$, animation slide top"
+          "match:namespace ^(swaync-control-center)$, animation slide right"
         ];
 
         "$mainMod" = "SUPER";
