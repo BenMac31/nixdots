@@ -5,6 +5,7 @@
     ./foot.nix
     ./kitty.nix
     ./mpv.nix
+    ./startpage.nix
     ./zathura.nix
   ];
   config = lib.mkIf config.desktop.enable {

@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <style>
+    :root {
+      --bg:     #282828;
+      --bg0h:   #1d2021;
+      --bg1:    #3c3836;
+      --bg2:    #504945;
+      --bg3:    #665c54;
+      --bg4:    #7c6f64;
+      --fg4:    #a89984;
+      --fg3:    #bdae93;
+      --fg1:    #d5c4a1;
+      --fg:     #ebdbb2;
+      --fg0:    #fbf1c7;
+      --red:    #fb4934;
+      --orange: #fe8019;
+      --yellow: #fabd2f;
+      --green:  #b8bb26;
+      --aqua:   #8ec07c;
+      --blue:   #83a598;
+      --purple: #d3869b;
+      --brown:  #d65d0e;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      position: relative;
+      background: transparent;
+      color: var(--fg1);
+      font-family: "JetBrainsMono Nerd Font Mono", monospace;
+    }
+
+    /* Blurred wallpaper — matches Hyprland blur_size=3 passes=1 */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: -20px;
+      background: var(--wall-bg, url('file:///home/greencheetah/.cache/wall.png')) center / cover no-repeat;
+      filter: blur(3px);
+      z-index: -2;
+    }
+
+    /* Dark overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(40, 40, 40, 0.86);
+      z-index: -1;
+    }
+
+    /* ── Pomodoro ambient bar ────────────────────────────────── */
+    #pomo-track {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 3px; background: var(--bg1); z-index: 99;
+    }
+    #pomo-bar {
+      position: fixed; top: 0; left: 0;
+      height: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--red), var(--yellow));
+      transition: width 1s linear, background 0.6s;
+      cursor: pointer; z-index: 100;
+    }
+    #pomo-bar.break-mode { background: linear-gradient(90deg, var(--green), var(--aqua)); }
+
+    /* ── Settings trigger ────────────────────────────────────── */
+    #settings-trigger {
+      position: fixed; top: 18px; right: 22px;
+      background: transparent; border: none;
+      color: var(--bg3); font-size: 1rem;
+      cursor: pointer; z-index: 200; padding: 4px;
+      transition: color 0.15s;
+      font-family: "JetBrainsMono Nerd Font Mono", monospace;
+      line-height: 1;
+    }
+    #settings-trigger:hover { color: var(--fg3); }
+
+    /* ── Settings panel ──────────────────────────────────────── */
+    #settings-bg {
+      position: fixed; inset: 0;
+      background: rgba(40, 40, 40, 0.5);
+      z-index: 300; opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    #settings-bg.open { opacity: 1; pointer-events: all; }
+
+    #settings-panel {
+      position: fixed; top: 0; right: 0;
+      width: 360px; height: 100vh;
+      background: rgba(29, 32, 33, 0.97);
+      border-left: 1px solid var(--bg2);
+      z-index: 400; padding: 0;
+      transform: translateX(100%);
+      transition: transform 0.28s cubic-bezier(0.05, 0.9, 0.1, 1.05);
+      display: flex; flex-direction: column;
+    }
+    #settings-panel.open { transform: translateX(0); }
+    #settings-panel .s-header { padding: 36px 32px 0; flex-shrink: 0; }
+    .s-scroll {
+      flex: 1; overflow-y: auto;
+      padding: 24px 32px 8px;
+      display: flex; flex-direction: column; gap: 28px;
+    }
+
+    .s-header {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .s-title { font-size: 0.72rem; letter-spacing: 0.16em; color: var(--fg3); }
+    .s-close {
+      background: transparent; border: none; color: var(--bg3);
+      font-size: 1.3rem; cursor: pointer; padding: 0; line-height: 1;
+      font-family: "JetBrainsMono Nerd Font Mono", monospace; transition: color 0.12s;
+    }
+    .s-close:hover { color: var(--red); }
+
+    .s-sec-label {
+      font-size: 0.65rem; letter-spacing: 0.14em;
+      text-transform: uppercase; margin-bottom: 14px;
+    }
+    .s-row { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
+    .s-row label { font-size: 0.68rem; color: var(--bg4); letter-spacing: 0.06em; }
+    .s-row input {
+      background: transparent; border: none;
+      border-bottom: 1px solid var(--bg3);
+      color: var(--fg1); font-family: "FiraCode Nerd Font", monospace;
+      font-size: 0.83rem; padding: 4px 0; outline: none; width: 100%;
+    }
+    .s-row input:focus { border-bottom-color: var(--blue); }
+    .s-row input::placeholder { color: var(--bg3); }
+
+    .s-row-toggle {
+      flex-direction: row; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .s-row-toggle label { font-size: 0.72rem; color: var(--fg3); cursor: pointer; }
+    .s-row-toggle input[type=checkbox] {
+      width: auto; border-bottom: none; cursor: pointer; accent-color: var(--aqua);
+    }
+
+    .s-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+
+    .s-btns {
+      display: flex; gap: 20px;
+      flex-shrink: 0;
+      padding: 16px 32px 28px;
+      border-top: 1px solid var(--bg2);
+    }
+    .s-btn {
+      background: transparent; border: none;
+      font-family: "JetBrainsMono Nerd Font Mono", monospace;
+      font-size: 0.78rem; letter-spacing: 0.06em; cursor: pointer; padding: 0;
+      transition: opacity 0.12s;
+    }
+    .s-btn.save  { color: var(--blue); }
+    .s-btn.clear { color: var(--red); }
+    .s-btn:hover { opacity: 0.7; }
+
+    .s-hint { font-size: 0.68rem; color: var(--bg4); margin-top: 2px; line-height: 1.5; }
+    .s-hint.connected { color: var(--green); }
+    .s-hint.offline   { color: var(--bg3); }
+    .s-hint code { color: var(--aqua); background: var(--bg1); padding: 1px 4px; border-radius: 3px; }
+
+    /* Server settings rows */
+    .s-srv-row { display: flex; gap: 7px; align-items: center; margin-bottom: 8px; }
+    .s-srv-row .s-srv-name     { width: 88px; flex-shrink: 0; }
+    .s-srv-row .s-srv-endpoint { flex: 1; min-width: 0; }
+    .s-srv-method {
+      background: transparent; border: none; border-bottom: 1px solid var(--bg3);
+      color: var(--fg3); font-family: "FiraCode Nerd Font", monospace;
+      font-size: 0.78rem; cursor: pointer; padding: 4px 0; outline: none; width: 48px;
+    }
+    .s-srv-method option { background: #1d2021; color: var(--fg1); }
+    .s-srv-row input { margin-bottom: 0; border-bottom: 1px solid var(--bg3); color: var(--fg1);
+      font-family: "FiraCode Nerd Font", monospace; font-size: 0.83rem;
+      background: transparent; border-top: none; border-left: none; border-right: none;
+      padding: 4px 0; outline: none; width: 100%; }
+    .s-srv-row input:focus { border-bottom-color: var(--blue); }
+    .s-srv-row input::placeholder { color: var(--bg3); }
+    .s-add-srv { font-size: 0.75rem; letter-spacing: 0.06em; margin-top: 4px; }
+
+    /* GitHub widget (right column) */
+    #gh-body { display: flex; flex-direction: column; gap: 5px; }
+    .gh-stats { display: flex; gap: 14px; flex-wrap: wrap; }
+    .gh-stat  { font-size: 0.72rem; font-family: "FiraCode Nerd Font", monospace; }
+    .gh-stat a { text-decoration: none; color: inherit; }
+    .gh-stat a:hover { color: var(--fg0); }
+    .gh-notif-count  { color: var(--orange); }
+    .gh-pr-count     { color: var(--blue); }
+    .gh-review-count { color: var(--purple); }
+    .gh-notif-breakdown { font-size: 0.69rem; color: var(--bg4); font-family: "FiraCode Nerd Font", monospace; }
+    .gh-divider { height: 1px; background: var(--bg2); margin: 3px 0; }
+    .gh-push { font-size: 0.78rem; font-family: "FiraCode Nerd Font", monospace; display: flex; gap: 6px; min-width: 0; }
+    .gh-push-repo { color: var(--yellow); flex-shrink: 0; }
+    .gh-push a { text-decoration: none; color: var(--fg3); display: flex; gap: 6px; min-width: 0; overflow: hidden; }
+    .gh-push a:hover { color: var(--fg0); }
+    .gh-push-sha { color: var(--bg4); flex-shrink: 0; }
+    .gh-push-msg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── Main layout ─────────────────────────────────────────── */
+    .page {
+      display: grid;
+      grid-template-columns: 62% 38%;
+      height: 100vh;
+      padding: 52px 56px 48px;
+      gap: 0;
+    }
+
+    /* ── Left ───────────────────────────────────────────────── */
+    .left {
+      display: flex; flex-direction: column; gap: 0;
+      padding-right: 52px;
+      border-right: 1px solid var(--bg2);
+    }
+
+    .dateline {
+      display: flex; align-items: baseline; gap: 14px;
+      margin-bottom: 44px;
+    }
+    #date { font-size: 1.05rem; color: var(--fg); letter-spacing: 0.05em; }
+    #chapter { font-size: 0.72rem; color: var(--purple); letter-spacing: 0.12em; }
+
+    .focus-label {
+      font-size: 0.65rem; color: var(--orange);
+      letter-spacing: 0.14em; text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    #focus {
+      font-family: "JetBrainsMono Nerd Font Mono", monospace;
+      font-size: 1.85rem; line-height: 1.35;
+      color: var(--yellow); background: transparent;
+      border: none; outline: none; resize: none;
+      width: 100%; min-height: 120px; caret-color: var(--yellow);
+    }
+    #focus:empty::before {
+      content: attr(data-placeholder);
+      color: var(--bg3); pointer-events: none;
+    }
+
+    .divider { width: 32px; height: 1px; background: var(--bg2); margin: 36px 0 28px; }
+
+    .cal-label {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.65rem; color: var(--aqua);
+      letter-spacing: 0.14em; text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    #cal-add-btn {
+      background: none; border: none; color: var(--bg4); cursor: pointer;
+      font-size: 1rem; line-height: 1; padding: 0;
+      letter-spacing: 0; text-transform: none;
+      font-family: "FiraCode Nerd Font", monospace;
+      transition: color 0.12s;
+    }
+    #cal-add-btn:hover { color: var(--aqua); }
+    #cal-add-form {
+      display: none; gap: 8px; align-items: center; margin-bottom: 10px;
+    }
+    #cal-add-form input {
+      background: transparent; border: none;
+      border-bottom: 1px solid var(--bg3);
+      color: var(--fg1); font-family: "FiraCode Nerd Font", monospace;
+      font-size: 0.82rem; padding: 2px 0; outline: none;
+    }
+    #cal-add-time  { width: 68px; color-scheme: dark; }
+    #cal-add-title { flex: 1; min-width: 0; }
+    #cal-add-form input::placeholder { color: var(--bg3); }
+    #cal-add-form input:focus { border-bottom-color: var(--aqua); }
+
+    #cal-body { display: flex; flex-direction: column; gap: 10px; }
+
+    .ev { display: flex; gap: 20px; align-items: baseline; font-size: 0.88rem; }
+    .ev-time {
+      color: var(--blue); font-family: "FiraCode Nerd Font", monospace;
+      flex-shrink: 0; width: 52px; text-align: right;
+    }
+    .ev-title { color: var(--fg1); flex: 1; }
+    .ev-rm {
+      background: none; border: none; color: var(--bg3); cursor: pointer;
+      font-size: 0.75rem; padding: 0; opacity: 0;
+      transition: opacity 0.12s, color 0.12s;
+      font-family: "FiraCode Nerd Font", monospace;
+    }
+    .ev:hover .ev-rm { opacity: 1; }
+    .ev-rm:hover { color: var(--red); }
+
+    .cal-muted { font-size: 0.82rem; color: var(--bg3); font-family: "FiraCode Nerd Font", monospace; }
+
+    /* ── Todo ──────────────────────────────────────────────── */
+    .todo-label {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.65rem; color: var(--orange);
+      letter-spacing: 0.14em; text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    #todo-add-btn {
+      background: none; border: none; color: var(--bg4); cursor: pointer;
+      font-size: 1rem; line-height: 1; padding: 0;
+      letter-spacing: 0; text-transform: none;
+      font-family: "FiraCode Nerd Font", monospace;
+      transition: color 0.12s;
+    }
+    #todo-add-btn:hover { color: var(--orange); }
+    #todo-input-wrap {
+      display: none; margin-bottom: 10px;
+    }
+    #todo-input {
+      background: transparent; border: none;
+      border-bottom: 1px solid var(--bg3);
+      color: var(--fg1); font-family: "FiraCode Nerd Font", monospace;
+      font-size: 0.88rem; padding: 2px 0; outline: none; width: 100%;
+    }
+    #todo-input::placeholder { color: var(--bg3); }
+    #todo-input:focus { border-bottom-color: var(--orange); }
+    #todo-body { display: flex; flex-direction: column; gap: 8px; }
+    .todo-item { display: flex; gap: 10px; align-items: baseline; font-size: 0.88rem; cursor: pointer; }
+    .todo-check {
+      font-family: "FiraCode Nerd Font", monospace;
+      font-size: 0.82rem; flex-shrink: 0;
+      color: var(--bg4); transition: color 0.12s; user-select: none;
+    }
+    .todo-item.done .todo-check { color: var(--green); }
+    .todo-text { color: var(--fg1); flex: 1; transition: color 0.12s; }
+    .todo-item.done .todo-text { color: var(--bg4); text-decoration: line-through; }
+    .todo-rm {
+      background: none; border: none; color: var(--bg3); cursor: pointer;
+      font-size: 0.75rem; padding: 0; opacity: 0;
+      transition: opacity 0.12s, color 0.12s;
+      font-family: "FiraCode Nerd Font", monospace;
+    }
+    .todo-item:hover .todo-rm { opacity: 1; }
+    .todo-rm:hover { color: var(--red); }
+
+
+    /* ── Right ──────────────────────────────────────────────── */
+    .right {
+      display: flex; flex-direction: column;
+      padding-left: 44px; gap: 0;
+      justify-content: space-between;
+    }
+
+    .section-label {
+      font-size: 0.65rem; letter-spacing: 0.14em;
+      text-transform: uppercase; margin-bottom: 14px;
+    }
+
+    /* Servers */
+    .srv-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 40px; }
+
+    .srv {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.82rem; font-family: "FiraCode Nerd Font", monospace;
+    }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--bg3); flex-shrink: 0; transition: background 0.4s;
+    }
+    .dot.up      { background: var(--green); }
+    .dot.down    { background: var(--red); }
+    .dot.pinging { background: var(--yellow); animation: flicker 1.1s infinite; }
+    @keyframes flicker { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+    .srv-name { color: var(--fg3); transition: color 0.3s; }
+    .srv-name.up   { color: var(--fg1); }
+    .srv-name.down { color: var(--bg4); }
+    .srv-meta { margin-left: auto; font-size: 0.72rem; }
+    .srv-meta.fast   { color: var(--green); }
+    .srv-meta.medium { color: var(--yellow); }
+    .srv-meta.slow   { color: var(--orange); }
+
+    /* Links */
+    .link-list { display: flex; flex-direction: column; gap: 7px; flex: 1; }
+
+    a.link {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.88rem; color: var(--fg3);
+      text-decoration: none; transition: color 0.12s;
+      letter-spacing: 0.02em;
+    }
+    a.link:hover { color: var(--fg0); }
+
+    .link-icon {
+      width: 16px; height: 16px; object-fit: contain;
+      border-radius: 3px; flex-shrink: 0;
+      opacity: 0.8; transition: opacity 0.12s;
+    }
+    a.link:hover .link-icon { opacity: 1; }
+
+    .gl { color: var(--bg3); font-size: 0.95rem; flex-shrink: 0; transition: color 0.12s; }
+    a.link:hover .gl { color: var(--purple); }
+
+    /* Pomo status */
+    .pomo-status {
+      font-size: 0.68rem; color: var(--bg3);
+      letter-spacing: 0.08em; margin-top: 32px;
+      cursor: pointer; transition: color 0.15s;
+    }
+    .pomo-status:hover  { color: var(--fg3); }
+    .pomo-status.work   { color: var(--orange); }
+    .pomo-status.break  { color: var(--aqua); }
+  </style>
+</head>
+<body>
+
+<div id="pomo-track"></div>
+<div id="pomo-bar" onclick="pomoAction('toggle')" title="click to toggle"></div>
+
+<button id="settings-trigger" onclick="openSettings()" title="Settings (,)">⚙</button>
+<div id="settings-bg" onclick="closeSettings()"></div>
+
+<div id="settings-panel">
+  <div class="s-header">
+    <span class="s-title">SETTINGS</span>
+    <div style="display:flex;align-items:center;gap:18px">
+      <button class="s-btn clear" onclick="clearSettings()" style="font-size:0.68rem">reset</button>
+      <button class="s-close" onclick="closeSettings()">×</button>
+    </div>
+  </div>
+
+  <div class="s-scroll">
+
+  <div>
+    <div class="s-sec-label" style="color:var(--aqua)">Nextcloud</div>
+    <div class="s-row s-row-toggle">
+      <label for="s-nc-enabled">CalDAV enabled</label>
+      <input id="s-nc-enabled" type="checkbox" checked>
+    </div>
+    <div id="s-nc-fields">
+      <div class="s-row"><label>URL</label>
+        <input id="s-nc-base" type="url" placeholder="https://cloud.benmac.xyz"></div>
+      <div class="s-row"><label>Username</label>
+        <input id="s-nc-user" type="text" placeholder="benmac"></div>
+      <div class="s-row"><label>App Password</label>
+        <input id="s-nc-pass" type="password" placeholder=""></div>
+      <div class="s-row"><label>Calendar</label>
+        <input id="s-nc-cal" type="text" placeholder="personal"></div>
+      <div class="s-hint">Nextcloud → Settings → Security → App passwords</div>
+    </div>
+  </div>
+
+  <div>
+    <div class="s-sec-label" style="color:var(--red)">Pomodoro</div>
+    <div class="s-grid-2">
+      <div class="s-row"><label>Work (min)</label>
+        <input id="s-pw" type="number" min="1" max="120"></div>
+      <div class="s-row"><label>Short break</label>
+        <input id="s-ps" type="number" min="1" max="60"></div>
+      <div class="s-row"><label>Long break</label>
+        <input id="s-pl" type="number" min="1" max="120"></div>
+      <div class="s-row"><label>Cycles / long</label>
+        <input id="s-pc" type="number" min="1" max="10"></div>
+    </div>
+    <div class="s-hint" id="s-bridge-hint">checking bridge…</div>
+  </div>
+
+  <div>
+    <div class="s-sec-label" style="color:var(--green)">サーバー</div>
+    <div id="s-servers-list"></div>
+    <button class="s-btn save s-add-srv" onclick="addServerRow()">+ add server</button>
+  </div>
+
+  <div>
+    <div class="s-sec-label" style="color:var(--yellow)">GitHub</div>
+    <div class="s-row"><label>Personal Access Token</label>
+      <input id="s-gh-token" type="password" placeholder="ghp_…"></div>
+    <div class="s-hint">Scope: <code>notifications</code> — enables unread count</div>
+  </div>
+
+  </div><!-- /.s-scroll -->
+</div>
+
+<div class="page">
+
+  <!-- ── Left ── -->
+  <div class="left">
+    <div class="dateline">
+      <span id="date"></span>
+      <span id="chapter"></span>
+    </div>
+
+    <div class="focus-label">focus</div>
+    <div id="focus"
+      contenteditable="true"
+      data-placeholder="what's the focus?"
+      spellcheck="false"></div>
+
+    <div class="divider"></div>
+
+    <div class="cal-label">schedule <button id="cal-add-btn" title="add event (a)">+</button></div>
+    <div id="cal-add-form">
+      <input id="cal-add-time" type="time">
+      <input id="cal-add-title" type="text" placeholder="event name">
+    </div>
+    <div id="cal-body"></div>
+
+    <div class="divider"></div>
+
+    <div class="todo-label">todo <button id="todo-add-btn" title="add todo (t)">+</button></div>
+    <div id="todo-input-wrap">
+      <input id="todo-input" type="text" placeholder="what needs doing?">
+    </div>
+    <div id="todo-body"></div>
+  </div>
+
+  <!-- ── Right ── -->
+  <div class="right">
+    <div>
+      <div class="section-label" style="color:var(--green)">サーバー</div>
+      <div class="srv-list" id="srv-list"></div>
+
+      <div class="section-label" style="color:var(--blue)">リンク</div>
+      <div class="link-list" id="link-list"></div>
+    </div>
+
+    <div id="gh-section" style="display:none">
+      <div class="section-label" style="color:var(--yellow)">github</div>
+      <div id="gh-body"></div>
+    </div>
+
+    <div id="pomo-status" class="pomo-status" onclick="pomoAction('toggle')">
+      ポモ
+    </div>
+  </div>
+
+</div>
+
+<script>
+(async () => {
+  const WALL = "file:///home/greencheetah/.cache/wall.png";
+  const setWall = u => document.documentElement.style.setProperty('--wall-bg', `url("${u}")`);
+  try {
+    const r = await fetch(WALL, { cache: "no-store" });
+    setWall(URL.createObjectURL(await r.blob()));
+  } catch {
+    setWall(WALL);
+  }
+})();
+
+// ╔══════════════════════════════════════════════════════════╗
+// ║  CONFIG — edit here or via the settings panel (,)       ║
+// ╚══════════════════════════════════════════════════════════╝
+const CFG = {
+  links: [
+    { label: "GitHub",     url: "https://github.com",                    glyph: "" },
+    { label: "Canvas",     url: "https://uc.instructure.com",             glyph: "󰑓" },
+    { label: "Nextcloud",  url: "https://cloud.benmac.xyz",              glyph: "󱋦" },
+    { label: "Mastodon",   url: "https://c.im",                          glyph: "󰙩" },
+    { label: "LinkedIn",   url: "https://linkedin.com",                  glyph: "" },
+    { label: "Proton",     url: "https://mail.proton.me",                glyph: "󰇰" },
+    { label: "Home Asst",  url: "http://homeassistant.local:8123",       glyph: "󰋜" },
+    { label: "nixos",      url: "https://github.com/greencheetah/nixos", glyph: "" },
+  ],
+  servers: [
+    { label: "omegaServ",   url: "https://cloud.benmac.xyz", method: "fetch" },
+    { label: "phantomServ", url: "https://cloud.benmac.xyz", method: "fetch" },
+    { label: "Minecraft",   host: "benmac.xyz",              method: "mc"    },
+  ],
+  caldav: {
+    base: "https://cloud.benmac.xyz", user: "benmac",
+    password: "", calendar: "personal", enabled: true,
+  },
+  pomo: { work: 25, shortBreak: 5, longBreak: 15, cyclesPerLong: 4 },
+  github: { token: "", username: "greencheetah", repo: "nixos" },
+};
+
+
+// ── Settings ───────────────────────────────────────────────
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem("sp_settings") || "{}");
+    if (s.caldav)  Object.assign(CFG.caldav, s.caldav);
+    if (s.pomo)    Object.assign(CFG.pomo, s.pomo);
+    if (s.github)  Object.assign(CFG.github, s.github);
+    if (s.servers) CFG.servers = s.servers;
+  } catch {}
+  // migrate legacy nc_pass key
+  if (!CFG.caldav.password) {
+    const lp = localStorage.getItem("nc_pass");
+    if (lp) { CFG.caldav.password = lp; }
+  }
+}
+loadSettings();
+
+function openSettings() {
+  const d = CFG.caldav, p = CFG.pomo, g = CFG.github;
+  const ncEnabled = d.enabled !== false;
+  document.getElementById("s-nc-enabled").checked = ncEnabled;
+  document.getElementById("s-nc-fields").style.display = ncEnabled ? "" : "none";
+  document.getElementById("s-nc-base").value = d.base     || "";
+  document.getElementById("s-nc-user").value = d.user     || "";
+  document.getElementById("s-nc-pass").value = d.password || "";
+  document.getElementById("s-nc-cal").value  = d.calendar || "";
+  document.getElementById("s-pw").value  = p.work          || 25;
+  document.getElementById("s-ps").value  = p.shortBreak    || 5;
+  document.getElementById("s-pl").value  = p.longBreak     || 15;
+  document.getElementById("s-pc").value  = p.cyclesPerLong || 4;
+  document.getElementById("s-gh-token").value = g.token   || "";
+  renderServerSettings();
+  document.getElementById("settings-bg").classList.add("open");
+  document.getElementById("settings-panel").classList.add("open");
+}
+
+// toggle NC fields visibility inline
+document.getElementById("s-nc-enabled").addEventListener("change", function () {
+  document.getElementById("s-nc-fields").style.display = this.checked ? "" : "none";
+});
+
+function closeSettings() {
+  document.getElementById("settings-bg").classList.remove("open");
+  document.getElementById("settings-panel").classList.remove("open");
+}
+
+function persistSettings() {
+  const v = id => document.getElementById(id).value.trim();
+  CFG.caldav.enabled    = document.getElementById("s-nc-enabled").checked;
+  CFG.caldav.base       = v("s-nc-base") || CFG.caldav.base;
+  CFG.caldav.user       = v("s-nc-user") || CFG.caldav.user;
+  CFG.caldav.password   = v("s-nc-pass");
+  CFG.caldav.calendar   = v("s-nc-cal")  || CFG.caldav.calendar;
+  CFG.pomo.work          = parseInt(v("s-pw"))  || 25;
+  CFG.pomo.shortBreak    = parseInt(v("s-ps"))  || 5;
+  CFG.pomo.longBreak     = parseInt(v("s-pl"))  || 15;
+  CFG.pomo.cyclesPerLong = parseInt(v("s-pc"))  || 4;
+  CFG.github.token       = v("s-gh-token");
+  CFG.servers = Array.from(document.querySelectorAll(".s-srv-row")).map(row => {
+    const label    = row.querySelector(".s-srv-name").value.trim();
+    const endpoint = row.querySelector(".s-srv-endpoint").value.trim();
+    const method   = row.querySelector(".s-srv-method").value;
+    if (method === "mc")   return { label, host: endpoint, method };
+    if (method === "ping") return { label, host: endpoint, method };
+    return { label, url: endpoint, method };
+  }).filter(s => s.label);
+  localStorage.setItem("sp_settings", JSON.stringify({
+    caldav: CFG.caldav, pomo: CFG.pomo, github: CFG.github, servers: CFG.servers,
+  }));
+  localStorage.removeItem("nc_pass");
+  loadCal();
+  loadGitHub();
+  rebuildServerList();
+}
+
+let _saveTimer = null;
+function scheduleSave() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(persistSettings, 700);
+}
+document.getElementById("settings-panel").addEventListener("input",  scheduleSave);
+document.getElementById("settings-panel").addEventListener("change", scheduleSave);
+
+function clearSettings() {
+  if (!confirm("Reset all settings and reload?")) return;
+  ["sp_settings", "nc_pass", "focus", "cal_cache"].forEach(k => localStorage.removeItem(k));
+  location.reload();
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { closeSettings(); return; }
+  const active = document.activeElement;
+  const isInput = active.tagName === "INPUT" || active.id === "focus";
+  if (e.key === "," && !isInput && !e.ctrlKey) openSettings();
+  if (e.key === "r" && !isInput && !e.ctrlKey) pomoAction("reset");
+  if (e.key === "a" && !isInput && !e.ctrlKey) { e.preventDefault(); toggleCalAdd(); }
+  if (e.key === "t" && !isInput && !e.ctrlKey) { e.preventDefault(); window._openTodoAdd(); }
+});
+
+
+// ── Date + chapter ─────────────────────────────────────────
+const DAYS = ["日","月","火","水","木","金","土"];
+const CHAPTERS = [
+  [0,  5,  "late night"],
+  [5,  9,  "morning"],
+  [9,  12, "midday"],
+  [12, 13, "noon"],
+  [13, 17, "afternoon"],
+  [17, 20, "evening"],
+  [20, 24, "夜"],
+];
+(function () {
+  const d = new Date(), h = d.getHours();
+  document.getElementById("date").textContent =
+    `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 (${DAYS[d.getDay()]})`;
+  const ch = CHAPTERS.find(([a, b]) => h >= a && h < b);
+  if (ch) document.getElementById("chapter").textContent = ch[2];
+})();
+
+
+// ── Focus field ────────────────────────────────────────────
+(function () {
+  const el  = document.getElementById("focus");
+  const saved = localStorage.getItem("focus");
+  if (saved) el.textContent = saved;
+  el.addEventListener("input", () => localStorage.setItem("focus", el.textContent));
+  el.addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.ctrlKey) {
+      localStorage.removeItem("focus"); el.textContent = ""; e.preventDefault();
+    }
+    if (e.key === "Enter" && !e.shiftKey) e.preventDefault(); // single-line
+  });
+})();
+
+
+// ── Favicon helper ─────────────────────────────────────────
+function faviconOf(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol === "http:" || u.protocol === "https:")
+      return `${u.protocol}//${u.hostname}/favicon.ico`;
+  } catch {}
+  return null;
+}
+
+function mkFavicon(url, cls) {
+  const fav = faviconOf(url);
+  if (!fav) return null;
+  const img = document.createElement("img");
+  img.src   = fav;
+  img.className = cls;
+  img.alt   = "";
+  return img;
+}
+
+
+// ── Server status ──────────────────────────────────────────
+(function () {
+  const list = document.getElementById("srv-list");
+  CFG.servers.forEach(srv => {
+    const row  = document.createElement("div");
+    row.className = "srv";
+
+    const dot  = document.createElement("div");
+    dot.id    = `dot-${srv.label}`;
+    dot.className = "dot pinging";
+    row.appendChild(dot);
+
+    const name = document.createElement("span");
+    name.id    = `name-${srv.label}`;
+    name.className = "srv-name";
+    name.textContent = srv.label;
+    row.appendChild(name);
+
+    const meta = document.createElement("span");
+    meta.id    = `meta-${srv.label}`;
+    meta.className = "srv-meta";
+    row.appendChild(meta);
+
+    list.appendChild(row);
+
+    checkServer(srv).then(({ up, meta: m, latCls }) => {
+      dot.className  = "dot " + (up ? "up" : "down");
+      name.className = "srv-name " + (up ? "up" : "down");
+      if (m) {
+        meta.textContent = m;
+        if (latCls) meta.className = "srv-meta " + latCls;
+      }
+    });
+  });
+})();
+
+function latClass(ms) {
+  return ms < 80 ? "fast" : ms < 300 ? "medium" : "slow";
+}
+
+async function checkServer(srv) {
+  if (srv.method === "mc") {
+    try {
+      const t0 = performance.now();
+      const j  = await (await fetch(
+        `https://api.mcsrvstat.us/3/${srv.host}`, { cache: "no-store" }
+      )).json();
+      const lat = Math.round(performance.now() - t0);
+      const players = j.online ? `${j.players?.online ?? 0}/${j.players?.max ?? 0}` : "";
+      const meta = j.online ? [players, `${lat}ms`].filter(Boolean).join(" · ") : "";
+      return { up: j.online, meta, latCls: latClass(lat) };
+    } catch { return { up: false }; }
+  }
+  if (srv.method === "ping") {
+    const host = srv.host || "";
+    // Try bridge first — does real ICMP ping + TCP fallback
+    try {
+      const r = await fetch(
+        `${BRIDGE}/ping?host=${encodeURIComponent(host)}`,
+        { cache: "no-store" }
+      );
+      if (r.ok) {
+        const d = await r.json();
+        const meta = d.up ? `${d.latency}ms` : "";
+        return { up: d.up, meta, latCls: d.up ? latClass(d.latency) : "" };
+      }
+    } catch {}
+    // Bridge not running — fall back to HTTP probe
+    for (const url of [`https://${host}`, `http://${host}`]) {
+      try {
+        const ctrl = new AbortController();
+        setTimeout(() => ctrl.abort(), 3000);
+        const t0 = performance.now();
+        await fetch(url, { method: "HEAD", mode: "no-cors", signal: ctrl.signal });
+        const lat = Math.round(performance.now() - t0);
+        return { up: true, meta: `${lat}ms`, latCls: latClass(lat) };
+      } catch {}
+    }
+    return { up: false };
+  }
+  try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 5000);
+    const t0 = performance.now();
+    await fetch(srv.url, { method: "HEAD", mode: "no-cors", signal: ctrl.signal });
+    const lat = Math.round(performance.now() - t0);
+    return { up: true, meta: `${lat}ms`, latCls: latClass(lat) };
+  } catch { return { up: false }; }
+}
+
+
+// ── Quick links ────────────────────────────────────────────
+(function () {
+  const list = document.getElementById("link-list");
+  CFG.links.forEach(({ label, url, glyph }) => {
+    const a = document.createElement("a");
+    a.className = "link";
+    a.href = url;
+
+    const fav = mkFavicon(url, "link-icon");
+    if (fav) {
+      const gl  = document.createElement("span");
+      gl.className = "gl";
+      gl.style.display = "none";
+      gl.textContent = glyph;
+      fav.addEventListener("error", () => {
+        fav.style.display = "none";
+        gl.style.display  = "";
+      });
+      a.appendChild(fav);
+      a.appendChild(gl);
+    } else {
+      const gl = document.createElement("span");
+      gl.className = "gl";
+      gl.textContent = glyph;
+      a.appendChild(gl);
+    }
+
+    a.appendChild(document.createTextNode(label));
+    list.appendChild(a);
+  });
+})();
+
+
+// ── CalDAV ─────────────────────────────────────────────────
+function davHeaders() {
+  const { user, password } = CFG.caldav;
+  return {
+    "Authorization": "Basic " + btoa(`${user}:${password}`),
+    "Content-Type":  "application/xml; charset=utf-8",
+    "Depth": "1",
+  };
+}
+
+function todayRange() {
+  const d = new Date(), p = n => String(n).padStart(2, "0");
+  const s = `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`;
+  return { start: s + "T000000Z", end: s + "T235959Z" };
+}
+
+function parseEvents(xml) {
+  const evs = [];
+  (xml.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || []).forEach(blk => {
+    const get = k => {
+      const m = blk.match(new RegExp(k + "(?:;[^:]*)?:(.+)"));
+      return m ? m[1].trim() : null;
+    };
+    const title = get("SUMMARY"); if (!title) return;
+    const dt    = get("DTSTART");
+    const time  = dt?.includes("T") ? `${dt.slice(9,11)}:${dt.slice(11,13)}` : "all day";
+    evs.push({ title, time, allDay: !dt?.includes("T") });
+  });
+  return evs.sort((a, b) => a.time.localeCompare(b.time));
+}
+
+// ── Local events (per-day, auto-pruned) ────────────────────
+function localEventsKey() { return "local_ev_" + new Date().toISOString().slice(0, 10); }
+
+function getLocalEvents() {
+  try { return JSON.parse(localStorage.getItem(localEventsKey()) || "[]"); } catch { return []; }
+}
+
+function saveLocalEvents(evs) { localStorage.setItem(localEventsKey(), JSON.stringify(evs)); }
+
+function removeLocalEvent(id) {
+  saveLocalEvents(getLocalEvents().filter(e => e.id !== id));
+  loadCal();
+}
+
+function toggleCalAdd() {
+  const form = document.getElementById("cal-add-form");
+  const open = form.style.display === "flex";
+  form.style.display = open ? "none" : "flex";
+  if (!open) {
+    document.getElementById("cal-add-time").value = "";
+    document.getElementById("cal-add-title").value = "";
+    document.getElementById("cal-add-title").focus();
+  }
+}
+
+function submitCalAdd() {
+  const time  = document.getElementById("cal-add-time").value;
+  const title = document.getElementById("cal-add-title").value.trim();
+  if (!title) return;
+  const evs = getLocalEvents();
+  evs.push({ id: Date.now(), time: time || "all day", title, allDay: !time });
+  saveLocalEvents(evs);
+  document.getElementById("cal-add-form").style.display = "none";
+  loadCal();
+}
+
+document.getElementById("cal-add-btn").addEventListener("click", toggleCalAdd);
+document.getElementById("cal-add-title").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); submitCalAdd(); }
+  if (e.key === "Escape") { document.getElementById("cal-add-form").style.display = "none"; }
+});
+document.getElementById("cal-add-time").addEventListener("keydown", e => {
+  if (e.key === "Enter") { document.getElementById("cal-add-title").focus(); }
+  if (e.key === "Escape") { document.getElementById("cal-add-form").style.display = "none"; }
+});
+
+function renderEvents(el, caldavEvs, stale) {
+  const localEvs = getLocalEvents();
+  const all = [
+    ...caldavEvs.map(e => ({ ...e, local: false })),
+    ...localEvs.map(e => ({ ...e, local: true })),
+  ].sort((a, b) => {
+    if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
+    return (a.time || "").localeCompare(b.time || "");
+  });
+
+  el.innerHTML = "";
+  if (!all.length) {
+    el.innerHTML = `<span class="cal-muted">nothing today</span>`;
+  } else {
+    all.forEach(ev => {
+      const div = document.createElement("div"); div.className = "ev";
+      div.innerHTML =
+        `<span class="ev-time" style="${ev.allDay ? "color:var(--aqua)" : ""}">${ev.time}</span>` +
+        `<span class="ev-title">${ev.title}</span>` +
+        (ev.local ? `<button class="ev-rm" onclick="removeLocalEvent(${ev.id})">×</button>` : "");
+      el.appendChild(div);
+    });
+  }
+  if (stale) {
+    const ind = document.createElement("span");
+    ind.className = "cal-muted";
+    ind.style.marginTop = "8px";
+    ind.textContent = "↻ cached";
+    el.appendChild(ind);
+  }
+}
+
+async function loadCal() {
+  const { base, user, password, calendar, enabled } = CFG.caldav;
+  const el = document.getElementById("cal-body");
+
+  let fetched = false;
+  if (enabled && password) {
+    const { start, end } = todayRange();
+    const url  = `${base}/remote.php/dav/calendars/${user}/${calendar}/`;
+    const body = `<?xml version="1.0"?>
+<C:calendar-query xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+  <D:prop><C:calendar-data/></D:prop>
+  <C:filter>
+    <C:comp-filter name="VCALENDAR">
+      <C:comp-filter name="VEVENT">
+        <C:time-range start="${start}" end="${end}"/>
+      </C:comp-filter>
+    </C:comp-filter>
+  </C:filter>
+</C:calendar-query>`;
+    try {
+      const r = await fetch(url, { method: "REPORT", headers: davHeaders(), body });
+      if (r.status === 401) {
+        CFG.caldav.password = "";
+        persistSettings();
+      } else if (r.ok) {
+        const evs = parseEvents(await r.text());
+        localStorage.setItem("cal_cache", JSON.stringify(evs));
+        renderEvents(el, evs, false);
+        fetched = true;
+      }
+    } catch {}
+  }
+
+  if (!fetched) {
+    const raw = localStorage.getItem("cal_cache");
+    if (raw) {
+      try { renderEvents(el, JSON.parse(raw), enabled && !!password); return; } catch {}
+    }
+    el.innerHTML = `<span class="cal-muted">${enabled && password ? "unreachable" : "nothing today"}</span>`;
+  }
+}
+
+(function () { loadCal(); })();
+setInterval(loadCal, 5 * 60 * 1000);
+
+
+// ── Pomodoro ───────────────────────────────────────────────
+// Polls localhost:9421 (pomo-bridge service) every second.
+// Falls back to standalone JS timer if bridge is unavailable.
+
+const BRIDGE = "http://localhost:9421";
+let bridgeMode = false;
+
+function parsePomoText(text) {
+  const m = String(text || "").match(/(\d+):(\d+)/);
+  return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0;
+}
+
+function pomoTotalSec(remainSec, cls) {
+  const P = CFG.pomo;
+  if (cls === "work")  return P.work * 60;
+  if (cls === "break") return remainSec > P.shortBreak * 60 ? P.longBreak * 60 : P.shortBreak * 60;
+  return 0;
+}
+
+function updatePomoUI({ progress, cls, remainSec, running }) {
+  const bar    = document.getElementById("pomo-bar");
+  const status = document.getElementById("pomo-status");
+  bar.style.width = progress.toFixed(1) + "%";
+  bar.className   = cls === "break" ? "break-mode" : "";
+  const mm = String(Math.floor(remainSec / 60)).padStart(2, "0");
+  const ss = String(remainSec % 60).padStart(2, "0");
+  if (running) {
+    const phase = cls === "break" ? "break" : "focus";
+    status.className   = `pomo-status ${cls}`;
+    status.textContent = `${phase} — ${mm}:${ss}`;
+  } else {
+    status.className   = "pomo-status";
+    status.textContent = `ポモ — ${mm}:${ss}`;
+  }
+}
+
+async function pollBridge() {
+  try {
+    const r  = await fetch(`${BRIDGE}/state`, { cache: "no-store" });
+    if (!r.ok) throw new Error();
+    const st = await r.json();
+    if (!bridgeMode) {
+      bridgeMode = true;
+      standalone.pause();
+      const hint = document.getElementById("s-bridge-hint");
+      if (hint) { hint.className = "s-hint connected"; hint.textContent = "Bridge connected — synced with waybar"; }
+    }
+    const cls       = st.class || "idle";
+    const remainSec = parsePomoText(st.text);
+    const total     = pomoTotalSec(remainSec, cls);
+    const running   = cls === "work" || cls === "break";
+    updatePomoUI({
+      progress: total > 0 ? (1 - remainSec / total) * 100 : 0,
+      cls, remainSec, running,
+    });
+  } catch {
+    if (bridgeMode) {
+      bridgeMode = false;
+      const hint = document.getElementById("s-bridge-hint");
+      if (hint) { hint.className = "s-hint offline"; hint.textContent = "Bridge offline — standalone mode"; }
+    }
+  }
+}
+
+async function pomoAction(cmd) {
+  if (bridgeMode) {
+    fetch(`${BRIDGE}/${cmd}`, { method: "POST" }).catch(() => {});
+  } else {
+    standalone[cmd]();
+  }
+}
+
+// Standalone fallback ──────────────────────────────────────
+const standalone = (function () {
+  const P = CFG.pomo;
+  let phase = "work", running = false, cycle = 0;
+  let remaining = P.work * 60, total = P.work * 60;
+  let _iv = null;
+
+  function sync() {
+    if (!bridgeMode)
+      updatePomoUI({ progress: (1 - remaining / total) * 100, cls: phase, remainSec: remaining, running });
+  }
+
+  function advance() {
+    clearInterval(_iv); _iv = null;
+    if (phase === "work") {
+      cycle++;
+      const isLong = cycle >= P.cyclesPerLong;
+      if (isLong) cycle = 0;
+      phase = "break";
+      total = (isLong ? P.longBreak : P.shortBreak) * 60;
+    } else {
+      phase = "work"; total = P.work * 60;
+    }
+    remaining = total; running = true;
+    _iv = setInterval(tick, 1000);
+    sync();
+    if (Notification.permission === "granted")
+      new Notification("Pomodoro", { body: phase === "work" ? "Focus time!" : "Take a break!" });
+  }
+
+  function tick() { remaining--; if (remaining <= 0) advance(); else sync(); }
+
+  sync(); // render initial state
+
+  return {
+    toggle() {
+      if (running) { clearInterval(_iv); _iv = null; running = false; }
+      else         { running = true; _iv = setInterval(tick, 1000); }
+      sync();
+    },
+    reset() {
+      clearInterval(_iv); _iv = null; running = false;
+      phase = "work"; cycle = 0; remaining = total = P.work * 60;
+      sync();
+    },
+    pause() {
+      clearInterval(_iv); _iv = null; running = false;
+    },
+  };
+})();
+
+if (Notification.permission === "default") Notification.requestPermission();
+setInterval(pollBridge, 1000);
+
+
+// ── Server settings UI ─────────────────────────────────────
+function renderServerSettings() {
+  const list = document.getElementById("s-servers-list");
+  list.innerHTML = "";
+  CFG.servers.forEach((srv, i) => {
+    const endpoint = (srv.method === "mc" || srv.method === "ping") ? (srv.host || "") : (srv.url || "");
+    const row = document.createElement("div");
+    row.className = "s-srv-row";
+    row.dataset.idx = i;
+    row.innerHTML =
+      `<input class="s-srv-name"     placeholder="name"     value="${srv.label || ""}">` +
+      `<input class="s-srv-endpoint" placeholder="url/host" value="${endpoint}">` +
+      `<select class="s-srv-method">` +
+        `<option value="fetch"${srv.method === "fetch" ? " selected" : ""}>http</option>` +
+        `<option value="ping"${srv.method === "ping" ? " selected" : ""}>ping</option>` +
+        `<option value="mc"${srv.method === "mc"    ? " selected" : ""}>mc</option>` +
+      `</select>` +
+      `<button class="s-btn danger" onclick="removeServerRow(this)">×</button>`;
+    list.appendChild(row);
+  });
+}
+
+function addServerRow() {
+  CFG.servers.push({ label: "", url: "", method: "fetch" });
+  renderServerSettings();
+}
+
+function removeServerRow(btn) {
+  const idx = parseInt(btn.closest(".s-srv-row").dataset.idx);
+  CFG.servers.splice(idx, 1);
+  renderServerSettings();
+}
+
+// Re-render the live server status list after settings save
+function rebuildServerList() {
+  const list = document.getElementById("srv-list");
+  list.innerHTML = "";
+  CFG.servers.forEach(srv => {
+    const row = document.createElement("div"); row.className = "srv";
+    const dot  = document.createElement("div");
+    dot.id = `dot-${srv.label}`; dot.className = "dot pinging";
+    const name = document.createElement("span");
+    name.id = `name-${srv.label}`; name.className = "srv-name"; name.textContent = srv.label;
+    const meta = document.createElement("span");
+    meta.id = `meta-${srv.label}`; meta.className = "srv-meta";
+    row.appendChild(dot); row.appendChild(name); row.appendChild(meta);
+    list.appendChild(row);
+    checkServer(srv).then(({ up, meta: m, latCls }) => {
+      dot.className  = "dot " + (up ? "up" : "down");
+      name.className = "srv-name " + (up ? "up" : "down");
+      if (m) { meta.textContent = m; if (latCls) meta.className = "srv-meta " + latCls; }
+    });
+  });
+}
+
+
+// ── GitHub ─────────────────────────────────────────────────
+async function loadGitHub() {
+  const { token, username, repo } = CFG.github;
+  const el      = document.getElementById("gh-body");
+  const section = document.getElementById("gh-section");
+  const authH   = token ? { Authorization: `Bearer ${token}` } : {};
+
+  const stats  = [];
+  const pushes = [];
+  let notifBreak = "";
+
+  // ── Token-gated: notifications, open PRs, review requests ──
+  if (token) {
+    let notifData = null, openPRData = null, reviewData = null;
+    await Promise.allSettled([
+      fetch("https://api.github.com/notifications?all=false&per_page=50",
+        { headers: authH, cache: "no-store" })
+        .then(r => r.json()).then(d => { notifData = d; }).catch(() => {}),
+      fetch(`https://api.github.com/search/issues?q=author:${username}+is:pr+is:open&per_page=5`,
+        { headers: authH, cache: "no-store" })
+        .then(r => r.json()).then(d => { openPRData = d; }).catch(() => {}),
+      fetch(`https://api.github.com/search/issues?q=review-requested:${username}+is:pr+is:open&per_page=5`,
+        { headers: authH, cache: "no-store" })
+        .then(r => r.json()).then(d => { reviewData = d; }).catch(() => {}),
+    ]);
+
+    if (Array.isArray(notifData) && notifData.length) {
+      stats.push({ label: `${notifData.length} unread`, url: "https://github.com/notifications", cls: "gh-notif-count" });
+      const counts = {};
+      for (const n of notifData) counts[n.reason] = (counts[n.reason] || 0) + 1;
+      const interesting = Object.entries(counts)
+        .filter(([r]) => ["mention","review_requested","assign","team_mention"].includes(r))
+        .map(([r, c]) => `${c} ${r.replace(/_/g, " ")}`);
+      if (interesting.length) notifBreak = interesting.join(" · ");
+    }
+    if (openPRData?.total_count > 0)
+      stats.push({ label: `${openPRData.total_count} PR${openPRData.total_count > 1 ? "s" : ""}`, url: "https://github.com/pulls", cls: "gh-pr-count" });
+    if (reviewData?.total_count > 0)
+      stats.push({ label: `${reviewData.total_count} review`, url: "https://github.com/pulls/review-requested", cls: "gh-review-count" });
+  }
+
+  // ── Recent pushes across all public repos (works without token) ──
+  try {
+    const events = await fetch(
+      `https://api.github.com/users/${username}/events?per_page=50`,
+      { headers: authH, cache: "no-store" }
+    ).then(r => r.json());
+    if (Array.isArray(events)) {
+      const seen = new Set();
+      for (const ev of events) {
+        if (ev.type !== "PushEvent") continue;
+        const repoShort = ev.repo.name.replace(`${username}/`, "");
+        if (seen.has(repoShort)) continue;
+        seen.add(repoShort);
+        const commits = ev.payload?.commits;
+        const commit  = commits?.[commits.length - 1];
+        if (!commit) continue;
+        pushes.push({
+          repo: repoShort,
+          sha:  commit.sha.slice(0, 7),
+          msg:  commit.message.split("\n")[0],
+          url:  `https://github.com/${ev.repo.name}/commit/${commit.sha}`,
+        });
+        if (pushes.length >= 4) break;
+      }
+    }
+  } catch {}
+
+  // Fallback: just show the configured repo's latest commit
+  if (!pushes.length) {
+    try {
+      const commits = await fetch(
+        `https://api.github.com/repos/${username}/${repo}/commits?per_page=1`,
+        { headers: authH, cache: "no-store" }
+      ).then(r => r.json());
+      if (Array.isArray(commits) && commits[0]) {
+        const c = commits[0];
+        pushes.push({ repo, sha: c.sha.slice(0, 7), msg: c.commit.message.split("\n")[0], url: c.html_url });
+      }
+    } catch {}
+  }
+
+  if (!stats.length && !pushes.length) { section.style.display = "none"; return; }
+  section.style.display = "";
+  el.innerHTML = "";
+
+  if (stats.length) {
+    const row = document.createElement("div");
+    row.className = "gh-stats";
+    stats.forEach(s => {
+      const span = document.createElement("span");
+      span.className = `gh-stat ${s.cls}`;
+      span.innerHTML = `<a href="${s.url}" target="_blank">${s.label}</a>`;
+      row.appendChild(span);
+    });
+    el.appendChild(row);
+    if (notifBreak) {
+      const nb = document.createElement("div");
+      nb.className = "gh-notif-breakdown";
+      nb.textContent = notifBreak;
+      el.appendChild(nb);
+    }
+    if (pushes.length) {
+      const div = document.createElement("div");
+      div.className = "gh-divider";
+      el.appendChild(div);
+    }
+  }
+
+  pushes.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "gh-push";
+    div.innerHTML =
+      `<span class="gh-push-repo">${p.repo}</span>` +
+      `<a href="${p.url}" target="_blank">` +
+        `<span class="gh-push-sha">${p.sha}</span>` +
+        `<span class="gh-push-msg">${p.msg}</span>` +
+      `</a>`;
+    el.appendChild(div);
+  });
+}
+
+loadGitHub();
+setInterval(loadGitHub, 5 * 60 * 1000);
+
+// ── Todo ───────────────────────────────────────────────────
+function getTodos() {
+  try { return JSON.parse(localStorage.getItem("todos") || "[]"); } catch { return []; }
+}
+function saveTodos(todos) { localStorage.setItem("todos", JSON.stringify(todos)); }
+
+function renderTodos() {
+  const el = document.getElementById("todo-body");
+  const todos = getTodos();
+  el.innerHTML = "";
+  // Undone first, done at bottom
+  const sorted = [...todos.filter(t => !t.done), ...todos.filter(t => t.done)];
+  sorted.forEach(t => {
+    const div = document.createElement("div");
+    div.className = "todo-item" + (t.done ? " done" : "");
+    div.innerHTML =
+      `<span class="todo-check">${t.done ? "☑" : "☐"}</span>` +
+      `<span class="todo-text">${t.text}</span>` +
+      `<button class="todo-rm" onclick="event.stopPropagation();removeTodo(${t.id})">×</button>`;
+    div.addEventListener("click", () => toggleTodo(t.id));
+    el.appendChild(div);
+  });
+}
+
+function addTodo(text) {
+  if (!text.trim()) return;
+  const todos = getTodos();
+  todos.push({ id: Date.now(), text: text.trim(), done: false });
+  saveTodos(todos);
+  renderTodos();
+}
+
+function toggleTodo(id) {
+  const todos = getTodos();
+  const t = todos.find(t => t.id === id);
+  if (t) { t.done = !t.done; saveTodos(todos); renderTodos(); }
+}
+
+function removeTodo(id) {
+  saveTodos(getTodos().filter(t => t.id !== id));
+  renderTodos();
+}
+
+(function initTodo() {
+  const btn   = document.getElementById("todo-add-btn");
+  const wrap  = document.getElementById("todo-input-wrap");
+  const input = document.getElementById("todo-input");
+
+  function openTodoAdd() {
+    wrap.style.display = "block";
+    input.value = "";
+    input.focus();
+  }
+  function closeTodoAdd() { wrap.style.display = "none"; }
+
+  btn.addEventListener("click", openTodoAdd);
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter")  { e.preventDefault(); addTodo(input.value); closeTodoAdd(); }
+    if (e.key === "Escape") { closeTodoAdd(); }
+  });
+
+  renderTodos();
+  window._openTodoAdd = openTodoAdd;
+})();
+</script>
+</body>
+</html>
