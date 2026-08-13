@@ -29,7 +29,7 @@
       pkgs.luajitPackages.magick
       pkgs.clang-tools
     ];
-    xdg.configFile = lib.mkIf (flakeAttr == "nixBlade") {
+    xdg.configFile = lib.mkIf (flakeAttr == "nixWorks") {
       "lvim" = {
         enable = true;
         source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos/confs/lvim";

@@ -81,7 +81,7 @@
       };
     in
     rec {
-      nixosConfigurations.nixBlade = nixpkgs.lib.nixosSystem rec {
+      nixosConfigurations.nixWorks = nixpkgs.lib.nixosSystem rec {
         specialArgs = { inherit inputs; };
         modules = [
           ({ config, pkgs, ... }: {
@@ -100,11 +100,11 @@
           ./hosts/nixBlade/configuration.nix
         ];
       };
-      homeConfigurations.nixBlade = home-manager.lib.homeManagerConfiguration {
+      homeConfigurations.nixWorks = home-manager.lib.homeManagerConfiguration {
         extraSpecialArgs = {
           inherit inputs;
-          osConfig = nixosConfigurations.nixBlade.config;
-          flakeAttr = "nixBlade";
+          osConfig = nixosConfigurations.nixWorks.config;
+          flakeAttr = "nixWorks";
         };
         inherit pkgs;
         modules = [

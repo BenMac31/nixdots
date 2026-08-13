@@ -10,7 +10,7 @@ in
       ./hardware-configuration.nix
     ];
   networking.hostName = "nixWorks";
-  custom.flakeAttr = "nixBlade";
+  custom.flakeAttr = "nixWorks";
   head = {
     enable = true;
     gaming = true;
