@@ -43,6 +43,7 @@
       nixpkgsConfig = {
         permittedInsecurePackages = [
           "electron-39.8.10"
+          "olm-3.2.16"
         ];
       };
       pkgs = import nixpkgs {
@@ -198,5 +199,16 @@
           ./hosts/omegaServ/home.nix
         ];
       };
+      nixosConfigurations.matrixServ = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs; };
+        modules = [
+          ({ config, pkgs, ... }: {
+            nixpkgs.config = nixpkgsConfig;
+            nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ];
+          })
+          ./hosts/matrixServ/configuration.nix
+        ];
+      };
+      checks.${system}.matrix = import ./tests/matrix.nix { inherit nixpkgs system nixpkgsConfig; };
     };
 }
