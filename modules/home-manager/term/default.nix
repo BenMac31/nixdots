@@ -3,7 +3,7 @@
   imports = [
     ./programming
     ./tui
-    ./ai.nix
+    ./ai
     ./git.nix
     ./omnigent.nix
     ./zsh.nix
