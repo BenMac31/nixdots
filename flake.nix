@@ -95,6 +95,7 @@
               overlay-unstable-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+                yc-cli = prev.callPackage ./pkgs/yc-cli.nix { };
               })
             ];
           })
@@ -119,6 +120,7 @@
               overlay-master-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+                yc-cli = prev.callPackage ./pkgs/yc-cli.nix { };
               })
             ];
           })
@@ -150,6 +152,7 @@
               overlay-master-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+                yc-cli = prev.callPackage ./pkgs/yc-cli.nix { };
               })
             ];
           })
@@ -169,6 +172,7 @@
               overlay-unstable-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+                yc-cli = prev.callPackage ./pkgs/yc-cli.nix { };
               })
             ];
           })
@@ -193,6 +197,7 @@
               overlay-master-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+                yc-cli = prev.callPackage ./pkgs/yc-cli.nix { };
               })
             ];
           })

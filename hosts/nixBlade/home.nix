@@ -10,7 +10,7 @@
   sync.enable = true;
   programming.enable = true;
   ai.enable = true;
-  omnigent.enable = true;
+  yc.enable = true;
   desktop = {
     enable = true;
     gaming.enable = true;
