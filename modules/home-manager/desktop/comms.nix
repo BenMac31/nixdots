@@ -9,6 +9,7 @@
 
     home.packages = [
       pkgs.thunderbird
+      pkgs.protonmail-desktop
       pkgs.fluffychat
       (lib.mkIf config.desktop.japanese.input.enable (pkgs.symlinkJoin
         {
