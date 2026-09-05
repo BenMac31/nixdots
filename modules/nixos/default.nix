@@ -39,6 +39,12 @@ in
     i18n.supportedLocales = [ "all" ]; # Support all languages
 
     security.rtkit.enable = true;
+
+    systemd.oomd = {
+      enableUserSlices = lib.mkDefault true;
+      settings.OOM.DefaultMemoryPressureDurationSec = lib.mkDefault "20s";
+    };
+    boot.kernel.sysctl."vm.swappiness" = lib.mkDefault 10;
     environment.systemPackages = with pkgs; [
       neovim
       pciutils
