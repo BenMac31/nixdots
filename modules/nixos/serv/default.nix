@@ -6,6 +6,7 @@ in
 {
   imports = [
     ./home-assistant.nix
+    ./matrix
     ./media.nix
     ./minecraft.nix
     ./wireguard.nix
