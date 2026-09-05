@@ -39,6 +39,9 @@
         ls = "eza --icons=auto";
         vpnexit = lib.mkIf osConfig.services.mullvad-vpn.enable "mullvad split-tunnel add \$$";
         hexdec = "printf '%x\n' \$1";
+        gr = "nix run $HOME/Projects/graphide/graphide#gr-dev --";
+        grat = "nix run $HOME/Projects/graphide/graphide#grat-dev --";
+        gred = "nix run $HOME/Projects/graphide/graphide#gred-dev --";
       }
     ];
     initContent = lib.mkMerge [
