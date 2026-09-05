@@ -270,6 +270,8 @@ in
           "CTRLSHIFT$mainMod,S,exec,qshot"
           "$mainMod,F11,fullscreen,0"
           "$mainMod,M,exec,toggle-monocle"
+          "$mainMod,I,layoutmsg,addmaster"
+          "$mainMod,D,layoutmsg,removemaster"
           "CTRL$mainMod,F11,fullscreenstate,2"
           "$mainMod,p,pin,"
           "$mainMod CTRL,s,exec,grimblast copy area"
