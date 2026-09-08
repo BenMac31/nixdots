@@ -16,6 +16,22 @@ in
     wireguard.enable = true;
     minecraft.enable = true;
     # media.enable = true;
+    ntfy = {
+      enable = true;
+      hostname = "ntfy.benmac.xyz";
+      acmeEmail = "acme@benmac.xyz";
+      topic = "mail";
+    };
+    youHaveMail = {
+      enable = true;
+      # TODO: add the Proton address to watch, then run `you-have-mail-setup`.
+      accounts = [ ];
+      ntfy = [{
+        name = "omegaServ";
+        url = "https://${config.serv.ntfy.hostname}/${config.serv.ntfy.topic}";
+        authTokenFile = config.serv.ntfy.internal.publishTokenFile;
+      }];
+    };
   };
   services.openssh = {
     enable = true;
@@ -49,5 +65,8 @@ in
   nix.settings.trusted-users = [ "root" "carol" ];
   virtualisation.docker.enable = true;
   virtualisation.docker.daemon.settings."data-root" = "/home/docker";
-  networking.firewall.allowedTCPPorts = [ 23 80 8080 8443 3478 ];
+  # Minecraft (25565) and Simple Voice Chat (24454) are opened here rather than
+  # in the minecraft module, so every port this host exposes is listed together.
+  networking.firewall.allowedTCPPorts = [ 23 80 8080 25565 8443 3478 ];
+  networking.firewall.allowedUDPPorts = [ 24454 ];
 }
