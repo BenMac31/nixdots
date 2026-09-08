@@ -32,7 +32,7 @@
     {
       hostName = "10.0.0.35";
       sshUser = "graphide-build";
-      sshKey = "/home/greencheetah/.ssh/id_rsa";
+      sshKey = "/home/greencheetah/.ssh/id_ed25519_voxi";
       system = "x86_64-linux";
       protocol = "ssh-ng";
       maxJobs = 3;
