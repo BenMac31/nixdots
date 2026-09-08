@@ -9,6 +9,7 @@ in
       ../../modules/nixos
       ./hardware-configuration.nix
       ./agent-throttle.nix
+      ./remote-builds.nix
     ];
   networking.hostName = "nixWorks";
   custom.flakeAttr = "nixWorks";
