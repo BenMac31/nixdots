@@ -9,7 +9,9 @@ in
     ./matrix
     ./media.nix
     ./minecraft.nix
+    ./ntfy.nix
     ./wireguard.nix
+    ./you-have-mail.nix
   ];
   options.serv.enable = lib.mkEnableOption "Enable the serv module";
   config = lib.mkIf config.serv.enable
