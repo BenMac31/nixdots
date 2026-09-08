@@ -8,6 +8,7 @@ in
     [
       ../../modules/nixos
       ./hardware-configuration.nix
+      ./agent-throttle.nix
     ];
   networking.hostName = "nixWorks";
   custom.flakeAttr = "nixWorks";
