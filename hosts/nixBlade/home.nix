@@ -11,6 +11,7 @@
   programming.enable = true;
   ai.enable = true;
   yc.enable = true;
+  graphide.enable = true;
   desktop = {
     enable = true;
     gaming.enable = true;

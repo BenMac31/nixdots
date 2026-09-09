@@ -5,6 +5,7 @@
     ./tui
     ./ai
     ./git.nix
+    ./graphide.nix
     ./yc.nix
     ./zsh.nix
     ./media.nix

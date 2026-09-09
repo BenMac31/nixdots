@@ -35,6 +35,22 @@
       url = "github:Andeskjerf/waybar-module-pomodoro";
       flake = false;
     };
+    graphide = {
+      # git+ssh, not `github:`: the repo is private and the GitHub *API*
+      # fetcher `github:` uses needs an access token in nix.conf, which this
+      # machine deliberately does not have. SSH reuses the key git already
+      # authenticates with. Still a GitHub-hosted, revision-locked input --
+      # NOT the local ~/Projects checkout, whose branch state is shared by
+      # concurrent sessions and has been stale.
+      url = "git+ssh://git@github.com/graphideHQ/monolith";
+      # Deliberately NO inputs.nixpkgs.follows. graphide keeps its own tested
+      # nixpkgs pin (nixos-25.11) independent of this flake's nixos-26.05, so
+      # the installed gr/grat/gred is exactly what graphide's own dev shell and
+      # CI built and tested. The cost -- a second nixpkgs evaluated and fetched,
+      # and a larger closure -- is accepted on purpose. Do not "tidy" a follows
+      # back in: move graphide forward in its own repo first, where the move can
+      # be tested, rather than rebuilding it here against an untried channel.
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, nixpkgs-master, nixpkgs-unstable, ... }@inputs:
