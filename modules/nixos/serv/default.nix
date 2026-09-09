@@ -10,6 +10,7 @@ in
     ./matrix
     ./media.nix
     ./minecraft.nix
+    ./nextcloud-aio.nix
     ./ntfy.nix
     ./wireguard.nix
     ./you-have-mail.nix

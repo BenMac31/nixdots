@@ -22,6 +22,12 @@ in
       acmeEmail = "acme@benmac.xyz";
       dataDir = "/home/continuwuity";
     };
+    nextcloudAio = {
+      enable = true;
+      domain = "cloud.benmac.xyz";
+      acmeEmail = "acme@benmac.xyz";
+      timeZone = "America/New_York";
+    };
     ntfy = {
       enable = true;
       hostname = "ntfy.benmac.xyz";
