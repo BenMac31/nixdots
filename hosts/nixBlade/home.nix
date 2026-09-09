@@ -12,6 +12,8 @@
   ai.enable = true;
   yc.enable = true;
   graphide.enable = true;
+  # Separate toggle: the timer reinstalls gr/grat/gred under you every 30 min.
+  graphide.autoUpdate.enable = true;
   desktop = {
     enable = true;
     gaming.enable = true;
