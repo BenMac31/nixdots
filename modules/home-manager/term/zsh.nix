@@ -8,7 +8,6 @@
     bc
   ];
   programs.zsh = {
-    completionInit = "";
     enable = true;
     history = {
       extended = true;
@@ -16,7 +15,12 @@
       ignoreSpace = true;
       path = "$HOME/.local/share/zsh/history";
     };
-    enableCompletion = false;
+    # DECISION 9: re-enabled so shipped completions (gr, grat, and every
+    # other package that installs one) are actually read. The empty
+    # completionInit override that used to sit above `enable` is gone with
+    # it -- it suppressed compinit entirely, which is what made the
+    # completions inert rather than merely slow.
+    enableCompletion = true;
     defaultKeymap = "viins";
     shellAliases = lib.mkMerge [
       (lib.mkIf config.desktop.enable {
@@ -39,9 +43,12 @@
         ls = "eza --icons=auto";
         vpnexit = lib.mkIf osConfig.services.mullvad-vpn.enable "mullvad split-tunnel add \$$";
         hexdec = "printf '%x\n' \$1";
-        gr = "nix run $HOME/Projects/graphide/graphide#gr-dev --";
-        grat = "nix run $HOME/Projects/graphide/graphide#grat-dev --";
-        gred = "nix run $HOME/Projects/graphide/graphide#gred-dev --";
+        # DECISION 15(B): gr and grat are installed by term/graphide.nix now, so
+        # the aliases are gone and the names resolve to the real binaries on
+        # PATH. gred stays aliased at the imperative patch build for now because
+        # the Nix gred derivation is brand new -- TEMPORARY, remove this line
+        # once the packaged gred has been used for a while.
+        gred = "nix run $HOME/Projects/graphide/graphide#gred-patch-dev --";
       }
     ];
     initContent = lib.mkMerge [
