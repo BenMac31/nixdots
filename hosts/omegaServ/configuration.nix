@@ -16,6 +16,12 @@ in
     wireguard.enable = true;
     minecraft.enable = true;
     # media.enable = true;
+    continuwuity = {
+      enable = true;
+      serverName = "chat.benmac.xyz";
+      acmeEmail = "acme@benmac.xyz";
+      dataDir = "/home/continuwuity";
+    };
     ntfy = {
       enable = true;
       hostname = "ntfy.benmac.xyz";

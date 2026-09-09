@@ -5,6 +5,7 @@ let
 in
 {
   imports = [
+    ./continuwuity.nix
     ./home-assistant.nix
     ./matrix
     ./media.nix
