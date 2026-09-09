@@ -28,7 +28,7 @@ in
       accounts = [ ];
       ntfy = [{
         name = "omegaServ";
-        url = "https://${config.serv.ntfy.hostname}/${config.serv.ntfy.topic}";
+        url = config.serv.ntfy.internal.localPublishUrl;
         authTokenFile = config.serv.ntfy.internal.publishTokenFile;
       }];
     };

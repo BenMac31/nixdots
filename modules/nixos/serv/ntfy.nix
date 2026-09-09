@@ -96,10 +96,25 @@ in
       internal = true;
       description = "Path to the generated publish token, for publishers on this host.";
     };
+
+    internal.localPublishUrl = lib.mkOption {
+      type = lib.types.str;
+      internal = true;
+      description = ''
+        Topic URL for publishers running on this host. Deliberately loopback
+        rather than the public name: this machine routes the VPS's public
+        address down the WireGuard tunnel, and the VPS only DNATs traffic
+        arriving on its ethernet interface, so the public URL is refused from
+        here. Access control is unaffected — ntfy still requires the token.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
-    serv.ntfy.internal.publishTokenFile = tokenFile;
+    serv.ntfy.internal = {
+      publishTokenFile = tokenFile;
+      localPublishUrl = "http://${listenAddress}/${cfg.topic}";
+    };
 
     environment.systemPackages = [ showCredentials ];
 
