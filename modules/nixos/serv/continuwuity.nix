@@ -113,15 +113,23 @@ in
     # DynamicUser makes /var/lib/continuwuity a symlink, hence the private path.
     systemd.tmpfiles.rules = lib.mkIf (cfg.dataDir != null) [
       "d ${cfg.dataDir} 0700 root root -"
+      "d /var/lib/private 0700 root root -"
+      "d /var/lib/private/continuwuity 0700 root root -"
     ];
 
-    fileSystems = lib.mkIf (cfg.dataDir != null) {
-      "/var/lib/private/continuwuity" = {
-        device = cfg.dataDir;
-        fsType = "none";
-        options = [ "bind" ];
-      };
-    };
+    # Deliberately systemd.mounts and not fileSystems: a fileSystems entry is
+    # boot-critical, so a failure here would fail local-fs.target and drop the
+    # whole machine to emergency mode with no sshd. RequiresMountsFor on the
+    # service below pulls this in and confines a failure to continuwuity.
+    systemd.mounts = lib.mkIf (cfg.dataDir != null) [
+      {
+        what = cfg.dataDir;
+        where = "/var/lib/private/continuwuity";
+        type = "none";
+        options = "bind";
+        unitConfig.RequiresMountsFor = cfg.dataDir;
+      }
+    ];
 
     systemd.services.continuwuity.unitConfig = lib.mkIf (cfg.dataDir != null) {
       RequiresMountsFor = "/var/lib/private/continuwuity";
