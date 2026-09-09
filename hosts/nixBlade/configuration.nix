@@ -10,9 +10,11 @@ in
       ./hardware-configuration.nix
       ./agent-throttle.nix
       ./remote-builds.nix
+      ./nix-store-hygiene.nix
     ];
   networking.hostName = "nixWorks";
   custom.flakeAttr = "nixWorks";
+  custom.tailscale.enable = true;
   head = {
     enable = true;
     gaming = true;
@@ -67,6 +69,25 @@ in
       lidSwitch = "hibernate";
       lidSwitchExternalPower = "hibernate";
     };
+    # UPower's stock policy acts at 2% with a hybrid sleep. The Framework EC
+    # cuts power before 2% under load, so the box died instead of sleeping.
+    # Action at 5% leaves time to write a multi-GB image; UPower requires
+    # low > critical > action.
+    #
+    # criticalPowerAction alone does not get you a hibernate: upower deems
+    # Hibernate "risky" and silently substitutes HybridSleep unless the flag
+    # below is set. That substitution killed the box on 2026-09-08 — hybrid
+    # sleep wrote the image and then kept drawing power in S3, the EC cut out
+    # 28s in, and the next boot found no signature (PM: Image not found, -22).
+    # A real hibernate powers off as soon as the image is down.
+    upower = {
+      enable = true;
+      allowRiskyCriticalPowerAction = true;
+      percentageLow = 20;
+      percentageCritical = 10;
+      percentageAction = 5;
+      criticalPowerAction = "Hibernate";
+    };
   };
   environment.systemPackages = with pkgs; [
     android-tools
@@ -83,8 +104,7 @@ in
   boot.extraModulePackages = with config.boot.kernelPackages; [
     v4l2loopback
   ];
-  boot.resumeDevice = "/dev/disk/by-uuid/d89aa6f6-efec-458f-a8d7-23bed9ec888e";
-  boot.kernelParams = [ "resume=/dev/disk/by-uuid/d89aa6f6-efec-458f-a8d7-23bed9ec888e" ];
+  boot.initrd.systemd.enable = true;
 
   home-manager = {
     users."greencheetah" = import ./home.nix;
