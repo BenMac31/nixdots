@@ -8,6 +8,71 @@ let
   # five overlay blocks would buy symmetry and nothing else.
   gp = inputs.graphide.packages.${pkgs.stdenv.hostPlatform.system};
 
+  # The endpoint trio the release recipe bakes, read from the SAME file
+  # `nix build .#gr-prod` reads, so the wrapper below cannot drift from the
+  # build. Do not retype the values here: a hand-copied anon key that goes
+  # stale is a binary that 503s on every login and looks perfectly healthy.
+  prodEndpoints = import "${inputs.graphide}/nix/prod-endpoints.nix";
+
+  # Pin an installed package's endpoints to the hosted stack, above anything
+  # a development tree can do to this machine.
+  #
+  # grug resolves endpoints in three layers (grug/cmd/grug/main.go,
+  # resolveEndpoints): baked ldflags < active config context < GRAPHIDE_*
+  # environment. The middle layer is machine-wide -- `active_context` lives in
+  # ~/.config/graphide/config.toml and grug's main() calls config.Load(), never
+  # LoadForRoot -- so `gr env use local` in ANY checkout repoints every daemon
+  # on the box, this one included. Baking prod into the binary is therefore
+  # necessary and not sufficient; only the environment layer is out of reach.
+  #
+  # Deliberately NOT home.sessionVariables. That would export the trio into
+  # every shell and drag the development trees to prod as well, which is the
+  # exact coupling this exists to remove. It belongs to these binaries only.
+  #
+  # Caveat worth knowing: a terminal opened INSIDE the installed editor
+  # inherits these three, so `gr` run there talks to prod whatever the active
+  # context says. Development happens in gred-patch-dev, not in the installed
+  # editor, so that is the right trade -- but it is why the variables are set
+  # on the wrapper and not on the login shell.
+  #
+  # cp -as, not symlinkJoin: symlinkJoin links at the highest level it can, so
+  # $out/share would itself be a symlink into the store and the desktop files
+  # below could not be rewritten. This materialises the directories and
+  # symlinks only the leaves.
+  pinEndpoints = pkg: exes: pkgs.runCommand "${pkg.pname}-endpoints-pinned"
+    {
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      meta = pkg.meta or { };
+    } ''
+      mkdir -p $out
+      cp -as ${pkg}/. $out/
+      chmod -R u+w $out
+
+      for exe in ${lib.escapeShellArgs exes}; do
+        if [ ! -e "$out/bin/$exe" ]; then
+          echo "pinEndpoints: ${pkg} has no bin/$exe" >&2
+          exit 1
+        fi
+        target=$(readlink -f "$out/bin/$exe")
+        rm "$out/bin/$exe"
+        makeWrapper "$target" "$out/bin/$exe" \
+          --set GRAPHIDE_API_URL ${lib.escapeShellArg prodEndpoints.apiURL} \
+          --set GRAPHIDE_SUPABASE_URL ${lib.escapeShellArg prodEndpoints.supabaseURL} \
+          --set GRAPHIDE_SUPABASE_ANON_KEY ${lib.escapeShellArg prodEndpoints.anonKey}
+      done
+
+      # A .desktop entry hardcodes the absolute Exec path of the package it was
+      # built from, so the launcher -- which is how the editor is actually
+      # opened -- would run straight past the wrapper. Repoint them at $out.
+      if [ -d "$out/share/applications" ]; then
+        for f in "$out"/share/applications/*; do
+          src=$(readlink -f "$f")
+          rm "$f"
+          sed "s|${pkg}/bin/|$out/bin/|g" "$src" > "$f"
+        done
+      fi
+    '';
+
   cfg = config.graphide;
 
   # The exact nix the rest of the machine runs (Lix, per hosts/*/configuration.nix
@@ -127,14 +192,25 @@ in
       enable = lib.mkEnableOption "Enable Graphide (gr, grat, gred)";
       variant = lib.mkOption {
         type = lib.types.enum [ "dev" "prod" ];
-        default = "dev";
+        default = "prod";
         description = ''
-          Which gr build to install. DECISION 3: "prod" cannot be built yet --
-          gr-prod reads nix/prod-endpoints.nix and refuses while its values
-          still start with REPLACE_ME, which they do until the hosted Supabase
-          project exists. "dev" bakes the local stack (127.0.0.1:54321 Supabase,
-          127.0.0.1:8080 API). Flipping to prod once the endpoints land is one
-          word here, not a redesign.
+          Which gr build to install. "prod" since 2026-09-09: the hosted
+          Supabase project was filled into nix/prod-endpoints.nix on
+          2026-09-07, so gr-prod's placeholder assertion passes and the release
+          build is buildable. DECISION 3's "cannot be built yet" is spent.
+
+          Why prod rather than dev, now that both point at the hosted stack:
+          since monolith 5e3ef19c the SOURCE defaults are the production trio in
+          every tier, so gr-dev would reach api.graphide.net too -- by
+          inheritance from whatever the source defaults happen to say that week.
+          gr-prod injects the trio from nix/prod-endpoints.nix explicitly and
+          refuses to build on a placeholder. This is the machine's shipped
+          build; its endpoints should be pinned by the release recipe.
+
+          "dev" bakes nothing and is only correct for a checkout working against
+          `nix run .#gr-srv`. The local stack is `gr env use local` now, a config
+          context rather than a different binary -- but see pinEndpoints above:
+          the installed build is deliberately deaf to that context.
         '';
       };
 
@@ -175,14 +251,31 @@ in
 
   config = lib.mkIf cfg.enable (lib.mkMerge [
     {
-      home.packages = [
-        # gr carries grug and grach as siblings in the same bin/ -- the triple is
-        # one derivation on purpose, and gred bundles the same variant inside
-        # itself so the editor and the CLI cannot point at different stacks.
-        (if cfg.variant == "prod" then gp.gr-prod else gp.gr-dev)
-        gp.grat
-        gp.gred
-      ];
+      home.packages =
+        let
+          # gr carries grug and grach as siblings in the same bin/ -- the triple
+          # is one derivation on purpose, and gred bundles the same variant
+          # inside itself so the editor and the CLI cannot point at different
+          # stacks.
+          grPkg = if cfg.variant == "prod" then gp.gr-prod else gp.gr-dev;
+
+          # Only the prod build is pinned. Wrapping a dev build with the hosted
+          # endpoints would be a lie: `variant = "dev"` exists precisely to talk
+          # to `nix run .#gr-srv`, and an env pin sits above the context that
+          # would point it there.
+          pin = if cfg.variant == "prod" then pinEndpoints else (pkg: _exes: pkg);
+        in
+        [
+          # grach takes no endpoints -- the daemon that forks it hands it a
+          # gateway and a lease -- so it is not in the wrapped list.
+          (pin grPkg [ "gr" "grug" ])
+          # gred spawns the grug bundled inside itself, which inherits the
+          # editor process's environment, so wrapping the editor covers the
+          # bundle. The .desktop rewrite in pinEndpoints is what makes that hold
+          # for a launcher start rather than only a terminal one.
+          (pin gp.gred [ "gred" ])
+          gp.grat
+        ];
     }
 
     (lib.mkIf cfg.autoUpdate.enable {
