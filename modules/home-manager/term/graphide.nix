@@ -102,19 +102,18 @@ let
       # Local only, on purpose: this rewrites flake.lock in the working tree and
       # never commits or pushes it. The lock in git stays whatever a human put
       # there; `git checkout flake.lock` is the whole undo.
-      # --refresh on both calls, and it is load-bearing: nix caches its copy of a
-      # dirty git worktree, so a plain `home-manager switch` right after the lock
-      # rewrite can be handed the pre-rewrite tree and quietly rebuild the OLD
-      # rev. Observed while building this. The locked inputs are content-addressed
-      # and already in the store, so --refresh costs a stat, not a re-download.
-      if ! nix flake lock --refresh --override-input graphide "$GIT_URL?rev=$green"; then
+      # No --refresh here or on the switch below. Nix re-reads a dirty worktree on
+      # every evaluation -- verified -- so the switch already sees the flake.lock
+      # this call just wrote, and --refresh only buys a re-check of every other
+      # input in the flake.
+      if ! nix flake lock --override-input graphide "$GIT_URL?rev=$green"; then
         fail "could not re-pin flake.lock to $green"
       fi
 
       # home-manager switch builds before it activates, so a broken commit leaves
       # the current generation running and just fails this unit. That is the
       # correct outcome -- do not wrap it in a rollback.
-      if ! home-manager switch --refresh --flake "$FLAKE_DIR#$FLAKE_ATTR"; then
+      if ! home-manager switch --flake "$FLAKE_DIR#$FLAKE_ATTR"; then
         fail "home-manager switch failed on graphide $green"
       fi
 
