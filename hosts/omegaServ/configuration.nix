@@ -22,6 +22,7 @@ in
       acmeEmail = "acme@benmac.xyz";
       dataDir = "/home/continuwuity";
     };
+    mautrixBridges.enable = true;
     nextcloudAio = {
       enable = true;
       domain = "cloud.benmac.xyz";

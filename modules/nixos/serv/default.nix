@@ -8,6 +8,7 @@ in
     ./continuwuity.nix
     ./home-assistant.nix
     ./matrix
+    ./mautrix-bridges.nix
     ./media.nix
     ./minecraft.nix
     ./nextcloud-aio.nix
