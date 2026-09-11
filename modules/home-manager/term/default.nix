@@ -6,6 +6,7 @@
     ./ai
     ./git.nix
     ./graphide.nix
+    ./graphide-sync.nix
     ./yc.nix
     ./zsh.nix
     ./media.nix
