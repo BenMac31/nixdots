@@ -127,6 +127,7 @@ in
     wayland.windowManager.hyprland = {
       enable = true;
       configType = "hyprlang";
+      systemd.variables = [ "--all" ];
       settings = {
         monitor = [
           ",preferred,auto,1.56667"
