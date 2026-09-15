@@ -5,6 +5,7 @@
     ./aiclip.nix
     ./claude-code.nix
     ./localrun.nix
+    ./accounts.nix
   ];
   options = {
     ai = {
@@ -17,5 +18,6 @@
       aiclip.enable = lib.mkDefault true;
       claude.enable = lib.mkDefault true;
     };
+    home.packages = [ pkgs.unstable.unfree.cursor-cli ];
   };
 }

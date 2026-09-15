@@ -39,7 +39,8 @@
   services.openssh.settings.PasswordAuthentication = false;
 
   users.users.root.openssh.authorizedKeys.keys = [
-    # add founders' keys here
+    # graphide-prod-azure: deploy/admin key for the graphide-prod resource group
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHbSeEFeBiVuZ+LgNtQRfUtsQDh2yyAB/S6tF1H5Wwqx graphide-prod-azure"
   ];
 
   networking.firewall.enable = true;

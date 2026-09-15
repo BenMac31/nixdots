@@ -1,15 +1,15 @@
 { lib, config, pkgs, ... }:
 {
-  imports = [ ./signal.nix ];
+  imports = [ ./signal.nix ./proton-mail.nix ];
 
   options.comms.enable = lib.mkEnableOption "Enable communications";
 
   config = lib.mkIf config.comms.enable {
     signal.enable = lib.mkDefault true;
+    protonMail.enable = lib.mkDefault true;
 
     home.packages = [
       pkgs.thunderbird
-      pkgs.protonmail-desktop
       pkgs.fluffychat
       (lib.mkIf config.desktop.japanese.input.enable (pkgs.symlinkJoin
         {

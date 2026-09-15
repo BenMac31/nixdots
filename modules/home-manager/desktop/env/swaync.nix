@@ -53,7 +53,7 @@
 
       .notification {
         border-radius: 20px;
-        border: 2px solid #${base0F};
+        border: 2px solid #${base0C};
         background: alpha(#${base00}, 0.92);
         padding: 0;
       }
@@ -110,7 +110,7 @@
 
       /* Urgency accents */
       .urgency-low    .notification { border-color: #${base0C}; }
-      .urgency-normal .notification { border-color: #${base0D}; }
+      .urgency-normal .notification { border-color: #${base0C}; }
       .urgency-critical .notification {
         border-color: #${base08};
         background: alpha(#${base00}, 0.97);
@@ -121,7 +121,7 @@
         border-top: 1px solid alpha(#${base03}, 0.4);
         border-radius: 0;
         background: transparent;
-        color: #${base0D};
+        color: #${base0C};
         padding: 8px 12px;
       }
 
@@ -145,7 +145,7 @@
 
       .control-center {
         background: alpha(#${base00}, 0.92);
-        border: 2px solid #${base0F};
+        border: 2px solid #${base0C};
         border-radius: 20px;
         padding: 15px;
         min-width: 480px;
@@ -163,22 +163,22 @@
       }
 
       .control-center-dnd slider {
-        background: #${base0B};
+        background: #${base0C};
         border-radius: 12px;
         min-width: 40px;
       }
 
       .control-center-dnd:checked {
-        background: alpha(#${base08}, 0.15);
+        background: alpha(#${base0C}, 0.15);
       }
 
       .control-center-dnd:checked slider {
-        background: #${base08};
+        background: #${base0C};
       }
 
       .control-center-clear-all {
         background: #${base01};
-        border: 2px solid #${base0F};
+        border: 2px solid #${base0C};
         border-radius: 12px;
         color: #${base05};
         padding: 8px 16px;

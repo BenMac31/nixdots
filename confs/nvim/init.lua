@@ -20,6 +20,9 @@ vim.api.nvim_set_option("clipboard", "unnamed")
 vim.opt.inccommand = "split" -- Preview substitutions live, as you type! vim.opt.cursorline = true
 vim.opt.scrolloff = 10
 
+-- Local colorscheme loads before plugins and also works without plugin downloads.
+vim.cmd.colorscheme("graphide")
+
 vim.opt.hlsearch = true
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 
@@ -65,6 +68,86 @@ require("lazy").setup({
       call vimtex#init()
       let g:vimtex_view_method = 'zathura'
       ]])
+
+			-- ;bib: open the project's bibliography file, setting one up
+			-- (biblatex + a references.bib next to the .tex file) if none exists yet.
+			local function tex_bib()
+				local existing = vim.fn["vimtex#bib#files"]()
+				if type(existing) == "table" and #existing > 0 then
+					vim.cmd("vsplit " .. vim.fn.fnameescape(existing[1]))
+					return
+				end
+
+				local dir = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":h")
+				local bibpath = dir .. "/references.bib"
+				if vim.fn.filereadable(bibpath) == 0 then
+					vim.fn.writefile({}, bibpath)
+				end
+
+				local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+				local has_biblatex, has_addbibresource = false, false
+				local begin_doc_row, end_doc_row
+
+				for i, line in ipairs(lines) do
+					if line:find("\\usepackage.-{biblatex}") then
+						has_biblatex = true
+					end
+					if line:find("\\addbibresource", 1, true) then
+						has_addbibresource = true
+					end
+					if not begin_doc_row and line:find("\\begin{document}", 1, true) then
+						begin_doc_row = i
+					end
+					if line:find("\\end{document}", 1, true) then
+						end_doc_row = i
+					end
+				end
+
+				local preamble_insert = {}
+				if not has_biblatex then
+					table.insert(preamble_insert, "\\usepackage{biblatex}")
+				end
+				if not has_addbibresource then
+					table.insert(preamble_insert, "\\addbibresource{references.bib}")
+				end
+
+				if #preamble_insert > 0 then
+					local at = begin_doc_row and (begin_doc_row - 1) or 0
+					vim.api.nvim_buf_set_lines(0, at, at, false, preamble_insert)
+					if begin_doc_row and end_doc_row then
+						end_doc_row = end_doc_row + #preamble_insert
+					end
+				end
+
+				if end_doc_row then
+					vim.api.nvim_buf_set_lines(
+						0,
+						end_doc_row - 1,
+						end_doc_row - 1,
+						false,
+						{ "\\printbibliography", "" }
+					)
+				else
+					vim.api.nvim_buf_set_lines(0, -1, -1, false, { "", "\\printbibliography" })
+				end
+
+				vim.cmd("vsplit " .. vim.fn.fnameescape(bibpath))
+			end
+
+			local function setup_tex_bib_keymap(bufnr)
+				vim.keymap.set("n", ";bib", tex_bib, { buffer = bufnr, desc = "Open/setup bibliography" })
+			end
+
+			vim.api.nvim_create_autocmd("FileType", {
+				pattern = { "tex", "latex" },
+				callback = function(args)
+					setup_tex_bib_keymap(args.buf)
+				end,
+			})
+
+			if vim.tbl_contains({ "tex", "latex" }, vim.bo.filetype) then
+				setup_tex_bib_keymap(0)
+			end
 		end,
 		init = function()
 			vim.cmd([[
@@ -524,49 +607,6 @@ require("lazy").setup({
 		config = function()
 			require("luasnip-latex-snippets").setup()
 			-- or setup({ use_treesitter = true })
-		end,
-	},
-
-	{ -- You can easily change to a different colorscheme.
-		-- Change the name of the colorscheme plugin below, and then
-		-- change the command in the config to whatever the name of that colorscheme is.
-		--
-		-- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-		"morhetz/gruvbox",
-		priority = 1000, -- Make sure to load this before all the other start plugins.
-		config = function()
-			require("gruvbox").setup({
-				terminal_colors = true, -- add neovim terminal colors
-				undercurl = true,
-				underline = true,
-				bold = true,
-				italic = {
-					strings = true,
-					emphasis = true,
-					comments = true,
-					operators = false,
-					folds = true,
-				},
-				strikethrough = true,
-				invert_selection = false,
-				invert_signs = false,
-				invert_tabline = false,
-				inverse = true, -- invert background for search, diffs, statuslines and errors
-				contrast = "", -- can be "hard", "soft" or empty string
-				palette_overrides = {},
-				overrides = {},
-				dim_inactive = false,
-				transparent_mode = true,
-			})
-		end,
-		init = function()
-			vim.cmd.colorscheme("gruvbox")
-
-			-- You can configure highlights by doing something like:
-			vim.cmd.hi("Comment gui=none")
-		end,
-		config = function()
-			-- Default options:
 		end,
 	},
 

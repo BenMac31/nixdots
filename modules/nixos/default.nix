@@ -14,6 +14,7 @@ in
       inputs.home-manager.nixosModules.default
       ./head
       ./serv
+      ./tailscale.nix
     ];
 
   config = {

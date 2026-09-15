@@ -47,6 +47,18 @@ in
         DontCheckDefaultBrowser = true;
         DisablePocket = true;
         SearchBar = "unified";
+        # Librewolf clears cookies on shutdown; sites with an explicit "allow"
+        # cookie permission are skipped by the shutdown sanitizer.
+        Cookies = {
+          Allow = [
+            "https://claude.ai"
+            "https://anthropic.com"
+            "https://github.com"
+            "https://proton.me"
+            "https://protonmail.com"
+            "https://ycombinator.com"
+          ];
+        };
         Preferences = {
           "extensions.pocket.enabled" = lock-false;
           "browser.topsites.contile.enabled" = lock-false;

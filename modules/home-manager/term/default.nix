@@ -5,8 +5,8 @@
     ./tui
     ./ai
     ./git.nix
+    ./fastfetch.nix
     ./graphide.nix
-    ./graphide-sync.nix
     ./yc.nix
     ./zsh.nix
     ./media.nix
@@ -17,12 +17,12 @@
     home.packages = with pkgs; [
       (lib.mkIf config.desktop.enable brightnessctl)
       (lib.mkIf config.desktop.enable wl-clipboard)
-      fastfetch
       libnotify
       jq
       yt-dlp
     ];
     programs = {
+      fastfetch.enable = lib.mkDefault true;
       gpg.enable = true;
       ssh.enable = lib.mkDefault true;
       direnv = {

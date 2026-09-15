@@ -1,4 +1,4 @@
-{ lib, config, pkgs, ... }:
+{ lib, config, pkgs, inputs, ... }:
 {
   options = {
     yc = {
@@ -6,7 +6,7 @@
     };
   };
   config = lib.mkIf config.yc.enable {
-    home.packages = [ pkgs.yc-cli ];
+    home.packages = [ inputs.graphide-tools.packages.${pkgs.stdenv.hostPlatform.system}.yc-cli ];
 
     # ~/.yc/bin is where upstream's installer drops its own copy of the binary,
     # which the packaged one replaces; prune it so it doesn't shadow ours.

@@ -1,11 +1,15 @@
 { lib, config, pkgs, ... }:
 let
   p = config.colorScheme.palette;
+  accent = if config.desktop.verdigris.enable then p.base0C else p.base0D;
+  asarLib = pkgs.writeTextDir "asar.py" (builtins.readFile ./asar.py);
 
-  gruvboxPatcher = pkgs.writeText "signal-gruvbox-patch.py" ''
-    import sys, json, struct, re, hashlib
+  themePatcher = pkgs.writeText "signal-theme-patch.py" ''
+    import sys, re, math
+    import asar
 
     ASAR = sys.argv[1]
+    PALETTE = ${builtins.toJSON (p // { inherit accent; })}
 
     COLOR_MAP = {
         "#121212": "#${p.base00}",
@@ -22,10 +26,10 @@ let
         "#f6f6f6": "#${p.base06}",
         "#fff":    "#${p.base06}",
         "#ffffff": "#${p.base06}",
-        "#6191f3": "#${p.base0D}",
-        "#2c6bed": "#${p.base0D}",
-        "#336ba3": "#${p.base0D}",
-        "#406ec9": "#${p.base0D}",
+        "#6191f3": "#${accent}",
+        "#2c6bed": "#${accent}",
+        "#336ba3": "#${accent}",
+        "#406ec9": "#${accent}",
         "#f44336": "#${p.base08}",
         "#cf163e": "#${p.base08}",
         "#3b7845": "#${p.base0B}",
@@ -73,79 +77,147 @@ let
             i = j + 1
         return "".join(result)
 
-    def sha256_blocks(data, block_size):
-        return [
-            hashlib.sha256(data[i:i + block_size]).hexdigest()
-            for i in range(0, len(data), block_size)
-        ]
+    def to_linear(c):
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
 
-    with open(ASAR, "rb") as f:
-        raw = f.read()
+    def to_srgb(c):
+        c = min(max(c, 0.0), 1.0)
+        return c * 12.92 if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
 
-    hdr_size = struct.unpack_from("<I", raw, 12)[0]
-    pad = (-hdr_size) % 4
-    data_start = 16 + hdr_size + pad
-    header = json.loads(raw[16:16 + hdr_size])
+    def rgb_to_oklab(r, g, b):
+        r, g, b = to_linear(r), to_linear(g), to_linear(b)
+        l = math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
+        m = math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
+        s = math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
+        return (
+            0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+            1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+            0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s,
+        )
 
-    def collect(node, path=""):
-        out = {}
-        if "files" in node:
-            for name, child in node["files"].items():
-                out.update(collect(child, f"{path}/{name}" if path else name))
-        elif "offset" in node:
-            out[path] = node
+    def oklab_to_hex(L, a, b, alpha):
+        l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3
+        m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3
+        s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3
+        rgb = (
+            4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+            -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+            -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
+        )
+        out = "#" + "".join(f"{round(to_srgb(c) * 255):02x}" for c in rgb)
+        if alpha < 1:
+            out += f"{round(alpha * 255):02x}"
         return out
 
-    file_index = collect(header)
-    file_data = {
-        path: raw[data_start + int(node["offset"]):data_start + int(node["offset"]) + node["size"]]
-        for path, node in file_index.items()
-    }
+    def hex_to_oklab(h):
+        return rgb_to_oklab(*(int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)))
 
-    for css_path in ("stylesheets/manifest.css", "stylesheets/manifest_bridge.css"):
-        if css_path in file_data:
-            original = file_data[css_path].decode("utf-8", errors="replace")
-            patched = patch_css(original)
-            file_data[css_path] = patched.encode("utf-8")
-            print(f"  {css_path}: {len(original)} -> {len(patched)} bytes")
+    def parse_color(tok):
+        tok = tok.strip()
+        m = re.fullmatch(r"#([0-9a-fA-F]{3,8})", tok)
+        if m:
+            h = m.group(1)
+            if len(h) in (3, 4):
+                h = "".join(c * 2 for c in h)
+            if len(h) not in (6, 8):
+                return None
+            alpha = int(h[6:8], 16) / 255 if len(h) == 8 else 1.0
+            return (*hex_to_oklab(h[:6]), alpha)
+        m = re.fullmatch(r"rgba?\(([^)]*)\)", tok)
+        if m:
+            parts = [x for x in re.split(r"[\s,/]+", m.group(1).strip()) if x]
+            if len(parts) < 3:
+                return None
+            rgb = [float(x.rstrip("%")) / (100 if x.endswith("%") else 255) for x in parts[:3]]
+            alpha = float(parts[3].rstrip("%")) / (100 if parts[3].endswith("%") else 1) if len(parts) > 3 else 1.0
+            return (*rgb_to_oklab(*rgb), alpha)
+        m = re.fullmatch(r"oklab\(([^)]*)\)", tok)
+        if m:
+            parts = [x for x in re.split(r"[\s/]+", m.group(1).strip()) if x]
+            if len(parts) < 3:
+                return None
+            num = lambda x: 0.0 if x == "none" else float(x.rstrip("%"))
+            L = num(parts[0]) / (100 if parts[0].endswith("%") else 1)
+            alpha = num(parts[3]) / (100 if parts[3].endswith("%") else 1) if len(parts) > 3 else 1.0
+            return (L, num(parts[1]), num(parts[2]), alpha)
+        return None
 
-    current_offset = 0
-    file_list = []
+    # Signal's dark greys, each pinned to the palette grey it stands in for.
+    GREY_RAMP = [
+        (hex_to_oklab(src)[0], hex_to_oklab(PALETTE[dst]))
+        for src, dst in (
+            ("1b1b1b", "base00"), ("3b3b3b", "base01"), ("545454", "base02"),
+            ("5e5e5e", "base03"), ("848484", "base04"), ("dedede", "base05"),
+            ("ffffff", "base06"),
+        )
+    ]
 
-    def update(node, path=""):
-        global current_offset
-        if "files" in node:
-            for name, child in node["files"].items():
-                update(child, f"{path}/{name}" if path else name)
-        elif "offset" in node:
-            data = file_data[path]
-            node["offset"] = str(current_offset)
-            node["size"] = len(data)
-            if "integrity" in node:
-                bs = node["integrity"].get("blockSize", 4194304)
-                blocks = sha256_blocks(data, bs)
-                node["integrity"] = {
-                    "algorithm": "SHA256",
-                    "hash": hashlib.sha256(data).hexdigest(),
-                    "blockSize": bs,
-                    "blocks": blocks,
-                }
-            current_offset += len(data)
-            file_list.append(data)
+    HUES = [
+        (20, "base0E"), (45, "base08"), (75, "base09"), (115, "base0A"),
+        (180, "base0B"), (300, "accent"), (360, "base0E"),
+    ]
 
-    update(header)
+    def remap(tok):
+        c = parse_color(tok)
+        if c is None:
+            return tok
+        L, a, b, alpha = c
+        if alpha == 0 or L < 0.05:
+            return tok
+        if math.hypot(a, b) < 0.03:
+            if L <= GREY_RAMP[0][0]:
+                return oklab_to_hex(*GREY_RAMP[0][1], alpha)
+            for (l0, c0), (l1, c1) in zip(GREY_RAMP, GREY_RAMP[1:]):
+                if L <= l1:
+                    t = (L - l0) / (l1 - l0)
+                    return oklab_to_hex(*(x + (y - x) * t for x, y in zip(c0, c1)), alpha)
+            return oklab_to_hex(*GREY_RAMP[-1][1], alpha)
+        hue = math.degrees(math.atan2(b, a)) % 360
+        name = next(n for limit, n in HUES if hue < limit)
+        return oklab_to_hex(*hex_to_oklab(PALETTE[name]), alpha)
 
-    new_hdr = json.dumps(header, separators=(",", ":")).encode("utf-8")
-    new_pad = (-len(new_hdr)) % 4
-    new_hdr_padded = new_hdr + b"\x00" * new_pad
-    n = len(new_hdr_padded)
+    def split_args(s):
+        depth, start, out = 0, 0, []
+        for i, ch in enumerate(s):
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+            elif ch == "," and depth == 0:
+                out.append(s[start:i])
+                start = i + 1
+        out.append(s[start:])
+        return out
 
-    with open(ASAR, "wb") as f:
-        # ASAR header: [4][padded+8][padded+4][raw_json_len][json][padding][data...]
-        f.write(struct.pack("<IIII", 4, n + 8, n + 4, len(new_hdr)))
-        f.write(new_hdr_padded)
-        for data in file_list:
-            f.write(data)
+    def patch_light_dark(css):
+        out, i = [], 0
+        while True:
+            j = css.find("light-dark(", i)
+            if j == -1:
+                out.append(css[i:])
+                return "".join(out)
+            k, depth = j + len("light-dark("), 1
+            while depth:
+                depth += {"(": 1, ")": -1}.get(css[k], 0)
+                k += 1
+            args = split_args(css[j + len("light-dark("):k - 1])
+            out.append(css[i:j])
+            if len(args) == 2:
+                lead = args[1][:len(args[1]) - len(args[1].lstrip())]
+                out.append(f"light-dark({args[0]},{lead}{remap(args[1])})")
+            else:
+                out.append(css[j:k])
+            i = k
+
+    def transform(file_data):
+        for css_path in ("stylesheets/manifest.css", "stylesheets/manifest_bridge.css", "stylesheets/tailwind.css"):
+            if css_path in file_data:
+                original = file_data[css_path].decode("utf-8", errors="replace")
+                patched = patch_light_dark(patch_css(original))
+                file_data[css_path] = patched.encode("utf-8")
+                print(f"  {css_path}: {len(original)} -> {len(patched)} bytes")
+
+    asar.patch(ASAR, transform)
 
     print("Done.")
   '';
@@ -153,8 +225,8 @@ let
   themedSignal = pkgs.signal-desktop.overrideAttrs (old: {
     nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.python3 ];
     postInstall = (old.postInstall or "") + ''
-      echo "Applying Gruvbox theme to Signal ASAR..."
-      python3 ${gruvboxPatcher} $out/share/signal-desktop/app.asar
+      echo "Applying system palette to Signal ASAR..."
+      PYTHONPATH=${asarLib} python3 ${themePatcher} $out/share/signal-desktop/app.asar
     '';
   });
 
@@ -164,7 +236,7 @@ let
   );
 in
 {
-  options.signal.enable = lib.mkEnableOption "Signal Desktop with Gruvbox theme";
+  options.signal.enable = lib.mkEnableOption "Signal Desktop with the system palette";
 
   config = lib.mkIf config.signal.enable {
     home.packages = [

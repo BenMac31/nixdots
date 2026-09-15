@@ -11,6 +11,7 @@ in
       ./agent-throttle.nix
       ./remote-builds.nix
       ./nix-store-hygiene.nix
+      ./coredump.nix
     ];
   networking.hostName = "nixWorks";
   custom.flakeAttr = "nixWorks";

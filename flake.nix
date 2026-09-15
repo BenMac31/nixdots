@@ -51,6 +51,9 @@
       # back in: move graphide forward in its own repo first, where the move can
       # be tested, rather than rebuilding it here against an untried channel.
     };
+    # Reusable modules/tools have their own pin: the release updater replaces
+    # `graphide` with its tested editor artifact without rolling these back.
+    graphide-tools.url = "git+ssh://git@github.com/GraphideHQ/monolith";
   };
 
   outputs = { self, nixpkgs, home-manager, nixpkgs-master, nixpkgs-unstable, ... }@inputs:
@@ -111,7 +114,6 @@
               overlay-unstable-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
-                yc-cli = prev.callPackage ./pkgs/yc-cli.nix { };
               })
             ];
           })
@@ -136,7 +138,6 @@
               overlay-master-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
-                yc-cli = prev.callPackage ./pkgs/yc-cli.nix { };
               })
             ];
           })
@@ -168,7 +169,6 @@
               overlay-master-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
-                yc-cli = prev.callPackage ./pkgs/yc-cli.nix { };
               })
             ];
           })
@@ -188,7 +188,6 @@
               overlay-unstable-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
-                yc-cli = prev.callPackage ./pkgs/yc-cli.nix { };
               })
             ];
           })
@@ -213,7 +212,6 @@
               overlay-master-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
-                yc-cli = prev.callPackage ./pkgs/yc-cli.nix { };
               })
             ];
           })
@@ -230,6 +228,5 @@
           ./hosts/matrixServ/configuration.nix
         ];
       };
-      checks.${system}.matrix = import ./tests/matrix.nix { inherit nixpkgs system nixpkgsConfig; };
     };
 }

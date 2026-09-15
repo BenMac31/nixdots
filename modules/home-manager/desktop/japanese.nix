@@ -28,7 +28,7 @@
         qt6Packages.fcitx5-configtool
       ];
     };
-    xdg.dataFile = lib.mkIf config.desktop.japanese.input.enable {
+    xdg.dataFile = lib.mkIf (config.desktop.japanese.input.enable && !config.desktop.verdigris.enable) {
       "fcitx5/themes".source = inputs.fcitx5-gruvbox;
     };
   };
