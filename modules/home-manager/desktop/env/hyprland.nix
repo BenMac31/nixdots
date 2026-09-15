@@ -15,12 +15,14 @@ in
     ./wm/rofi
     ./wm/hyprpaper.nix
     ./wm/waybar
+    ./wm/graphide-shell.nix
     ./swaync.nix
   ];
   config = lib.mkIf osConfig.programs.hyprland.enable {
-    programs.rofi.enable = true;
-    services.hyprpaper.enable = true;
-    programs.waybar.enable = true;
+    programs.rofi.enable = lib.mkDefault (!config.programs.graphide-shell.enable);
+    programs.graphide-shell.enable = lib.mkDefault true;
+    services.hyprpaper.enable = lib.mkDefault (!config.programs.graphide-shell.enable);
+    programs.waybar.enable = lib.mkDefault (!config.programs.graphide-shell.enable);
     xdg = {
       desktopEntries."org.gnome.Settings" = {
         name = "Settings";
@@ -154,7 +156,7 @@ in
           gaps_in = 8;
           gaps_out = 16;
           border_size = 2;
-          "col.active_border" = "rgba(${base08}ee) rgba(${base0A}ee) 45deg";
+          "col.active_border" = "rgba(${base0C}ee)";
           "col.inactive_border" = "rgba(${base03}aa)";
           layout = "master";
           allow_tearing = false;
@@ -230,6 +232,9 @@ in
             (wClass 8 "steam(.*)")
             (wClass 8 "org.prismlauncher.PrismLauncher")
             "match:title (Bitwarden), float on"
+            "match:title ^(TODO)$, float on"
+            "match:title ^(TODO)$, size 600 800"
+            "match:title ^(TODO)$, center on"
           ];
         layerrule = [
           "match:namespace ^(rofi)$, animation slide top"
@@ -248,11 +253,23 @@ in
           "$mainMod,W,exec,xdg-open 'http://'"
           "$mainMod,A,exec,pkill aiclip; aiclip"
           "$mainMod,V,togglefloating,"
-          "$mainMod,n,exec,swaync-client --close-latest"
-          "$mainMod SHIFT,n,exec,swaync-client -t"
-          "$mainMod,R,exec,pkill rofi || rofi -show drun"
+          (if config.programs.graphide-shell.enable then
+            "$mainMod,n,exec,graphide-shell ipc call notifications closeLatest"
+          else "$mainMod,n,exec,swaync-client --close-latest")
+          (if config.programs.graphide-shell.enable then
+            "$mainMod SHIFT,n,exec,graphide-shell ipc call notifications toggle"
+          else "$mainMod SHIFT,n,exec,swaync-client -t")
+          (if config.programs.graphide-shell.enable then
+            "$mainMod,R,exec,graphide-shell ipc call desktop apps"
+          else "$mainMod,R,exec,pkill rofi || rofi -show drun")
           "$mainMod SHIFT, V, exec, mullvad reconnect"
-          (lib.mkIf config.programs.rbw.enable "$mainMod,P,exec,pkill rofi || rofi-rbw -a copy")
+          (lib.mkIf config.programs.rbw.enable (if config.programs.graphide-shell.enable then
+            "$mainMod,P,exec,graphide-shell ipc call desktop vault"
+          else "$mainMod,P,exec,pkill rofi || rofi-rbw -a copy"))
+          (lib.mkIf config.programs.graphide-shell.enable
+            "$mainMod SHIFT,D,exec,graphide-shell ipc call desktop desktops")
+          (lib.mkIf config.programs.graphide-shell.enable
+            "$mainMod SHIFT,U,exec,graphide-shell ipc call desktop accounts")
           "$mainMod,H,movefocus,l"
           "$mainMod,L,movefocus,r"
           "$mainMod,K,movefocus,u"
@@ -276,7 +293,11 @@ in
           "CTRL$mainMod,F11,fullscreenstate,2"
           "$mainMod,p,pin,"
           "$mainMod CTRL,s,exec,grimblast copy area"
-          "$mainMod,b,exec,pkill waybar || waybar"
+          (if config.programs.graphide-shell.enable then
+            "$mainMod,b,exec,graphide-shell ipc call desktop toggleBar"
+          else "$mainMod,b,exec,pkill waybar || waybar")
+          (lib.mkIf config.programs.graphide-shell.enable
+            "$mainMod SHIFT,b,exec,graphide-shell ipc call desktop toggleWidgets")
           "$mainMod,G,togglegroup"
           "$mainMod,f1,exec,hyprperf"
           "$mainMod,f2,exec,swapcaps"
