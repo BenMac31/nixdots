@@ -6,8 +6,6 @@
     ./ai
     ./git.nix
     ./fastfetch.nix
-    ./graphide.nix
-    ./yc.nix
     ./zsh.nix
     ./media.nix
     ./ssh.nix

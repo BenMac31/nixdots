@@ -3,6 +3,7 @@
 {
   imports = [
     ../../modules/home-manager
+    ../../modules/home-manager/graphide.nix
   ];
   programs.home-manager.enable = true;
   home.username = "greencheetah";

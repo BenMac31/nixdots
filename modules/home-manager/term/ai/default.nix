@@ -5,7 +5,6 @@
     ./aiclip.nix
     ./claude-code.nix
     ./localrun.nix
-    ./accounts.nix
   ];
   options = {
     ai = {

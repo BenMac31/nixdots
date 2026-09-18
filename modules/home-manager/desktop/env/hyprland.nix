@@ -7,6 +7,7 @@ let
   socat = "${pkgs.socat}/bin/socat";
   hyprctl = "${pkgs.hyprland}/bin/hyprctl";
   jq = "${pkgs.jq}/bin/jq";
+  graphideShell = lib.attrByPath [ "programs" "graphide-shell" "enable" ] false config;
 in
 {
   # Only merge Waybar / rofi / hyprpaper when the OS enables Hyprland; otherwise
@@ -15,14 +16,12 @@ in
     ./wm/rofi
     ./wm/hyprpaper.nix
     ./wm/waybar
-    ./wm/graphide-shell.nix
     ./swaync.nix
   ];
   config = lib.mkIf osConfig.programs.hyprland.enable {
-    programs.rofi.enable = lib.mkDefault (!config.programs.graphide-shell.enable);
-    programs.graphide-shell.enable = lib.mkDefault true;
-    services.hyprpaper.enable = lib.mkDefault (!config.programs.graphide-shell.enable);
-    programs.waybar.enable = lib.mkDefault (!config.programs.graphide-shell.enable);
+    programs.rofi.enable = lib.mkDefault (!graphideShell);
+    services.hyprpaper.enable = lib.mkDefault (!graphideShell);
+    programs.waybar.enable = lib.mkDefault (!graphideShell);
     xdg = {
       desktopEntries."org.gnome.Settings" = {
         name = "Settings";
@@ -253,22 +252,22 @@ in
           "$mainMod,W,exec,xdg-open 'http://'"
           "$mainMod,A,exec,pkill aiclip; aiclip"
           "$mainMod,V,togglefloating,"
-          (if config.programs.graphide-shell.enable then
+          (if graphideShell then
             "$mainMod,n,exec,graphide-shell ipc call notifications closeLatest"
           else "$mainMod,n,exec,swaync-client --close-latest")
-          (if config.programs.graphide-shell.enable then
+          (if graphideShell then
             "$mainMod SHIFT,n,exec,graphide-shell ipc call notifications toggle"
           else "$mainMod SHIFT,n,exec,swaync-client -t")
-          (if config.programs.graphide-shell.enable then
+          (if graphideShell then
             "$mainMod,R,exec,graphide-shell ipc call desktop apps"
           else "$mainMod,R,exec,pkill rofi || rofi -show drun")
           "$mainMod SHIFT, V, exec, mullvad reconnect"
-          (lib.mkIf config.programs.rbw.enable (if config.programs.graphide-shell.enable then
+          (lib.mkIf config.programs.rbw.enable (if graphideShell then
             "$mainMod,P,exec,graphide-shell ipc call desktop vault"
           else "$mainMod,P,exec,pkill rofi || rofi-rbw -a copy"))
-          (lib.mkIf config.programs.graphide-shell.enable
+          (lib.mkIf graphideShell
             "$mainMod SHIFT,D,exec,graphide-shell ipc call desktop desktops")
-          (lib.mkIf config.programs.graphide-shell.enable
+          (lib.mkIf graphideShell
             "$mainMod SHIFT,U,exec,graphide-shell ipc call desktop accounts")
           "$mainMod,H,movefocus,l"
           "$mainMod,L,movefocus,r"
@@ -293,10 +292,10 @@ in
           "CTRL$mainMod,F11,fullscreenstate,2"
           "$mainMod,p,pin,"
           "$mainMod CTRL,s,exec,grimblast copy area"
-          (if config.programs.graphide-shell.enable then
+          (if graphideShell then
             "$mainMod,b,exec,graphide-shell ipc call desktop toggleBar"
           else "$mainMod,b,exec,pkill waybar || waybar")
-          (lib.mkIf config.programs.graphide-shell.enable
+          (lib.mkIf graphideShell
             "$mainMod SHIFT,b,exec,graphide-shell ipc call desktop toggleWidgets")
           "$mainMod,G,togglegroup"
           "$mainMod,f1,exec,hyprperf"
