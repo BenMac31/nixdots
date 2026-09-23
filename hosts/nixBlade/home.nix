@@ -15,9 +15,6 @@
   graphide.enable = true;
   # Separate toggle: the timer reinstalls gr/grat/gred under you every 30 min.
   graphide.autoUpdate.enable = true;
-  # The editor build runs on XiaServer over ssh from a background unit, so it
-  # needs a key that works with no agent loaded; id_rsa has a passphrase.
-  graphide.autoUpdate.sshIdentityFile = "/home/greencheetah/.ssh/id_ed25519_voxi";
   desktop = {
     enable = true;
     gaming.enable = true;

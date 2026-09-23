@@ -5,7 +5,6 @@
   graphide.autoUpdate = {
     flakeAttr = flakeAttr;
     homeManagerPackage = inputs.home-manager.packages.${pkgs.stdenv.hostPlatform.system}.home-manager;
-    sshAuthSock = "%t/ssh-agent";
   };
   graphide.checkoutSync = {
     enable = lib.mkDefault config.graphide.enable;
