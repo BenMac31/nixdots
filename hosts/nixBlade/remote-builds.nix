@@ -107,6 +107,12 @@
 # This is a preference, not a requirement: if the host is off or unreachable,
 # nix logs the failed connection and builds locally instead. Nothing here can
 # wedge a build.
+#
+# The M6 Mac mini intentionally is not in nix.buildMachines. This laptop asks
+# for x86_64-linux derivations and the Mac provides aarch64-darwin; Nix cannot
+# transparently substitute one system for the other. Portable dev-shell work
+# goes to the M6 through `utilities/scripts/remote.sh --portable`, while these
+# entries remain the automatic path for ordinary `nix build`/`nix run` work.
 { ... }:
 {
   nix.distributedBuilds = true;
