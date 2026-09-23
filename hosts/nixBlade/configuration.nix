@@ -10,6 +10,7 @@ in
       ./hardware-configuration.nix
       ./agent-throttle.nix
       ./remote-builds.nix
+      ./remote-macs.nix
       ./nix-store-hygiene.nix
       ./coredump.nix
     ];
