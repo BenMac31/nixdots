@@ -269,6 +269,8 @@ in
             "$mainMod SHIFT,D,exec,graphide-shell ipc call desktop desktops")
           (lib.mkIf graphideShell
             "$mainMod SHIFT,U,exec,graphide-shell ipc call desktop accounts")
+          (lib.mkIf graphideShell
+            "$mainMod,Y,exec,graphide-shell ipc call desktop artifacts")
           "$mainMod,H,movefocus,l"
           "$mainMod,L,movefocus,r"
           "$mainMod,K,movefocus,u"
