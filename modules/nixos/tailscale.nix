@@ -25,6 +25,15 @@
 # Mullvad and Tailscale both want to own routing and DNS. With the Mullvad
 # tunnel up its kill switch can swallow tailnet traffic. If the tailnet goes
 # dark only while Mullvad is connected, that is the cause, not this module.
+#
+# XiaServer (and whatever else Dan shares) lives on Dan's tailnet and is only
+# shared into this one. MagicDNS searches this tailnet's own suffix, so a
+# shared node answers only to its full name, xiaserver.tail028f45.ts.net.
+# Searching Dan's suffix too makes the bare `xiaserver` that the artifact
+# store, its publish script and every link an agent prints resolve here the
+# same as on Dan's machines. append_search rather than networking.search:
+# Tailscale registers with resolvconf exclusively, which drops the static
+# entry networking.search becomes, while append_search survives it.
 { config, lib, ... }:
 {
   options.custom.tailscale.enable = lib.mkEnableOption "the Tailscale client daemon";
@@ -37,5 +46,8 @@
     };
 
     networking.firewall.trustedInterfaces = [ config.services.tailscale.interfaceName ];
+    networking.resolvconf.extraConfig = ''
+      append_search="tail028f45.ts.net"
+    '';
   };
 }
