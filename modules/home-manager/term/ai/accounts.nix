@@ -1,11 +1,27 @@
 { config, lib, inputs, pkgs, ... }:
 let
   cfg = config.services.graphide-accounts;
+  # Every agent session, and everything it spawns, runs in agents.slice
+  # (hosts/nixBlade/agent-throttle.nix: low CPU/IO weight, 11G memory kill
+  # line). This wrapper is the one launch path every terminal, alias and GUI
+  # launcher goes through, so the slice lives here rather than in a shell
+  # alias: on 2026-09-23 the alias had been shadowed, no session was in the
+  # slice, and one agent's `nix eval` grew to 13 GB and swapped the desktop
+  # to a standstill. The wrapper re-execs itself inside a scope once; with no
+  # user bus (a bare ssh or a container) it runs unconfined.
+  intoAgentsSlice = ''
+    if [[ $(< /proc/self/cgroup) != */agents.slice/* && -S "''${XDG_RUNTIME_DIR:-/nonexistent}/bus" ]] \
+        && command -v systemd-run >/dev/null; then
+      exec systemd-run --user --scope --slice=agents.slice --quiet --collect -- "$0" "$@"
+    fi
+  '';
   selectedClaude = pkgs.writeShellScriptBin "claude" ''
+    ${intoAgentsSlice}
     export GRAPHIDE_CLAUDE_BIN=${lib.escapeShellArg (lib.getExe config.ai.claude.package)}
     exec ${cfg.package}/bin/graphide-claude "$@"
   '';
   selectedCodex = pkgs.writeShellScriptBin "codex" ''
+    ${intoAgentsSlice}
     export GRAPHIDE_CODEX_BIN=${lib.escapeShellArg (lib.getExe pkgs.master.unfree.codex)}
     exec ${cfg.package}/bin/graphide-codex "$@"
   '';

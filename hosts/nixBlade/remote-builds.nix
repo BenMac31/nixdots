@@ -37,6 +37,12 @@
 # reverts to a 10-second stall per build with nothing explaining it. That is
 # the thing to check first if builds start feeling slow for no reason.
 #
+# From 2026-09-14 to 2026-09-23 the LAN entry read 10.0.0.100, a wrong address
+# that a backlog merge brought in. Nothing answers there, so every build paid
+# the ConnectTimeout, then went out through tailscaled instead of the LAN.
+# XiaServer's LAN address is 10.0.0.35, the one the monorepo's
+# utilities/scripts/remote.sh uses; check both when either changes.
+#
 # There is no hostname to use in place of either literal IP. All three
 # candidates were checked on 2026-09-08 and none of them resolve here:
 #
@@ -120,7 +126,7 @@
 
   nix.buildMachines = [
     {
-      hostName = "10.0.0.100";
+      hostName = "10.0.0.35";
       sshUser = "graphide-build";
       sshKey = "/home/greencheetah/.ssh/id_ed25519_voxi";
       system = "x86_64-linux";
@@ -145,14 +151,14 @@
     hostNames = [
       "100.96.50.71"
       "xiaserver.tail028f45.ts.net"
-      "10.0.0.100"
+      "10.0.0.35"
     ];
     publicKey =
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINWFmoYiRIbUToYku4tbARtl7W0OLx+lSt2cwV0iSaj1";
   };
 
   programs.ssh.extraConfig = ''
-    Host 100.96.50.71 10.0.0.100
+    Host 100.96.50.71 10.0.0.35
       ConnectTimeout 10
   '';
 }

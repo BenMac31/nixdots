@@ -7,7 +7,7 @@
 #
 # Three levers, all undone by dropping this file from the host's imports:
 #   1. an `agents.slice` user slice with a low CPU/IO weight and a memory
-#      ceiling, and a `claude` alias that starts each session inside it;
+#      ceiling, which the claude/codex wrappers start each session inside;
 #   2. nix builds capped at two jobs of four cores instead of eight of eight,
 #      and nix-daemon, where builds actually run (outside the user's cgroup,
 #      so the slice cannot reach them), given the same low weight;
@@ -33,11 +33,9 @@
     };
   };
 
-  # An interactive `claude` lands in the slice; a script calling the binary
-  # is unaffected, and so are sessions Paseo, Orca or Cursor start themselves.
-  # --scope keeps the session in this terminal with its environment intact.
-  environment.shellAliases.claude =
-    "systemd-run --user --scope --slice=agents.slice --quiet claude";
+  # The `claude` and `codex` wrappers in modules/home-manager/term/ai/
+  # accounts.nix put each session in this slice. That used to be a shell alias
+  # here, which any later `claude` alias silently replaced.
 
   # Defaults are cores = 0 (every thread per build) and max-jobs = auto (one
   # build per thread): up to 64 build threads on an 8-thread laptop before a
