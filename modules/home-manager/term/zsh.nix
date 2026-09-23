@@ -38,6 +38,9 @@
         homewatch = "cd ~/nixos && dirwatch homeswitch";
         powerinfo = "upower -i /org/freedesktop/UPower/devices/battery_BAT1";
         inhibit-sleep = "systemd-inhibit --what=handle-lid-switch --why=\"lid closed, keep running\" sleep infinity";
+        # Temporary (2026-09-22): nixpkgs master for the new models until unstable catches up.
+        claude-master = "NIXPKGS_ALLOW_UNFREE=1 nix run --impure github:NixOS/nixpkgs/master#claude-code --";
+        codex-master = "NIXPKGS_ALLOW_UNFREE=1 nix run --impure github:NixOS/nixpkgs/master#codex --";
         cat = "bat";
         cp = "cp -r";
         neofetch = "fastfetch";
