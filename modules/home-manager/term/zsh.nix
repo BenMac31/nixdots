@@ -24,14 +24,14 @@
     defaultKeymap = "viins";
     shellAliases = lib.mkMerge [
       (lib.mkIf config.desktop.enable {
-        nixswitch = "st=\"$(date +%s)\"; sudo nixos-rebuild switch --flake $HOME/nixos/#${flakeAttr} --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
-        homeswitch = "st=\"$(date +%s)\"; home-manager switch --flake $HOME/nixos/#${flakeAttr} --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
-        nixtest = "st=\"$(date +%s)\"; sudo nixos-rebuild test --fast --flake $HOME/nixos/#${flakeAttr} --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
+        nixswitch = "st=\"$(date +%s)\"; sudo nixos-rebuild switch --flake $HOME/nixos/#${flakeAttr} --impure --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
+        homeswitch = "st=\"$(date +%s)\"; home-manager switch --flake $HOME/nixos/#${flakeAttr} --impure --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
+        nixtest = "st=\"$(date +%s)\"; sudo nixos-rebuild test --fast --flake $HOME/nixos/#${flakeAttr} --impure --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
       })
       (lib.mkIf (!config.desktop.enable) {
-        nixswitch = "sudo nixos-rebuild switch --flake $HOME/nixos/#${flakeAttr} --cores 6";
-        homeswitch = "home-manager switch --flake $HOME/nixos/#${flakeAttr} --cores 6";
-        nixtest = "sudo nixos-rebuild test --fast --flake $HOME/nixos/#${flakeAttr} --cores 6";
+        nixswitch = "sudo nixos-rebuild switch --flake $HOME/nixos/#${flakeAttr} --impure --cores 6";
+        homeswitch = "home-manager switch --flake $HOME/nixos/#${flakeAttr} --impure --cores 6";
+        nixtest = "sudo nixos-rebuild test --fast --flake $HOME/nixos/#${flakeAttr} --impure --cores 6";
       })
       {
         nixwatch = "cd ~/nixos && dirwatch nixtest";
