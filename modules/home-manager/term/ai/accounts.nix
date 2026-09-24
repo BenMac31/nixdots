@@ -23,10 +23,12 @@ let
       exec systemd-run --user --scope --slice=agents.slice --quiet --collect -- "$0" "$@"
     fi
   '';
+  effortSettings = lib.optionalString (config.ai.claude.effort != null)
+    "--settings ${lib.escapeShellArg (builtins.toJSON { effortLevel = config.ai.claude.effort; })}";
   selectedClaude = pkgs.writeShellScriptBin "claude" ''
     ${intoAgentsSlice}
     export GRAPHIDE_CLAUDE_BIN=${lib.escapeShellArg (lib.getExe config.ai.claude.package)}
-    exec ${cfg.package}/bin/graphide-claude "$@"
+    exec ${cfg.package}/bin/graphide-claude ${effortSettings} "$@"
   '';
   selectedCodex = pkgs.writeShellScriptBin "codex" ''
     ${intoAgentsSlice}
