@@ -17,11 +17,14 @@ in
     ./wm/hyprpaper.nix
     ./wm/waybar
     ./swaync.nix
+    ./lock.nix
   ];
   config = lib.mkIf osConfig.programs.hyprland.enable {
     programs.rofi.enable = lib.mkDefault (!graphideShell);
     services.hyprpaper.enable = lib.mkDefault (!graphideShell);
     programs.waybar.enable = lib.mkDefault (!graphideShell);
+    programs.hyprlock.enable = lib.mkDefault true;
+    services.hypridle.enable = lib.mkDefault true;
     xdg = {
       desktopEntries."org.gnome.Settings" = {
         name = "Settings";
@@ -262,9 +265,6 @@ in
             "$mainMod,R,exec,graphide-shell ipc call desktop apps"
           else "$mainMod,R,exec,pkill rofi || rofi -show drun")
           "$mainMod SHIFT, V, exec, mullvad reconnect"
-          (lib.mkIf config.programs.rbw.enable (if graphideShell then
-            "$mainMod,P,exec,graphide-shell ipc call desktop vault"
-          else "$mainMod,P,exec,pkill rofi || rofi-rbw -a copy"))
           (lib.mkIf graphideShell
             "$mainMod SHIFT,D,exec,graphide-shell ipc call desktop desktops")
           (lib.mkIf graphideShell

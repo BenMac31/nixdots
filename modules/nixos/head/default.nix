@@ -22,6 +22,11 @@ in
       };
     };
     hardware.pulseaudio.enable = false;
+    # home-manager can't write /etc/pam.d. fprintAuth off so typing a password
+    # never waits on the reader; hyprlock talks to fprintd directly instead.
+    security.pam.services.hyprlock = lib.mkIf config.programs.hyprland.enable {
+      fprintAuth = false;
+    };
     programs = lib.mkIf config.head.gaming {
       gamemode.enable = true;
       gamescope.enable = true;
