@@ -13,6 +13,7 @@ in
       ./remote-macs.nix
       ./nix-store-hygiene.nix
       ./coredump.nix
+      ./prochot-watch.nix
     ];
   networking.hostName = "nixWorks";
   custom.flakeAttr = "nixWorks";
