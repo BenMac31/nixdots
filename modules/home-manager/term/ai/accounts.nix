@@ -7,11 +7,19 @@ let
   # launcher goes through, so the slice lives here rather than in a shell
   # alias: on 2026-09-23 the alias had been shadowed, no session was in the
   # slice, and one agent's `nix eval` grew to 13 GB and swapped the desktop
-  # to a standstill. The wrapper re-execs itself inside a scope once; with no
-  # user bus (a bare ssh or a container) it runs unconfined.
+  # to a standstill. The wrapper re-execs itself inside a scope once; when the
+  # user manager cannot be reached (a bare ssh, a container) it runs unconfined.
+  #
+  # The socket existing is not enough. Inside a bwrap sandbox with its own pid
+  # namespace (agent-sandbox, which runs the dev editor) the socket is there
+  # but the manager refuses the connection ("Failed to connect to user scope
+  # bus via local transport: No data available"), and systemd-run exits 1
+  # before the CLI starts: every agent the sandboxed editor launched died ~4 s
+  # in. So ask the manager (~6 ms) before handing the launch to it.
   intoAgentsSlice = ''
     if [[ $(< /proc/self/cgroup) != */agents.slice/* && -S "''${XDG_RUNTIME_DIR:-/nonexistent}/bus" ]] \
-        && command -v systemd-run >/dev/null; then
+        && command -v systemd-run >/dev/null \
+        && systemctl --user show-environment >/dev/null 2>&1; then
       exec systemd-run --user --scope --slice=agents.slice --quiet --collect -- "$0" "$@"
     fi
   '';
