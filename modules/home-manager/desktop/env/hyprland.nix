@@ -302,6 +302,7 @@ in
           "$mainMod,G,togglegroup"
           "$mainMod,f1,exec,hyprperf"
           "$mainMod,f2,exec,swapcaps"
+          "$mainMod CTRL,Y,exec,systemctl start prochot-clear"
           "$mainMod,1,workspace,1"
           "$mainMod,2,workspace,2"
           "$mainMod,3,workspace,3"
