@@ -125,6 +125,33 @@ in
         else
           ${hyprctl} keyword "workspace name:$ws,layout:monocle"
         fi
+        rm -f "$XDG_RUNTIME_DIR/hypr-columns/$ws"
+      '')
+      (pkgs.writeShellScriptBin "hypr-columns" ''
+        dir="$XDG_RUNTIME_DIR/hypr-columns"
+        mkdir -p "$dir"
+        read -r ws layout < <(${hyprctl} activeworkspace -j | ${jq} -r '[.name,.tiledLayout]|@tsv')
+        if [ "$layout" = "monocle" ]; then
+          cols=1
+        else
+          cols=$(cat "$dir/$ws" 2>/dev/null || echo 2)
+        fi
+        next=$((cols + $1))
+        case $next in
+          1)
+            ${hyprctl} keyword "workspace name:$ws,layout:monocle"
+            rm -f "$dir/$ws"
+            ;;
+          2)
+            [ "$layout" = "monocle" ] && ${hyprctl} keyword "workspace name:$ws,layout:master"
+            ${hyprctl} dispatch layoutmsg orientationleft
+            echo 2 > "$dir/$ws"
+            ;;
+          3)
+            ${hyprctl} dispatch layoutmsg orientationcenter
+            echo 3 > "$dir/$ws"
+            ;;
+        esac
       '')
 
     ];
@@ -291,6 +318,8 @@ in
           "$mainMod,M,exec,toggle-monocle"
           "$mainMod,I,layoutmsg,addmaster"
           "$mainMod,D,layoutmsg,removemaster"
+          "CTRL$mainMod,I,exec,hypr-columns 1"
+          "CTRL$mainMod,D,exec,hypr-columns -1"
           "CTRL$mainMod,F11,fullscreenstate,2"
           "$mainMod,p,pin,"
           "$mainMod CTRL,s,exec,grimblast copy area"
