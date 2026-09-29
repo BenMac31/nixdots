@@ -15,6 +15,7 @@
       # a hover-opened panel through another option, a local copy of the
       # shell, or an override of the shared module.
       hoverReveal = false;
+      launcherSideCards = false;
     };
     # Bridge must keep running after `connect.py proton` pairs it, or IMAP sync
     # dies the moment that CLI session exits.
