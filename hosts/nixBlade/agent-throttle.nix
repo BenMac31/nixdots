@@ -17,7 +17,7 @@
 #
 # The Go-side caps (the build-slot queue, GOFLAGS, GOMAXPROCS) live in the
 # monorepo's scripts/ and flake.nix, not here.
-{ ... }:
+{ pkgs, ... }:
 {
   # MemoryHigh throttles and reclaims; MemoryMax is the kill line. Both are
   # for the slice as a whole, so seven sessions share one budget rather than
@@ -27,11 +27,28 @@
     description = "Coding agents and everything they spawn";
     sliceConfig = {
       CPUWeight = 30;
+      # A weight only yields to the desktop; agents contending with each other
+      # still filled all eight threads (load 60 on 2026-09-29). The quota keeps
+      # two threads free regardless.
+      CPUQuota = "600%";
       IOWeight = 30;
       MemoryHigh = "8G";
       MemoryMax = "11G";
     };
   };
+
+  # The dev editor that agents launch moves its main process into its own
+  # app-code\x2doss\x2ddev-<pid>.scope under app.slice, out of agents.slice and
+  # out of any systemd-run cap it was started under; one ran at 115% CPU. This
+  # prefix drop-in applies to every such scope. It ships as a package because
+  # NixOS's unit generator mangles the backslashes in a systemd.user.units name.
+  systemd.packages = [
+    (pkgs.writeTextDir "lib/systemd/user/app-code\\x2doss\\x2ddev-.scope.d/cpu.conf" ''
+      [Scope]
+      CPUQuota=100%
+      CPUWeight=30
+    '')
+  ];
 
   # The `claude` and `codex` wrappers in modules/home-manager/term/ai/
   # accounts.nix put each session in this slice. That used to be a shell alias
