@@ -13,22 +13,8 @@
       url = "github:gmodena/nix-flatpak";
     };
     nix-colors.url = "github:misterio77/nix-colors";
-    gBar.url = "github:scorpion-26/gBar";
-    xremap-flake.url = "github:xremap/nix-flake";
-    hyprland = {
-      url = "github:hyprwm/Hyprland";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    ollama = {
-      url = "github:abysssol/ollama-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     firefox-css-hacks = { url = "github:MrOtherGuy/firefox-csshacks"; flake = false; };
     fcitx5-gruvbox = { url = "github:ayamir/fcitx5-gruvbox"; flake = false; };
-    hypr-darkwindow = {
-      url = "github:micha4w/Hypr-DarkWindow/v0.44.0";
-      inputs.hyprland.follows = "hyprland";
-    };
     gruvbox-wallpapers = { url = "github:AngelJumbo/gruvbox-wallpapers"; flake = false; };
     gruvbox-kvantum = { url = "github:isouravgope/Gruvbox-Kvantum"; flake = false; };
     waybar-pomodoro = {
@@ -69,12 +55,6 @@
         inherit system;
         config = nixpkgsConfig;
       };
-      overlay-master = final: prev: {
-        master = import nixpkgs-master.legacyPackages.${system};
-      };
-      overlay-unstable = final: prev: {
-        unstable = import nixpkgs-unstable.legacyPackages.${system};
-      };
       overlay-unfree = final: prev: {
         unfree = import nixpkgs {
           inherit system;
@@ -108,9 +88,7 @@
             nixpkgs.config = nixpkgsConfig;
             nixpkgs.overlays = [
               overlay-unfree
-              overlay-master
               overlay-master-unfree
-              overlay-unstable
               overlay-unstable-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
@@ -132,9 +110,7 @@
             nixpkgs.config = nixpkgsConfig;
             nixpkgs.overlays = [
               overlay-unfree
-              overlay-unstable
               overlay-unstable-unfree
-              overlay-master
               overlay-master-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
@@ -147,7 +123,7 @@
       nixosConfigurations.phantomServ = nixpkgs.lib.nixosSystem rec {
         specialArgs = { inherit inputs; };
         modules = [
-          ({ config, pkgs, ... }: { nixpkgs.config = nixpkgsConfig; nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ]; })
+          ({ config, pkgs, ... }: { nixpkgs.config = nixpkgsConfig; nixpkgs.overlays = [ overlay-unfree overlay-master-unfree overlay-unstable-unfree ]; })
           ./hosts/phantomServ/configuration.nix
         ];
       };
@@ -163,9 +139,7 @@
             nixpkgs.config = nixpkgsConfig;
             nixpkgs.overlays = [
               overlay-unfree
-              overlay-unstable
               overlay-unstable-unfree
-              overlay-master
               overlay-master-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
@@ -182,9 +156,7 @@
             nixpkgs.config = nixpkgsConfig;
             nixpkgs.overlays = [
               overlay-unfree
-              overlay-master
               overlay-master-unfree
-              overlay-unstable
               overlay-unstable-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
@@ -206,9 +178,7 @@
             nixpkgs.config = nixpkgsConfig;
             nixpkgs.overlays = [
               overlay-unfree
-              overlay-unstable
               overlay-unstable-unfree
-              overlay-master
               overlay-master-unfree
               (final: prev: {
                 waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
@@ -223,7 +193,7 @@
         modules = [
           ({ config, pkgs, ... }: {
             nixpkgs.config = nixpkgsConfig;
-            nixpkgs.overlays = [ overlay-unfree overlay-master overlay-master-unfree overlay-unstable overlay-unstable-unfree ];
+            nixpkgs.overlays = [ overlay-unfree overlay-master-unfree overlay-unstable-unfree ];
           })
           ./hosts/matrixServ/configuration.nix
         ];
