@@ -2,12 +2,15 @@
 {
   config = lib.mkIf (config.media.enable && config.desktop.enable) {
     home.packages = with pkgs; [
-      obs-studio
       audacity
       gimp
       inkscape
       sxiv
     ];
+    programs.obs-studio = {
+      enable = true;
+      plugins = [ pkgs.obs-studio-plugins.obs-source-record ];
+    };
     services.flatpak.packages = [
       "org.qbittorrent.qBittorrent"
     ];
