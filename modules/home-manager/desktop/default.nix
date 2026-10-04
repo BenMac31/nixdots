@@ -14,6 +14,7 @@
     ./sync.nix
     ./office.nix
     ./media.nix
+    ./record-mode.nix
     ./health-alerts.nix
   ];
   config = lib.mkIf config.desktop.enable {
