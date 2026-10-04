@@ -188,15 +188,5 @@
           ./hosts/omegaServ/home.nix
         ];
       };
-      nixosConfigurations.matrixServ = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs; };
-        modules = [
-          ({ config, pkgs, ... }: {
-            nixpkgs.config = nixpkgsConfig;
-            nixpkgs.overlays = [ overlay-unfree overlay-master-unfree overlay-unstable-unfree ];
-          })
-          ./hosts/matrixServ/configuration.nix
-        ];
-      };
     };
 }
