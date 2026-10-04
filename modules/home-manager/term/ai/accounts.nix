@@ -28,19 +28,24 @@ let
   selectedClaude = pkgs.writeShellScriptBin "claude" ''
     ${intoAgentsSlice}
     export GRAPHIDE_CLAUDE_BIN=${lib.escapeShellArg (lib.getExe config.ai.claude.package)}
-    exec ${cfg.package}/bin/graphide-claude ${effortSettings} "$@"
+    exec ${cfg.finalPackage}/bin/graphide-claude ${effortSettings} "$@"
   '';
   selectedCodex = pkgs.writeShellScriptBin "codex" ''
     ${intoAgentsSlice}
     export GRAPHIDE_CODEX_BIN=${lib.escapeShellArg (lib.getExe pkgs.master.unfree.codex)}
-    exec ${cfg.package}/bin/graphide-codex "$@"
+    exec ${cfg.finalPackage}/bin/graphide-codex "$@"
   '';
   selectedAccountCommands = pkgs.symlinkJoin {
     name = "graphide-selected-account-commands";
     paths = [ selectedClaude selectedCodex ];
   };
 in {
-  imports = [ inputs.graphide-tools.homeManagerModules.accounts ];
+  imports = [
+    inputs.graphide-tools.homeManagerModules.accounts
+    inputs.graphide-tools.homeManagerModules.ai-router
+  ];
+  # Codex keeps its router; Claude uses vendor-owned configuration directories.
+  services.ai-router.enable = lib.mkDefault config.ai.enable;
   services.graphide-accounts = {
     enable = lib.mkDefault config.ai.enable;
     claudeCommand = lib.getExe config.ai.claude.package;
@@ -49,6 +54,7 @@ in {
     # Each poll cold-starts `codex app-server`: ~15 MB read and ~2 MB of sqlite
     # writes. 240s still refreshes inside the snapshot's 300s stale cutoff.
     interval = 240;
+    claudeUsage.enable = config.ai.claude.enable;
   };
   # High-priority executable names make selection apply to every new launch
   # through PATH, including GUI launchers and child applications. The account
