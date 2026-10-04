@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   cfg = config.serv.continuwuity;
@@ -52,6 +52,11 @@ in
   config = lib.mkIf cfg.enable {
     services.matrix-continuwuity = {
       enable = true;
+      # 0.5.10, nixpkgs' default, carries the embargoed SEC8 bug and is marked
+      # insecure; nixpkgs ships the fixed 26.9.x line as _latest so the default
+      # does not jump a major version under anyone. The first start on it
+      # migrates the RocksDB database in place.
+      package = pkgs.matrix-continuwuity_latest;
 
       settings.global = {
         server_name = cfg.serverName;
