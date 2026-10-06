@@ -120,6 +120,49 @@
           ./hosts/nixBlade/home.nix
         ];
       };
+      nixosConfigurations.nixUltra = nixpkgs.lib.nixosSystem rec {
+        specialArgs = { inherit inputs; };
+        modules = [
+          ({ config, pkgs, ... }: {
+            nixpkgs.config = nixpkgsConfig;
+            nixpkgs.overlays = [
+              overlay-unfree
+              overlay-master-unfree
+              overlay-unstable-unfree
+              (final: prev: {
+                waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+              })
+            ];
+          })
+          ./hosts/nixUltra/configuration.nix
+        ];
+      };
+      homeConfigurations.nixUltra = home-manager.lib.homeManagerConfiguration {
+        extraSpecialArgs = {
+          inherit inputs;
+          osConfig = nixosConfigurations.nixUltra.config;
+          flakeAttr = "nixUltra";
+        };
+        inherit pkgs;
+        modules = [
+          ({ config, pkgs, ... }: {
+            nixpkgs.config = nixpkgsConfig;
+            nixpkgs.overlays = [
+              overlay-unfree
+              overlay-unstable-unfree
+              overlay-master-unfree
+              (final: prev: {
+                waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+              })
+            ];
+          })
+          ./hosts/nixUltra/home.nix
+        ];
+      };
+      # nix build .#nixosConfigurations.nixUltraInstaller.config.system.build.isoImage
+      nixosConfigurations.nixUltraInstaller = nixpkgs.lib.nixosSystem {
+        modules = [ ./hosts/nixUltra/installer.nix ];
+      };
       nixosConfigurations.phantomServ = nixpkgs.lib.nixosSystem rec {
         specialArgs = { inherit inputs; };
         modules = [
