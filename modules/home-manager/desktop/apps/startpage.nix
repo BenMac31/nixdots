@@ -2,7 +2,7 @@
 {
   options.startpage.enable = lib.mkEnableOption "startpage" // { default = true; };
 
-  config = lib.mkIf (config.desktop.enable && config.startpage.enable && flakeAttr == "nixWorks") {
+  config = lib.mkIf (config.desktop.enable && config.startpage.enable && lib.elem flakeAttr [ "nixWorks" "nixUltra" ]) {
     xdg.configFile."startpage" = {
       source = config.lib.file.mkOutOfStoreSymlink
         "${config.home.homeDirectory}/nixos/confs/startpage";
