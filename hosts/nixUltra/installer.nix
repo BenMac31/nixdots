@@ -116,7 +116,7 @@ in
       Type = "oneshot";
       RemainAfterExit = true;
     };
-    path = with pkgs; [ coreutils util-linux ];
+    path = with pkgs; [ coreutils gnutar util-linux ];
     script = ''
       dev=/dev/disk/by-label/NIXSECRETS
       for _ in $(seq 20); do [ -e "$dev" ] && break; sleep 0.5; done
@@ -124,7 +124,8 @@ in
       mkdir -p /run/usb-secrets
       mount -o ro,umask=0077 "$dev" /run/usb-secrets
       install -d -m 700 /etc/NetworkManager/system-connections
-      install -m 600 /run/usb-secrets/nm/* /etc/NetworkManager/system-connections/
+      tar -C /etc/NetworkManager/system-connections --no-same-owner -xf /run/usb-secrets/nm.tar
+      chmod 600 /etc/NetworkManager/system-connections/*
       install -d -m 700 /root/.ssh
       install -m 600 /run/usb-secrets/ssh/id_rsa /root/.ssh/id_rsa
       install -m 644 /run/usb-secrets/ssh/id_rsa.pub /root/.ssh/id_rsa.pub
