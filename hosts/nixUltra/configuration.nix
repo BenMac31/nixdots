@@ -35,6 +35,12 @@
 
       # here, NOT in environment.systemPackages
 
+      # The official Graphide editor gdev downloads and runs unmodified
+      # (~/.local/share/gdev). `gdev doctor` lists what it still needs.
+      alsa-lib at-spi2-atk at-spi2-core atk cairo cups dbus expat glib gtk3
+      libgbm libxkbcommon nspr nss pango
+      libx11 libxcomposite libxdamage libxext
+      libxfixes libxrandr libxcb
     ];
     kdeconnect.enable = true;
     noisetorch.enable = true;
