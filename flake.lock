@@ -129,6 +129,27 @@
         "type": "github"
       }
     },
+    "disko_2": {
+      "inputs": {
+        "nixpkgs": [
+          "graphide-tools",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789770686,
+        "narHash": "sha256-uZkBR7yHdIKUFB5SZdfgh1qkGfI3XmYmI/lTiquxbck=",
+        "owner": "nix-community",
+        "repo": "disko",
+        "rev": "725ea35e410ad83be4931d1bff7e090eacaf3563",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "disko",
+        "type": "github"
+      }
+    },
     "fcitx5-gruvbox": {
       "flake": false,
       "locked": {
@@ -240,17 +261,19 @@
     "graphide-tools": {
       "inputs": {
         "agenix": "agenix_2",
+        "disko": "disko_2",
         "flake-utils": "flake-utils_2",
         "nixpkgs": "nixpkgs_2",
+        "nixpkgs-matrix": "nixpkgs-matrix_2",
         "sops-nix": "sops-nix_2",
         "vscode-src": "vscode-src_2"
       },
       "locked": {
-        "lastModified": 1791151562,
-        "narHash": "sha256-me2Ys8xXVqjo8tZY5wwsJaXwxmWXj8yoF4sNedThA5Y=",
+        "lastModified": 1791342987,
+        "narHash": "sha256-vkT0gP5n/liYuWG+J/3e3n2vhiKFTu2fEoB0wxSYEMA=",
         "ref": "refs/heads/master",
-        "rev": "870634b6be6e6ee05441b09681ae2cb0967add10",
-        "revCount": 14091,
+        "rev": "d18305de67c1806744d8229d3ad8041be4e60833",
+        "revCount": 15025,
         "type": "git",
         "url": "ssh://git@github.com/GraphideHQ/monolith"
       },
@@ -419,6 +442,22 @@
       }
     },
     "nixpkgs-matrix": {
+      "locked": {
+        "lastModified": 1791143449,
+        "narHash": "sha256-9+n3ReS2y9xS199LoJjKUWHwZrISGHWgkD/LUZTDZyA=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0d9e9b832d03ac387417e16ce1febf73b2e631e1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-26.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-matrix_2": {
       "locked": {
         "lastModified": 1791143449,
         "narHash": "sha256-9+n3ReS2y9xS199LoJjKUWHwZrISGHWgkD/LUZTDZyA=",
