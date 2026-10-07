@@ -1,2 +1,0 @@
-# Graphide: graph.db is stored as sorted NDJSON. See `gr git setup`.
-.graphide/graph.db filter=graphide-graph merge=graphide-graph diff=graphide-graph -text

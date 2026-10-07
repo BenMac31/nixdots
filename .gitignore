@@ -29,8 +29,5 @@ THEME_VIOLATIONS.md
 secrets/plaintext/
 **/secrets.env
 
-# Graphide: the graph travels in git; everything else under .graphide/ is local.
+# Graphide: everything under .graphide/ is local.
 .graphide/*
-!.graphide/graph.db
-.graphide/graph.db-wal
-.graphide/graph.db-shm
