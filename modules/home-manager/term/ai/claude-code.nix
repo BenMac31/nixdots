@@ -14,6 +14,11 @@
         default = "high";
         description = "Effort every new session starts at. The account wrapper passes it as --settings, which outranks the per-model default /effort saves to settings.json, so /effort only changes the session it runs in.";
       };
+      bypassPermissions = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Start every session in bypassPermissions mode, the settings form of --dangerously-skip-permissions, passed through the account wrapper's --settings so subcommands parse unchanged.";
+      };
     };
   };
 

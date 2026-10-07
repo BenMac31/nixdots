@@ -23,12 +23,18 @@ let
       exec systemd-run --user --scope --slice=agents.slice --quiet --collect -- "$0" "$@"
     fi
   '';
-  effortSettings = lib.optionalString (config.ai.claude.effort != null)
-    "--settings ${lib.escapeShellArg (builtins.toJSON { effortLevel = config.ai.claude.effort; })}";
+  claudeSettings = lib.optionalAttrs (config.ai.claude.effort != null) {
+    effortLevel = config.ai.claude.effort;
+  } // lib.optionalAttrs config.ai.claude.bypassPermissions {
+    permissions.defaultMode = "bypassPermissions";
+    skipDangerousModePermissionPrompt = true;
+  };
+  sessionSettings = lib.optionalString (claudeSettings != { })
+    "--settings ${lib.escapeShellArg (builtins.toJSON claudeSettings)}";
   selectedClaude = pkgs.writeShellScriptBin "claude" ''
     ${intoAgentsSlice}
     export GRAPHIDE_CLAUDE_BIN=${lib.escapeShellArg (lib.getExe config.ai.claude.package)}
-    exec ${cfg.finalPackage}/bin/graphide-claude ${effortSettings} "$@"
+    exec ${cfg.finalPackage}/bin/graphide-claude ${sessionSettings} "$@"
   '';
   selectedCodex = pkgs.writeShellScriptBin "codex" ''
     ${intoAgentsSlice}
