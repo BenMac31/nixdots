@@ -2,6 +2,7 @@
 {
   imports = [
     ./term/graphide.nix
+    ./term/transcripts.nix
     ./term/yc.nix
     ./term/ai/accounts.nix
   ] ++ lib.optionals osConfig.programs.hyprland.enable [
