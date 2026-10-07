@@ -1,13 +1,13 @@
-{ lib, config, pkgs, ... }:
+{ lib, config, pkgs, inputs, ... }:
 {
   options = {
     ai.claude = {
       enable = lib.mkEnableOption "Enable Claude Code";
       package = lib.mkOption {
         type = lib.types.package;
-        default = pkgs.master.unfree.claude-code;
-        defaultText = lib.literalExpression "pkgs.master.unfree.claude-code";
-        description = "Which claude-code build to install; unfree, so it tracks the master overlay.";
+        default = inputs.claude-code.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        defaultText = lib.literalExpression "inputs.claude-code.packages.\${pkgs.stdenv.hostPlatform.system}.default";
+        description = "Claude Code package from github:sadjow/claude-code-nix.";
       };
       effort = lib.mkOption {
         type = lib.types.nullOr (lib.types.enum [ "low" "medium" "high" "xhigh" ]);
