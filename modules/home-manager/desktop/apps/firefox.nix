@@ -91,7 +91,6 @@ in
             (extension "multi-account-containers" "@testpilot-containers")
             (extension "ublock-origin" "uBlock0@raymondhill.net")
             (extension "bitwarden-password-manager" "{446900e4-71c2-419f-a6a7-df9c091e268b}")
-            (extension "sponsorblock" "uMatrix@raymondhill.net")
             (extension "libredirect" "7esoorv3@alefvanoon.anonaddy.me")
             (extension "darkreader" "addon@darkreader.org")
             (extension "deep-fake-detector" "{ddd3c206-589e-431d-93d0-897378f9200a}")
@@ -158,6 +157,100 @@ in
             "sidebar.main.tools" = "";
             "sidebar.expandOnHover" = true;
             "browser.tabs.groups.enabled" = true;
+            # Hand-set in the browser on nixWorks and never declared, so a new
+            # machine came up with a different toolbar, theme and DRM setting.
+            # user.js reapplies these at every start: customize here, not in the UI.
+            "browser.uiCustomization.state" = builtins.toJSON {
+              placements = {
+                widget-overflow-fixed-list = [ ];
+                unified-extensions-area = [
+                  "_ddd3c206-589e-431d-93d0-897378f9200a_-browser-action"
+                  "addon_darkreader_org-browser-action"
+                  "_a2503cd4-4083-4c2f-bef2-37767a569867_-browser-action"
+                  "_6b733b82-9261-47ee-a595-2dda294a4d08_-browser-action"
+                  "_aecec67f-0d10-4fa7-b7c7-609a2db280cf_-browser-action"
+                  "_b7eef7b5-1504-4fe1-a48b-3d08859a7761_-browser-action"
+                ];
+                nav-bar = [
+                  "sidebar-button"
+                  "back-button"
+                  "forward-button"
+                  "vertical-spacer"
+                  "stop-reload-button"
+                  "urlbar-container"
+                  "downloads-button"
+                  "fxa-toolbar-menu-button"
+                  "unified-extensions-button"
+                  "ublock0_raymondhill_net-browser-action"
+                  "_testpilot-containers-browser-action"
+                  "7esoorv3_alefvanoon_anonaddy_me-browser-action"
+                  "sponsorblocker_ajay_app-browser-action"
+                  "reset-pbm-toolbar-button"
+                  "tridactyl_vim_cmcaine_co_uk-browser-action"
+                  "_446900e4-71c2-419f-a6a7-df9c091e268b_-browser-action"
+                ];
+                toolbar-menubar = [
+                  "menubar-items"
+                ];
+                TabsToolbar = [ ];
+                vertical-tabs = [
+                  "tabbrowser-tabs"
+                ];
+                PersonalToolbar = [
+                  "import-button"
+                  "personal-bookmarks"
+                ];
+              };
+              seen = [
+                "developer-button"
+                "_ddd3c206-589e-431d-93d0-897378f9200a_-browser-action"
+                "ublock0_raymondhill_net-browser-action"
+                "addon_darkreader_org-browser-action"
+                "7esoorv3_alefvanoon_anonaddy_me-browser-action"
+                "_testpilot-containers-browser-action"
+                "_a2503cd4-4083-4c2f-bef2-37767a569867_-browser-action"
+                "_6b733b82-9261-47ee-a595-2dda294a4d08_-browser-action"
+                "_446900e4-71c2-419f-a6a7-df9c091e268b_-browser-action"
+                "sponsorblocker_ajay_app-browser-action"
+                "screenshot-button"
+                "_aecec67f-0d10-4fa7-b7c7-609a2db280cf_-browser-action"
+                "_b7eef7b5-1504-4fe1-a48b-3d08859a7761_-browser-action"
+                "reset-pbm-toolbar-button"
+                "tridactyl_vim_cmcaine_co_uk-browser-action"
+              ];
+              dirtyAreaCache = [
+                "nav-bar"
+                "vertical-tabs"
+                "unified-extensions-area"
+                "PersonalToolbar"
+                "toolbar-menubar"
+                "TabsToolbar"
+              ];
+              currentVersion = 26;
+              newElementCount = 6;
+            };
+            "browser.uiCustomization.navBarWhenVerticalTabs" = builtins.toJSON [
+              "sidebar-button"
+              "back-button"
+              "forward-button"
+              "vertical-spacer"
+              "stop-reload-button"
+              "urlbar-container"
+              "downloads-button"
+              "fxa-toolbar-menu-button"
+              "unified-extensions-button"
+              "ublock0_raymondhill_net-browser-action"
+              "_testpilot-containers-browser-action"
+              "7esoorv3_alefvanoon_anonaddy_me-browser-action"
+              "sponsorblocker_ajay_app-browser-action"
+            ];
+            "browser.uiCustomization.horizontalTabstrip" = builtins.toJSON [
+              "tabbrowser-tabs"
+            ];
+            "browser.toolbars.bookmarks.visibility" = "never";
+            "browser.theme.toolbar-theme" = 0;
+            "media.eme.enabled" = true;
+            "browser.ml.enable" = true;
           };
           userChrome = /*css*/ ''
             @import url(css-hacks/chrome/blank_page_background.css);
