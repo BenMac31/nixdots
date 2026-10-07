@@ -1,26 +1,26 @@
 --- a/hackerboard/connectors/graphide.py
 +++ b/hackerboard/connectors/graphide.py
-@@ -89,7 +89,10 @@
+@@ -105,7 +105,10 @@
  SELECT d.day, COALESCE(a.accounts, 0), COALESCE(a.installs, 0), COALESCE(s.n, 0),
         (SELECT COUNT(*) FROM users u
           WHERE NOT EXISTS (SELECT 1 FROM internal i WHERE i.user_id = u.id)),
--       (SELECT COUNT(*) FROM internal)
-+       (SELECT COUNT(*) FROM internal),
+-       (SELECT COUNT(*) FROM internal), a.latest
++       (SELECT COUNT(*) FROM internal), a.latest,
 +       (SELECT COUNT(*) FROM users u
 +         WHERE u.created_at < EXTRACT(EPOCH FROM ((d.day + 1)::timestamp AT TIME ZONE 'UTC')) * 1000
 +           AND NOT EXISTS (SELECT 1 FROM internal i WHERE i.user_id = u.id)) AS total_accounts
  FROM days d
  LEFT JOIN activity a ON a.day = d.day
  LEFT JOIN signups s ON s.day = d.day
-@@ -224,7 +227,7 @@
+@@ -243,7 +246,7 @@
+             count[0] += 1
              count[1] += n >= PROMPT_HEAVY
              count[2] += n
-     return {
--        "days": [{"day": r[0].isoformat(), "active_accounts": r[1], "active_installs": r[2], "new_accounts": r[3],
-+        "days": [{"day": r[0].isoformat(), "active_accounts": r[1], "active_installs": r[2], "new_accounts": r[3], "total_accounts": r[6],
-                   "active_hours": round(hours.get(r[0].isoformat(), [0.0])[0], 3),
-                   "hands_on_hours": round(hours.get(r[0].isoformat(), [0.0, 0.0])[1], 3),
-                   **prompt_counts(r[0].isoformat(), prompts)}
+-    daily = [{"day": r[0].isoformat(), "active_accounts": r[1], "active_installs": r[2], "new_accounts": r[3],
++    daily = [{"day": r[0].isoformat(), "active_accounts": r[1], "active_installs": r[2], "new_accounts": r[3], "total_accounts": r[7],
+               "active_hours": round(hours.get(r[0].isoformat(), [0.0])[0], 3),
+               "hands_on_hours": round(hours.get(r[0].isoformat(), [0.0, 0.0])[1], 3),
+               **prompt_counts(r[0].isoformat(), prompts)} for r in rows]
 --- a/hackerboard/store.py
 +++ b/hackerboard/store.py
 @@ -101,7 +101,7 @@
