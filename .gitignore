@@ -5,9 +5,6 @@ result
 result-*
 STYLE_GUIDE.md
 THEME_VIOLATIONS.md
-.graphide/graph.db
-.graphide/graph.db-shm
-.graphide/graph.db-wal
 .graphide/extract-cache.db
 .graphide/extract-cache.db-shm
 .graphide/extract-cache.db-wal
@@ -31,3 +28,9 @@ THEME_VIOLATIONS.md
 **/hackerboard/*.db-wal
 secrets/plaintext/
 **/secrets.env
+
+# Graphide: the graph travels in git; everything else under .graphide/ is local.
+.graphide/*
+!.graphide/graph.db
+.graphide/graph.db-wal
+.graphide/graph.db-shm
