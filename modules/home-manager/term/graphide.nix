@@ -1,8 +1,47 @@
 { lib, config, pkgs, inputs, flakeAttr, ... }:
-{
+let
+  router = config.services.ai-router;
+  wrap = ''
+    for exe in gred gr grug grat; do
+      if [ -e "$out/bin/$exe" ]; then
+        wrapProgram "$out/bin/$exe" \
+          --set AI_ROUTER_URL ${lib.escapeShellArg router.url} \
+          --set CODEX_PATH ${lib.escapeShellArg "${config.home.profileDirectory}/bin/codex"} \
+          --prefix PATH : ${lib.escapeShellArg "${config.home.profileDirectory}/bin"}
+      fi
+    done
+  '';
+  route = package: package.overrideAttrs (old: {
+    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
+    postFixup = (old.postFixup or "") + wrap;
+  });
+  # The Go programs only need new launchers, not a recompilation. gred above
+  # retains overrideAttrs because the release module replaces its tarball src.
+  routeCommands = package: pkgs.symlinkJoin {
+    name = "${package.name}-routed";
+    inherit (package) pname meta;
+    paths = [ package ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = wrap;
+  };
+  system = pkgs.stdenv.hostPlatform.system;
+  packages = inputs.graphide.packages.${system};
+in {
   imports = [ inputs.graphide-tools.homeManagerModules.graphide ];
-  graphide.releaseFlake = inputs.graphide;
+  # The release's desktop launcher and bundled daemon inherit these settings.
+  # Keeping the override here also reapplies it after automatic release updates.
+  graphide.releaseFlake = if router.enable then inputs.graphide // {
+    packages = inputs.graphide.packages // {
+      ${system} = packages // {
+        gred = route packages.gred;
+        gr-prod = routeCommands packages.gr-prod;
+        gr-dev = routeCommands packages.gr-dev;
+        grat = routeCommands packages.grat;
+      };
+    };
+  } else inputs.graphide;
   graphide.autoUpdate = {
+    blobAccount = "graphidereleaseswus";
     flakeAttr = flakeAttr;
     homeManagerPackage = inputs.home-manager.packages.${pkgs.stdenv.hostPlatform.system}.home-manager;
   };

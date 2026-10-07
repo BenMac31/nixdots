@@ -35,9 +35,15 @@ let
     export GRAPHIDE_CODEX_BIN=${lib.escapeShellArg (lib.getExe pkgs.master.unfree.codex)}
     exec ${cfg.finalPackage}/bin/graphide-codex "$@"
   '';
+  # Graphide needs the ACP adapter. Default other ACP clients to the same
+  # account-aware CLI, while preserving an explicit CODEX_PATH from the caller.
+  selectedCodexAcp = pkgs.writeShellScriptBin "codex-acp" ''
+    export CODEX_PATH="''${CODEX_PATH:-${lib.getExe selectedCodex}}"
+    exec ${lib.getExe pkgs.unstable.unfree.codex-acp} "$@"
+  '';
   selectedAccountCommands = pkgs.symlinkJoin {
     name = "graphide-selected-account-commands";
-    paths = [ selectedClaude selectedCodex ];
+    paths = [ selectedClaude selectedCodex selectedCodexAcp ];
   };
 in {
   imports = [
@@ -54,6 +60,7 @@ in {
     # Each poll cold-starts `codex app-server`: ~15 MB read and ~2 MB of sqlite
     # writes. 240s still refreshes inside the snapshot's 300s stale cutoff.
     interval = 240;
+    idleInterval = 900;
     claudeUsage.enable = config.ai.claude.enable;
   };
   # High-priority executable names make selection apply to every new launch
