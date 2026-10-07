@@ -1,0 +1,238 @@
+--- a/CompanyPanel.qml
++++ b/CompanyPanel.qml
+@@ -23,7 +23,7 @@
+     readonly property var email: Desktop.board.email || null
+     readonly property var ci: Desktop.board.ci || null
+     readonly property var failingCi: ci ? (ci.repos || []).filter(repo => repo.state === "fail") : []
+-    readonly property var tasks: (Desktop.board.tasks || []).filter(t => t.status !== "done")
++    readonly property var scrum: Desktop.board.scrum || null
+     readonly property var meta: Desktop.board.board || null
+     // Days, not hours: the board's own countdown is a date with no time on it,
+     // so anything finer than a day would be invented. null when unset, which
+@@ -63,7 +63,7 @@
+             // sections, and there is no leftover height to hand out. More
+             // content than fits still scrolls, which is what the Math.max picks.
+             height: Math.max(implicitHeight, scroller.availableHeight)
+-            spacing: 20
++            spacing: 16
+             Label {
+                 Layout.fillWidth: true
+                 visible: !Desktop.fresh
+@@ -75,30 +75,67 @@
+                 Layout.fillWidth: true
+                 points: Desktop.board.growth ? (Desktop.board.growth.daily_activity || []) : []
+             }
+-            Section {
+-                id: countdownSection
+-                visible: panel.countdownDays !== null
+-                title: panel.meta && panel.meta.countdownLabel ? panel.meta.countdownLabel : "DEMO DAY"
+-                Timer { interval: 33; repeat: true; triggeredOnStart: true; running: countdownSection.visible && panel.visible; onTriggered: panel.tickCountdown() }
++            ColumnLayout {
++                Layout.fillWidth: true
++                spacing: 12
++                Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.rule }
+                 RowLayout {
+                     Layout.fillWidth: true
+-                    Label {
+-                        Layout.fillWidth: true
+-                        font.pixelSize: 25
+-                        // Monospace so the falling digits do not shuffle the width.
+-                        font.family: panel.countdownRemaining > 0 ? Theme.mono : Theme.sans
+-                        color: panel.countdownDays !== null && panel.countdownDays <= 7 ? Theme.warning : Theme.text
+-                        text: panel.countdownDays === null ? "—"
+-                            : panel.countdownRemaining > 0 ? panel.countdownRemaining.toFixed(6) + "d"
+-                            : panel.countdownDays > 0 ? panel.countdownDays + "d"
+-                            : panel.countdownDays === 0 ? "TODAY"
+-                            : Math.abs(panel.countdownDays) + "d ago"
++                    spacing: 16
++                    Section {
++                        id: countdownSection
++                        showDivider: false
++                        Layout.alignment: Qt.AlignTop
++                        Layout.preferredWidth: 1
++                        Layout.minimumWidth: 0
++                        visible: panel.countdownDays !== null
++                        title: panel.meta && panel.meta.countdownLabel ? panel.meta.countdownLabel : "DEMO DAY"
++                        Timer { interval: 33; repeat: true; triggeredOnStart: true; running: countdownSection.visible && panel.visible; onTriggered: panel.tickCountdown() }
++                        RowLayout {
++                            Layout.fillWidth: true
++                            Label {
++                                Layout.fillWidth: true
++                                font.pixelSize: 25
++                                // Monospace so the falling digits do not shuffle the width.
++                                font.family: panel.countdownRemaining > 0 ? Theme.mono : Theme.sans
++                                wrapMode: Text.WordWrap
++                                color: panel.countdownDays !== null && panel.countdownDays <= 7 ? Theme.warning : Theme.text
++                                text: panel.countdownDays === null ? "—"
++                                    : panel.countdownRemaining > 0 ? panel.countdownRemaining.toFixed(6) + "d"
++                                    : panel.countdownDays > 0 ? panel.countdownDays + "d"
++                                    : panel.countdownDays === 0 ? "TODAY"
++                                    : Math.abs(panel.countdownDays) + "d ago"
++                            }
++                        }
++                        Label {
++                            Layout.fillWidth: true
++                            wrapMode: Text.WordWrap
++                            text: panel.meta && panel.meta.countdownDate ? Qt.formatDate(new Date(panel.meta.countdownDate + "T00:00:00"), "ddd · d MMM yyyy") : ""
++                            color: Theme.muted
++                            font.pixelSize: 11
++                        }
++                    }
++                    Section {
++                        showDivider: false
++                        Layout.alignment: Qt.AlignTop
++                        Layout.preferredWidth: 1
++                        Layout.minimumWidth: 0
++                        title: "NEXT STANDUP"
++                        RowLayout {
++                            Layout.fillWidth: true
++                            Label {
++                                Layout.fillWidth: true; wrapMode: Text.WordWrap; font.pixelSize: 25; color: panel.scrum && panel.scrum.firing ? Theme.warning : Theme.text
++                                text: !panel.scrum ? "—" : !panel.scrum.enabled ? "Disabled" : !Desktop.fresh ? "—" : panel.scrum.firing ? "Time to check in" : Desktop.duration(panel.scrum.next_at ? panel.scrum.next_at - Desktop.now.getTime() / 1000 : null)
++                            }
++                        }
++                        Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: panel.scrum && panel.scrum.next_at ? Qt.formatDateTime(new Date(panel.scrum.next_at * 1000), "ddd · HH:mm") + (panel.scrum.skipped_for_quiet ? " · quiet hours" : "") : "Team cadence"; color: Theme.muted; font.pixelSize: 11 }
++                        ColumnLayout {
++                            visible: panel.scrum !== null && panel.scrum.firing
++                            enabled: Desktop.fresh
++                            Action { text: "Done"; active: true; onClicked: Desktop.mutation("/api/scrum/ack") }
++                            Action { text: "Snooze"; onClicked: Desktop.mutation("/api/scrum/snooze") }
++                        }
+                     }
+-                }
+-                Label {
+-                    text: panel.meta && panel.meta.countdownDate ? Qt.formatDate(new Date(panel.meta.countdownDate + "T00:00:00"), "ddd · d MMM yyyy") : ""
+-                    color: Theme.muted
+-                    font.pixelSize: 11
+                 }
+             }
+             Section {
+@@ -135,33 +172,6 @@
+                 }
+             }
+             Section {
+-                title: "IN MOTION"
+-                Label { visible: panel.tasks.length === 0; text: Desktop.fresh ? "A clear board. Pick the next thing." : "Waiting for tasks"; font.pixelSize: 11; color: Theme.muted }
+-                Repeater {
+-                    model: panel.tasks.slice(0, 5)
+-                    Rectangle {
+-                        id: taskRow
+-                        required property var modelData
+-                        Layout.fillWidth: true
+-                        implicitHeight: taskLabel.implicitHeight + 18
+-                        color: taskMouse.containsMouse ? Theme.secondary : "transparent"
+-                        radius: 4
+-                        RowLayout {
+-                            anchors { fill: parent; margins: 8 } spacing: 9
+-                            Label { text: taskRow.modelData.status === "doing" ? "◐" : "○"; color: Theme.accent }
+-                            Label { id: taskLabel; Layout.fillWidth: true; text: taskRow.modelData.title; wrapMode: Text.WordWrap; font.pixelSize: 12 }
+-                        }
+-                        Controls.ToolTip.visible: taskMouse.containsMouse
+-                        Controls.ToolTip.text: "Click: " + (modelData.status === "todo" ? "start" : "complete") + (modelData.owner ? " · " + modelData.owner : "")
+-                        MouseArea {
+-                            id: taskMouse; anchors.fill: parent; hoverEnabled: true; enabled: Desktop.fresh; cursorShape: Qt.PointingHandCursor
+-                            onClicked: Desktop.mutation("/api/tasks/" + taskRow.modelData.id, {status: taskRow.modelData.status === "todo" ? "doing" : "done"}, "PATCH")
+-                        }
+-                    }
+-                }
+-                Label { visible: panel.tasks.length > 5; text: "+ " + (panel.tasks.length - 5) + " more"; color: Theme.muted; font.pixelSize: 11 }
+-            }
+-            Section {
+                 id: pointsSection
+                 visible: Desktop.pointsUrl !== ""
+                 title: "POINTS"
+@@ -248,28 +258,22 @@
+                 id: commitsSection
+                 visible: Desktop.pointsUrl === "" && Desktop.commitsRepo !== ""
+                 title: "COMMITS"
+-                // A click anywhere, or DETAILS, opens the commits view: whole
+-                // weeks, the two of you day by day, and when you worked.
++                // The full chart and daily breakdown are available in DETAILS.
+                 action: "DETAILS"
+                 onActivated: Desktop.toggleLauncher("commits")
+                 TapHandler { onTapped: Desktop.toggleLauncher("commits") }
+                 HoverHandler { cursorShape: Qt.PointingHandCursor }
+-                // The feed reaches back to a Monday for the weekly view; this
+-                // section reads the last 28 days of it.
+                 readonly property var days: Array.isArray(Desktop.commits.days) ? Desktop.commits.days.slice(-28) : []
+-                // The two most active people; a third author, if one appears,
+-                // still counts in the day's net lines.
+                 readonly property var people: Array.isArray(Desktop.commits.people) ? Desktop.commits.people.slice(0, 2) : []
+                 readonly property var colors: [Theme.accent, Theme.warning]
++                readonly property int net: days.reduce((sum, day) => sum + day.added - day.removed, 0)
+                 function firstName(name) { return String(name).split(" ")[0]; }
+-                function count(day, name) { return day.people && day.people[name] ? day.people[name].commits : 0; }
++                function total(name) { return days.reduce((sum, day) => sum + (day.people && day.people[name] ? day.people[name].commits : 0), 0); }
+                 function compact(n) {
+                     const a = Math.abs(n);
+                     const text = a >= 1000000 ? (a / 1000000).toFixed(1) + "M" : a >= 1000 ? (a / 1000).toFixed(1) + "k" : String(a);
+                     return (n < 0 ? "−" : "+") + text;
+                 }
+-                function total(name) { return days.reduce((sum, day) => sum + count(day, name), 0); }
+-                readonly property int net: days.reduce((sum, day) => sum + day.added - day.removed, 0)
+                 RowLayout {
+                     Layout.fillWidth: true
+                     Repeater {
+@@ -284,60 +288,12 @@
+                     }
+                     Item { Layout.fillWidth: true }
+                 }
+-                Canvas {
+-                    id: commitChart
+-                    Layout.fillWidth: true
+-                    implicitHeight: 52
+-                    // Two weeks, one pair of bars a day: left is the first
+-                    // person's commits, right the second's, on one scale.
+-                    property var recent: commitsSection.days.slice(-14)
+-                    onRecentChanged: requestPaint()
+-                    onWidthChanged: requestPaint()
+-                    onPaint: {
+-                        const c = getContext("2d"); c.reset();
+-                        c.strokeStyle = Theme.rule; c.beginPath(); c.moveTo(0, height - 1); c.lineTo(width, height - 1); c.stroke();
+-                        if (!recent.length) return;
+-                        const names = commitsSection.people;
+-                        let top = 1;
+-                        recent.forEach(day => names.forEach(name => { top = Math.max(top, commitsSection.count(day, name)); }));
+-                        const slot = width / recent.length, bar = Math.max(1, (slot - 4) / Math.max(1, names.length));
+-                        recent.forEach((day, i) => names.forEach((name, j) => {
+-                            const h = (height - 4) * commitsSection.count(day, name) / top;
+-                            c.fillStyle = commitsSection.colors[j];
+-                            c.fillRect(i * slot + 2 + j * bar, height - 1 - h, bar - 1, h);
+-                        }));
+-                    }
+-                }
+-                Repeater {
+-                    model: commitsSection.days.slice(-7).reverse()
+-                    RowLayout {
+-                        id: commitRow
+-                        required property var modelData
+-                        Layout.fillWidth: true
+-                        HoverHandler { id: commitHover }
+-                        Controls.ToolTip.visible: commitHover.hovered && commitsSection.people.length > 0
+-                        Controls.ToolTip.delay: 400
+-                        Controls.ToolTip.text: commitsSection.people.map(name => {
+-                            const p = commitRow.modelData.people[name];
+-                            return commitsSection.firstName(name) + ": " + (p ? (p.landed || 0) + " landed, " + p.commits + " commits, +" + p.added + " / −" + p.removed + " code lines" : "no commits");
+-                        }).join("\n") + "\nMaster: +" + modelData.added + " / −" + modelData.removed + " code lines"
+-                        Label { text: Qt.formatDate(new Date(modelData.day + "T12:00:00"), "ddd d"); font.family: Theme.mono; font.pixelSize: 10; color: Theme.muted; Layout.preferredWidth: 48 }
+-                        Label {
+-                            Layout.fillWidth: true; font.pixelSize: 11
+-                            text: commitsSection.people.map(name => commitsSection.firstName(name) + " " + commitsSection.count(commitRow.modelData, name)).join("  ·  ")
+-                        }
+-                        Label {
+-                            text: commitsSection.compact(modelData.added - modelData.removed)
+-                            font.family: Theme.mono; font.pixelSize: 10
+-                            color: modelData.added - modelData.removed < 0 ? Theme.error : modelData.added === modelData.removed ? Theme.muted : Theme.good
+-                        }
+-                    }
+-                }
+                 Label {
+                     Layout.fillWidth: true; wrapMode: Text.WordWrap; font.pixelSize: 10; color: Desktop.commits.error ? Theme.warning : Theme.muted
+                     text: Desktop.commits.error ? Desktop.commits.error
+                         : !commitsSection.days.length ? "Reading git history…"
+-                        : "Last 28 days of " + Desktop.commits.ref + " · " + commitsSection.compact(commitsSection.net) + " real code lines" + " · updated " + Qt.formatDateTime(new Date(Desktop.commits.updated * 1000), "HH:mm") + (Desktop.commits.fetched ? "" : " · fetch failed, local copy")
++                        : "Last 28 days · " + commitsSection.compact(commitsSection.net) + " code lines"
++                            + (Desktop.commits.fetched ? "" : " · local copy")
+                 }
+             }
+             Label { Layout.fillWidth: true; visible: Desktop.actionError.length > 0; text: Desktop.actionError; color: Theme.warning; wrapMode: Text.WordWrap }

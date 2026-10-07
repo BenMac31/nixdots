@@ -1,0 +1,26 @@
+--- a/CompanyPanel.qml
++++ b/CompanyPanel.qml
+@@ -69,7 +69,11 @@
+                 text: Desktop.receivedAt ? "Reconnecting · last update " + Qt.formatDateTime(new Date(Desktop.receivedAt), "HH:mm:ss") : "Starting your local company board…"
+                 wrapMode: Text.WordWrap; font.pixelSize: 11; color: Theme.muted
+             }
+-            GrowthCard { Layout.fillWidth: true; size: 54; chartHeight: 104 }
++            GrowthCard { Layout.fillWidth: true; size: 54; chartHeight: 0 }
++            ActivityChart {
++                Layout.fillWidth: true
++                points: Desktop.board.growth ? (Desktop.board.growth.daily_activity || []) : []
++            }
+             Section {
+                 id: countdownSection
+                 visible: panel.countdownDays !== null
+--- a/AccountsPanel.qml
++++ b/AccountsPanel.qml
+@@ -131,7 +131,7 @@
+                                         RowLayout {
+                                             Label { text: limit.modelData.label + " · " + Math.round(limit.modelData.usedPercent) + "% used"; font.pixelSize: 11; Layout.fillWidth: true }
+                                             Label {
+-                                                text: limit.modelData.resetsAt <= Desktop.now.getTime() / 1000 ? "Reset passed · awaiting data" : "Resets in " + Desktop.duration(limit.modelData.resetsAt - Desktop.now.getTime() / 1000)
++                                                text: limit.modelData.resetsAt === null ? "Window not started" : limit.modelData.resetsAt <= Desktop.now.getTime() / 1000 ? "Reset passed · awaiting data" : "Resets in " + Desktop.duration(limit.modelData.resetsAt - Desktop.now.getTime() / 1000)
+                                                 font.pixelSize: 10; color: Theme.muted
+                                             }
+                                         }

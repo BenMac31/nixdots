@@ -1,6 +1,6 @@
 { config, lib, pkgs, inputs, ... }:
 {
-  imports = [ inputs.graphide-tools.homeManagerModules.quickshell ];
+  imports = [ ./graphide-activity ];
   config = lib.mkIf config.programs.graphide-shell.enable {
     programs.graphide-shell = {
       widgetMonitor = "eDP-1";
@@ -8,6 +8,7 @@
       pomodoro = pkgs.waybar-pomodoro;
       rbwPinentry = true;
       todoCommand = [ "nvim" "${config.home.homeDirectory}/Projects/graphide/docs/TODO.md" ];
+      commitsRepo = "${config.home.homeDirectory}/Projects/graphide/graphide";
       hyprland = { layerRules = true; decoration = true; };
       # Nothing opens from pointer position here: no right-edge levels card, no
       # top-edge overview, and none added later. This is a deliberate personal

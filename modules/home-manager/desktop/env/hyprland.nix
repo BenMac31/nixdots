@@ -23,8 +23,8 @@ in
     programs.rofi.enable = lib.mkDefault (!graphideShell);
     services.hyprpaper.enable = lib.mkDefault (!graphideShell);
     programs.waybar.enable = lib.mkDefault (!graphideShell);
-    programs.hyprlock.enable = lib.mkDefault true;
-    services.hypridle.enable = lib.mkDefault true;
+    programs.hyprlock.enable = lib.mkDefault false;
+    services.hypridle.enable = lib.mkDefault false;
     xdg = {
       desktopEntries."org.gnome.Settings" = {
         name = "Settings";
@@ -276,6 +276,7 @@ in
         bind = [
           #
           "$mainMod,Q,exec,kitty"
+          "$mainMod,SPACE,exec,${config.home.profileDirectory}/bin/gred"
           "$mainMod,C,killactive,"
           "CTRLSHIFT$mainMod,C,exit,"
           "$mainMod,E,exec,xdg-open '/'"
