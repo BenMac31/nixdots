@@ -28,6 +28,11 @@ let
   packages = inputs.graphide.packages.${system};
 in {
   imports = [ inputs.graphide-tools.homeManagerModules.graphide ];
+  # gdev: per-worktree isolated instances. From graphide-tools, not the
+  # release-pinned `graphide`, so the updater never rolls it back.
+  home.packages = lib.mkIf config.graphide.enable [
+    inputs.graphide-tools.packages.${system}.gdev
+  ];
   # The release's desktop launcher and bundled daemon inherit these settings.
   # Keeping the override here also reapplies it after automatic release updates.
   graphide.releaseFlake = if router.enable then inputs.graphide // {
