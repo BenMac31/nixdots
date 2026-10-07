@@ -55,6 +55,12 @@
   hardware.graphics.enable = true;
 
   time.timeZone = lib.mkDefault "America/New_York";
+  # At boot it asks geoclue before wifi is up, gets NoReply after a minute
+  # and exits, leaving the clock on UTC. Keep trying until there is a fix.
+  systemd.services.automatic-timezoned.serviceConfig = {
+    Restart = "on-failure";
+    RestartSec = "30s";
+  };
   services = {
     displayManager.defaultSession = "hyprland";
     flatpak.enable = true;
