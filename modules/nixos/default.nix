@@ -64,7 +64,11 @@ in
 
     programs = {
       gnupg.agent.enable = true;
-      zsh.enable = true;
+      zsh = {
+        enable = true;
+        # Home Manager initializes completion after adding user plugins to fpath.
+        enableGlobalCompInit = false;
+      };
     };
     nix.gc = {
       automatic = true;

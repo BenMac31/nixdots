@@ -53,6 +53,9 @@ in
           Allow = [
             "https://claude.ai"
             "https://anthropic.com"
+            "https://chatgpt.com"
+            "https://openai.com"
+            "https://discord.com"
             "https://github.com"
             "https://proton.me"
             "https://protonmail.com"

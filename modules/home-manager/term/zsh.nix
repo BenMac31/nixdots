@@ -22,16 +22,17 @@
     # completions inert rather than merely slow.
     enableCompletion = true;
     defaultKeymap = "viins";
+    # Fetch private flake inputs with the user's SSH credentials; elevate only activation.
     shellAliases = lib.mkMerge [
       (lib.mkIf config.desktop.enable {
-        nixswitch = "st=\"$(date +%s)\"; sudo nixos-rebuild switch --flake $HOME/nixos/#${flakeAttr} --impure --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
+        nixswitch = "st=\"$(date +%s)\"; nixos-rebuild switch --sudo --flake $HOME/nixos/#${flakeAttr} --impure --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
         homeswitch = "st=\"$(date +%s)\"; home-manager switch --flake $HOME/nixos/#${flakeAttr} --impure --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
-        nixtest = "st=\"$(date +%s)\"; sudo nixos-rebuild test --fast --flake $HOME/nixos/#${flakeAttr} --impure --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
+        nixtest = "st=\"$(date +%s)\"; nixos-rebuild test --sudo --fast --flake $HOME/nixos/#${flakeAttr} --impure --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
       })
       (lib.mkIf (!config.desktop.enable) {
-        nixswitch = "sudo nixos-rebuild switch --flake $HOME/nixos/#${flakeAttr} --impure --cores 6";
+        nixswitch = "nixos-rebuild switch --sudo --flake $HOME/nixos/#${flakeAttr} --impure --cores 6";
         homeswitch = "home-manager switch --flake $HOME/nixos/#${flakeAttr} --impure --cores 6";
-        nixtest = "sudo nixos-rebuild test --fast --flake $HOME/nixos/#${flakeAttr} --impure --cores 6";
+        nixtest = "nixos-rebuild test --sudo --fast --flake $HOME/nixos/#${flakeAttr} --impure --cores 6";
       })
       {
         nixwatch = "cd ~/nixos && dirwatch nixtest";

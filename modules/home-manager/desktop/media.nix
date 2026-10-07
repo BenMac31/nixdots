@@ -5,7 +5,7 @@
       audacity
       gimp
       inkscape
-      sxiv
+      imv
     ];
     programs.obs-studio = {
       enable = true;
