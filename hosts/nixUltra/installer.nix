@@ -120,8 +120,14 @@ in
       dev=/dev/disk/by-label/NIXSECRETS
       for _ in $(seq 20); do [ -e "$dev" ] && break; sleep 0.5; done
       [ -e "$dev" ] || { echo "no NIXSECRETS partition"; exit 0; }
+      # The live system mounts the whole stick at /iso, which keeps the kernel
+      # from handing out its partitions; read this one through the disk at
+      # its offset instead.
+      part=$(basename "$(readlink -f "$dev")")
+      disk=$(basename "$(readlink -f "/sys/class/block/$part/..")")
+      start=$(cat "/sys/class/block/$part/start")
       mkdir -p /run/usb-secrets
-      mount -o ro,umask=0077 "$dev" /run/usb-secrets
+      mount -o ro,umask=0077,offset=$(( start * 512 )) "/dev/$disk" /run/usb-secrets
       install -d -m 700 /etc/NetworkManager/system-connections
       tar -C /etc/NetworkManager/system-connections --no-same-owner -xf /run/usb-secrets/nm.tar
       chmod 600 /etc/NetworkManager/system-connections/*
