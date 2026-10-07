@@ -119,9 +119,14 @@
 # transparently substitute one system for the other. Portable dev-shell work
 # goes to the M6 through `utilities/scripts/remote.sh --portable`, while these
 # entries remain the automatic path for ordinary `nix build`/`nix run` work.
+#
+# On 2026-10-07 offload was switched off, by owner decision: distributedBuilds
+# is false, so nix writes no builders and everything builds locally. The
+# machine list, host-key pin and ssh config stay, since remote.sh still uses
+# the pin; flipping the flag back to true restores offload as it was.
 { ... }:
 {
-  nix.distributedBuilds = true;
+  nix.distributedBuilds = false;
   nix.settings.builders-use-substitutes = true;
 
   nix.buildMachines = [
