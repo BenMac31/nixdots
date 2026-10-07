@@ -12,6 +12,7 @@
       ./hardware-configuration.nix
       ./migrate.nix
       ./storage.nix
+      ./secure-boot.nix
       ../nixBlade/ai-router.nix
       ../nixBlade/remote-builds.nix
       ../nixBlade/remote-macs.nix

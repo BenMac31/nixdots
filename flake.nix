@@ -16,6 +16,10 @@
     nix-flatpak = {
       url = "github:gmodena/nix-flatpak";
     };
+    lanzaboote = {
+      url = "git+https://github.com/nix-community/lanzaboote?ref=refs/tags/v1.2.0&shallow=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nix-colors.url = "github:misterio77/nix-colors";
     firefox-css-hacks = { url = "github:MrOtherGuy/firefox-csshacks"; flake = false; };
     fcitx5-gruvbox = { url = "github:ayamir/fcitx5-gruvbox"; flake = false; };
