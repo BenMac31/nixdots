@@ -22,6 +22,13 @@ in
           (lib.mkIf osConfig.programs.hyprland.enable xdg-desktop-portal-hyprland)
         ];
       };
+      configFile."hypr/xdph.conf" = lib.mkIf osConfig.programs.hyprland.enable {
+        text = ''
+          screencopy {
+            allow_token_by_default = true
+          }
+        '';
+      };
       mime.enable = true;
       mimeApps.enable = true;
       userDirs = {

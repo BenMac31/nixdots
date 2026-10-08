@@ -9,7 +9,10 @@
     ];
     programs.obs-studio = {
       enable = true;
-      plugins = [ pkgs.obs-studio-plugins.obs-source-record ];
+      plugins = with pkgs.obs-studio-plugins; [
+        obs-source-record
+        obs-shaderfilter
+      ];
     };
     services.flatpak.packages = [
       "org.qbittorrent.qBittorrent"
