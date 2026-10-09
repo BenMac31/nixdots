@@ -22,6 +22,8 @@
   networking.hostName = "nixUltra";
   custom.flakeAttr = "nixUltra";
   custom.tailscale.enable = true;
+  # Android apps beside the desktop: Graphide's phone app on gred-rs.
+  custom.waydroid.enable = true;
   head = {
     enable = true;
     gaming = true;

@@ -15,6 +15,7 @@ in
       ./head
       ./serv
       ./tailscale.nix
+      ./waydroid.nix
     ];
 
   config = {
