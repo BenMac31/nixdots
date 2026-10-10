@@ -25,6 +25,7 @@ in
     programs.waybar.enable = lib.mkDefault (!graphideShell);
     programs.hyprlock.enable = lib.mkDefault false;
     services.hypridle.enable = lib.mkDefault false;
+    services.hyprpolkitagent.enable = true;
     xdg = {
       desktopEntries."org.gnome.Settings" = {
         name = "Settings";
