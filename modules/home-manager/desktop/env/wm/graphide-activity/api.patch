@@ -1,6 +1,6 @@
 --- a/hackerboard/connectors/graphide.py
 +++ b/hackerboard/connectors/graphide.py
-@@ -105,7 +105,10 @@
+@@ -104,7 +104,10 @@
  SELECT d.day, COALESCE(a.accounts, 0), COALESCE(a.installs, 0), COALESCE(s.n, 0),
         (SELECT COUNT(*) FROM users u
           WHERE NOT EXISTS (SELECT 1 FROM internal i WHERE i.user_id = u.id)),
@@ -12,7 +12,7 @@
  FROM days d
  LEFT JOIN activity a ON a.day = d.day
  LEFT JOIN signups s ON s.day = d.day
-@@ -243,7 +246,7 @@
+@@ -237,7 +240,7 @@
              count[0] += 1
              count[1] += n >= PROMPT_HEAVY
              count[2] += n
@@ -23,16 +23,16 @@
                **prompt_counts(r[0].isoformat(), prompts)} for r in rows]
 --- a/hackerboard/store.py
 +++ b/hackerboard/store.py
-@@ -101,7 +101,7 @@
-         # fetched before them means not measured, which a chart must not draw
-         # as zero.
+@@ -98,7 +98,7 @@
+         # Columns added after the table: NULL means not measured, which a chart
+         # must not draw as zero.
          have = {r["name"] for r in self._db.execute("PRAGMA table_info(daily_activity)")}
 -        for column, kind in (("active_hours", "REAL"), ("hands_on_hours", "REAL"),
 +        for column, kind in (("total_accounts", "INTEGER"), ("active_hours", "REAL"), ("hands_on_hours", "REAL"),
                               ("prompters", "INTEGER"), ("heavy_prompters", "INTEGER"), ("prompts", "INTEGER")):
              if column not in have:
                  self._db.execute(f"ALTER TABLE daily_activity ADD COLUMN {column} {kind}")
-@@ -145,15 +145,16 @@
+@@ -139,15 +139,16 @@
          with self._lock:
              self._db.executemany(
                  "INSERT INTO daily_activity (day, active_accounts, active_installs, new_accounts, "
@@ -52,7 +52,7 @@
                   for d in days],
              )
              self._db.commit()
-@@ -163,7 +164,7 @@
+@@ -157,7 +158,7 @@
          with self._lock:
              rows = self._db.execute(
                  "SELECT day, active_accounts, active_installs, new_accounts, active_hours, hands_on_hours, "
@@ -63,7 +63,7 @@
                  (limit,),
 --- a/hackerboard/board.py
 +++ b/hackerboard/board.py
-@@ -309,6 +309,10 @@
+@@ -296,6 +296,10 @@
              "note": "",
              "history": history,
              "source": "telemetry",
