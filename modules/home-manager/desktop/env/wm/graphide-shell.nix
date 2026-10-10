@@ -1,6 +1,6 @@
 { config, lib, pkgs, inputs, ... }:
 {
-  imports = [ ./graphide-activity ];
+  imports = [ inputs.graphide-tools.homeManagerModules.quickshell ];
   config = lib.mkIf config.programs.graphide-shell.enable {
     programs.graphide-shell = {
       widgetMonitor = "eDP-1";
