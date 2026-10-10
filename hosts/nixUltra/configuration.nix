@@ -82,9 +82,12 @@
 
     xserver.enable = true;
     desktopManager.gnome.enable = true;
+    # s2idle is the only sleep state the G1a firmware offers. Hibernating on
+    # every lid close wrote a ~10 GB image and asked for the LUKS passphrase
+    # on every open; upower still hibernates at 5%.
     logind.settings.Login = {
-      HandleLidSwitch = "hibernate";
-      HandleLidSwitchExternalPower = "hibernate";
+      HandleLidSwitch = "suspend";
+      HandleLidSwitchExternalPower = "suspend";
     };
     # Same policy as nixBlade, whose configuration.nix has the history: act at
     # 5%, and let upower really hibernate instead of substituting HybridSleep.
@@ -112,6 +115,11 @@
   boot.extraModulePackages = with config.boot.kernelPackages; [
     v4l2loopback
   ];
+  # In platform mode a power-key press while the image is being written
+  # makes the kernel roll back instead of powering off, and amdgpu (gfx1151)
+  # dies on the rollback; the image is invalidated too, so the next boot is
+  # cold. Shutdown mode powers off without that check.
+  systemd.sleep.settings.Sleep.HibernateMode = "shutdown";
   # Also what resumes from the swapfile: systemd's initrd reads the
   # HibernateLocation EFI variable, so no resume_offset is needed.
   boot.initrd.systemd.enable = true;
