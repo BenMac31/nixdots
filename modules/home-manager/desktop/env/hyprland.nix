@@ -276,7 +276,7 @@ in
         bind = [
           #
           "$mainMod,Q,exec,kitty"
-          "$mainMod,SPACE,exec,${config.home.profileDirectory}/bin/gred"
+          "$mainMod,SPACE,exec,${config.home.homeDirectory}/.cache/gred-rs/bin/gred"
           "$mainMod,C,killactive,"
           "CTRLSHIFT$mainMod,C,exit,"
           "$mainMod,E,exec,xdg-open '/'"
