@@ -26,12 +26,39 @@ let
   };
   system = pkgs.stdenv.hostPlatform.system;
   packages = inputs.graphide.packages.${system};
+  # The shell's `gr` runs the same build as the running daemon. grug points
+  # ~/.config/graphide/bin/gr at its own gr on every start (monolith
+  # grug/harness, EnsureGrShim), so this follows a `gdev swap` to a newer
+  # daemon. Without it the shell keeps the release module's gr, which the
+  # frozen `ff` channel holds at 0.1.27, and a command only the newer build
+  # has (`gr cloud`) is missing. The release gr still runs when no daemon has
+  # made the link yet, or when the link would lead back here.
+  releaseGr =
+    let gp = config.graphide.releaseFlake.packages.${system};
+    in if config.graphide.variant == "prod" then gp.gr-prod else gp.gr-dev;
+  grFollowsDaemon = pkgs.writeShellScriptBin "gr" ''
+    shim="''${XDG_CONFIG_HOME:-$HOME/.config}/graphide/bin/gr"
+    if [ -x "$shim" ]; then
+      self=$(${pkgs.coreutils}/bin/readlink -f "$0")
+      target=$(${pkgs.coreutils}/bin/readlink -f "$shim")
+      if [ -n "$target" ] && [ "$target" != "$self" ]; then
+        ${lib.optionalString router.enable ''
+          export AI_ROUTER_URL=${lib.escapeShellArg router.url}
+          export CODEX_PATH=${lib.escapeShellArg "${config.home.profileDirectory}/bin/codex"}
+          export PATH=${lib.escapeShellArg "${config.home.profileDirectory}/bin"}:"$PATH"
+        ''}
+        exec "$shim" "$@"
+      fi
+    fi
+    exec ${releaseGr}/bin/gr "$@"
+  '';
 in {
   imports = [ inputs.graphide-tools.homeManagerModules.graphide ];
   # gdev: per-worktree isolated instances. From graphide-tools, not the
   # release-pinned `graphide`, so the updater never rolls it back.
   home.packages = lib.mkIf config.graphide.enable [
     inputs.graphide-tools.packages.${system}.gdev
+    (lib.hiPrio grFollowsDaemon)
   ];
   # The release's desktop launcher and bundled daemon inherit these settings.
   # Keeping the override here also reapplies it after automatic release updates.
