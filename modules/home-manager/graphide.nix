@@ -5,6 +5,7 @@
     ./term/transcripts.nix
     ./term/yc.nix
     ./term/ai/accounts.nix
+    ./term/ai/pool.nix
   ] ++ lib.optionals osConfig.programs.hyprland.enable [
     ./desktop/env/wm/graphide-shell.nix
   ];
