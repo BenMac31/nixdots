@@ -268,11 +268,11 @@
         "vscode-src": "vscode-src_2"
       },
       "locked": {
-        "lastModified": 1791943900,
-        "narHash": "sha256-5EyJDpN1+9PQOIiQ9TyQl60j0FJ3vbviWRfqV8zTaVU=",
+        "lastModified": 1791949580,
+        "narHash": "sha256-rv6HfElmE0iI06Crrkj+9yZmgeOLTCR3J22/VHT0XWw=",
         "ref": "refs/heads/master",
-        "rev": "fffceeedac8c543cf543eb3958b68743bb8060b6",
-        "revCount": 21379,
+        "rev": "403368ab62f19261ff758cb6861378728ccebf09",
+        "revCount": 21482,
         "type": "git",
         "url": "ssh://git@github.com/GraphideHQ/monolith"
       },
