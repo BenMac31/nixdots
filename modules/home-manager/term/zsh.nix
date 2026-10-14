@@ -45,13 +45,9 @@
         ls = "eza --icons=auto";
         vpnexit = lib.mkIf osConfig.services.mullvad-vpn.enable "mullvad split-tunnel add \$$";
         hexdec = "printf '%x\n' \$1";
-        # DECISION 15(B): gr, grat and gred are all installed by
-        # term/graphide.nix, so there are no aliases for them and the names
-        # resolve to the real binaries on PATH. gred's temporary alias to the
-        # gred-patch-dev flake app was retired on 2026-09-13, once the local
-        # auto-update was installing packaged builds again -- run the patch
-        # build explicitly with `nix run ~/Projects/graphide/graphide#gred-patch-dev`
-        # when you actually want it.
+        # DECISION 15(B): gr and grat are installed by term/graphide.nix, so
+        # there are no aliases for them and the names resolve to the real
+        # binaries on PATH.
       }
     ];
     initContent = lib.mkMerge [

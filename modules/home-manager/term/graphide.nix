@@ -2,7 +2,7 @@
 let
   router = config.services.ai-router;
   wrap = ''
-    for exe in gred gr grug grat; do
+    for exe in gr grug grat; do
       if [ -e "$out/bin/$exe" ]; then
         wrapProgram "$out/bin/$exe" \
           --set AI_ROUTER_URL ${lib.escapeShellArg router.url} \
@@ -11,12 +11,7 @@ let
       fi
     done
   '';
-  route = package: package.overrideAttrs (old: {
-    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
-    postFixup = (old.postFixup or "") + wrap;
-  });
-  # The Go programs only need new launchers, not a recompilation. gred above
-  # retains overrideAttrs because the release module replaces its tarball src.
+  # The Go programs only need new launchers, not a recompilation.
   routeCommands = package: pkgs.symlinkJoin {
     name = "${package.name}-routed";
     inherit (package) pname meta;
@@ -65,7 +60,6 @@ in {
   graphide.releaseFlake = if router.enable then inputs.graphide // {
     packages = inputs.graphide.packages // {
       ${system} = packages // {
-        gred = route packages.gred;
         gr-prod = routeCommands packages.gr-prod;
         gr-dev = routeCommands packages.gr-dev;
         grat = routeCommands packages.grat;
@@ -73,7 +67,6 @@ in {
     };
   } else inputs.graphide;
   graphide.autoUpdate = {
-    blobAccount = "graphidereleaseswus";
     flakeAttr = flakeAttr;
     homeManagerPackage = inputs.home-manager.packages.${pkgs.stdenv.hostPlatform.system}.home-manager;
   };
@@ -88,14 +81,12 @@ in {
     # Directory roots rather than exact files, so a new skill or hook does not
     # re-break it; the cost is that an untracked, non-ignored file a peer drops
     # under one of these dirs is cleaned on the next cycle. Drop an entry once
-    # git stops tracking it (gred/extensions/graphide/out, 2026-09-23): before
-    # monolith c3a856832 one dead entry made `git restore` clear nothing.
+    # git stops tracking it (gred/, 2026-10-13): before monolith c3a856832 one
+    # dead entry made `git restore` clear nothing.
     allowlist = [
       ".graphide/authored"
       ".agents" ".claude" ".codex" ".cursor"
       "AGENTS.md" "CLAUDE.md" "QUIRKS.md" ".agent-config-manifest" "orca.yaml"
-      "gred/.agents" "gred/.claude" "gred/.codex" "gred/.cursor"
-      "gred/AGENTS.md" "gred/CLAUDE.md" "gred/QUIRKS.md" "gred/.agent-config-manifest"
       "website/.claude" "website/.codex" "website/.cursor" "website/.agent-config-manifest"
     ];
   };
