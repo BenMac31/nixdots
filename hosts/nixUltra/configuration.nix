@@ -22,6 +22,9 @@
   networking.hostName = "nixUltra";
   custom.flakeAttr = "nixUltra";
   custom.tailscale.enable = true;
+  # Codex goes through the account pool on XiaServer, which holds this
+  # machine's former sign-ins (ai-router.nix).
+  custom.codexPool = true;
   # Android apps beside the desktop: Graphide's phone app on gred-rs.
   custom.waydroid.enable = true;
   head = {
