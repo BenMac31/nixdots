@@ -267,11 +267,11 @@
         "sops-nix": "sops-nix_2"
       },
       "locked": {
-        "lastModified": 1792040155,
-        "narHash": "sha256-/tf9e2x03OdJWboHpjad74iqQlUxGUQNypqd1NlxPoQ=",
+        "lastModified": 1792043114,
+        "narHash": "sha256-UAfUx8wgjM6RFAQn1SXJ4ZAwkqWiFdRP8YSA4eLGPd8=",
         "ref": "refs/heads/master",
-        "rev": "dbc96bc541d7f84720976a45ea875053c7d12fac",
-        "revCount": 23326,
+        "rev": "0b3b015abceda24e734cc269f05e4e3cb6861ca4",
+        "revCount": 23457,
         "type": "git",
         "url": "ssh://git@github.com/GraphideHQ/monolith"
       },
@@ -293,22 +293,6 @@
       "original": {
         "owner": "isouravgope",
         "repo": "Gruvbox-Kvantum",
-        "type": "github"
-      }
-    },
-    "gruvbox-wallpapers": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1784553621,
-        "narHash": "sha256-RpPMMbI/jxCxOlsf0d8SZyORR4qafod97kjE98FhId0=",
-        "owner": "AngelJumbo",
-        "repo": "gruvbox-wallpapers",
-        "rev": "64a1f5fdbc4f7e0a7700405a80f6011dbe2e00f8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "AngelJumbo",
-        "repo": "gruvbox-wallpapers",
         "type": "github"
       }
     },
@@ -549,7 +533,6 @@
         "graphide": "graphide",
         "graphide-tools": "graphide-tools",
         "gruvbox-kvantum": "gruvbox-kvantum",
-        "gruvbox-wallpapers": "gruvbox-wallpapers",
         "home-manager": "home-manager",
         "lanzaboote": "lanzaboote",
         "nix-colors": "nix-colors",

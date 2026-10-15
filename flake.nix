@@ -21,7 +21,6 @@
     nix-colors.url = "github:misterio77/nix-colors";
     firefox-css-hacks = { url = "github:MrOtherGuy/firefox-csshacks"; flake = false; };
     fcitx5-gruvbox = { url = "github:ayamir/fcitx5-gruvbox"; flake = false; };
-    gruvbox-wallpapers = { url = "github:AngelJumbo/gruvbox-wallpapers"; flake = false; };
     gruvbox-kvantum = { url = "github:isouravgope/Gruvbox-Kvantum"; flake = false; };
     waybar-pomodoro = { url = "github:Andeskjerf/waybar-module-pomodoro"; flake = false; };
 

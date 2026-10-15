@@ -13,14 +13,12 @@ in
   # Only with Hyprland, so headless hosts do not build waybar-pomodoro and co.
   imports = lib.optionals osConfig.programs.hyprland.enable [
     ./wm/rofi
-    ./wm/hyprpaper.nix
     ./wm/waybar
     ./swaync.nix
     ./lock.nix
   ];
   config = lib.mkIf osConfig.programs.hyprland.enable {
     programs.rofi.enable = lib.mkDefault (!graphideShell);
-    services.hyprpaper.enable = lib.mkDefault (!graphideShell);
     programs.waybar.enable = lib.mkDefault (!graphideShell);
     programs.hyprlock.enable = lib.mkDefault false;
     services.hypridle.enable = lib.mkDefault false;
@@ -233,8 +231,10 @@ in
           "3, horizontal, workspace"
         ];
 
-        misc = {
-          force_default_wallpaper = -1;
+        misc = with config.colorScheme.palette; {
+          force_default_wallpaper = 0;
+          disable_hyprland_logo = true;
+          background_color = "rgb(${base00})";
           enable_swallow = false;
           swallow_regex = "^(Alacritty|kitty|footclient|foot)$";
         };
