@@ -15,14 +15,10 @@
       ignoreSpace = true;
       path = "$HOME/.local/share/zsh/history";
     };
-    # DECISION 9: re-enabled so shipped completions (gr, grat, and every
-    # other package that installs one) are actually read. The empty
-    # completionInit override that used to sit above `enable` is gone with
-    # it -- it suppressed compinit entirely, which is what made the
-    # completions inert rather than merely slow.
     enableCompletion = true;
     defaultKeymap = "viins";
-    # Fetch private flake inputs with the user's SSH credentials; elevate only activation.
+    # --sudo rather than sudo: private inputs fetch with the user's ssh key and
+    # only activation runs as root.
     shellAliases = lib.mkMerge [
       (lib.mkIf config.desktop.enable {
         nixswitch = "st=\"$(date +%s)\"; nixos-rebuild switch --sudo --flake $HOME/nixos/#${flakeAttr} --impure --cores 6 && notify-send 'updated' \"Took: $(($(date +%s)-$st))s\"";
@@ -45,16 +41,10 @@
         ls = "eza --icons=auto";
         vpnexit = lib.mkIf osConfig.services.mullvad-vpn.enable "mullvad split-tunnel add \$$";
         hexdec = "printf '%x\n' \$1";
-        # DECISION 15(B): gr and grat are installed by term/graphide.nix, so
-        # there are no aliases for them and the names resolve to the real
-        # binaries on PATH.
       }
     ];
     initContent = lib.mkMerge [
       (lib.mkOrder 550 /*bash*/ ''
-        # Plugins come from nixpkgs, pinned by flake.lock. antidote cloned them
-        # from GitHub into ~/.cache at first use, so a machine whose cache was
-        # empty or never copied (nixUltra) started with none of them.
         source ${pkgs.zsh-vi-mode}/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
         source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh
         source ${pkgs.zsh-defer}/share/zsh-defer/zsh-defer.plugin.zsh
@@ -85,15 +75,12 @@
             return 1
           }
 
-          # Read input values
           local sec="''${1:-0}"
           local min="''${2:-0}"
           local hour="''${3:-0}"
 
-          # Validate input values
           [[ "$sec" =~ ^[0-9]+$ ]] && [[ "$min" =~ ^[0-9]+$ ]] && [[ "$hour" =~ ^[0-9]+$ ]] || usage || return 1
 
-          # Calculate total time in seconds
           local total_seconds=$((sec + min * 60 + hour * 3600))
 
           echo "Starting timer for $hour hours, $min minutes, and $sec seconds."
@@ -104,9 +91,8 @@
             total_seconds=$((total_seconds - 1))
           done
 
-          # Sound alert when the timer finishes
           printf "\nTime's up!\n"
-          while true; do mpv ~/.local/share/sounds/Ping.ogg; sleep 0.25; done # Avoid echoing new lines by using `tput bel` for the beep
+          while true; do mpv ~/.local/share/sounds/Ping.ogg; sleep 0.25; done
         }
         std() {
         echo 'echo """' > /tmp/out
