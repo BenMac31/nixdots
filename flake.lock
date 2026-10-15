@@ -264,15 +264,14 @@
         "flake-utils": "flake-utils_2",
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-matrix": "nixpkgs-matrix_2",
-        "sops-nix": "sops-nix_2",
-        "vscode-src": "vscode-src_2"
+        "sops-nix": "sops-nix_2"
       },
       "locked": {
-        "lastModified": 1791949900,
-        "narHash": "sha256-ax6QvG2eYZ9e3CwKaB2uiQXcyDeDHr1E2KX8pCIw8K0=",
+        "lastModified": 1792040155,
+        "narHash": "sha256-/tf9e2x03OdJWboHpjad74iqQlUxGUQNypqd1NlxPoQ=",
         "ref": "refs/heads/master",
-        "rev": "75930f761a59fa1653865f6b3711c832fec41083",
-        "revCount": 21511,
+        "rev": "dbc96bc541d7f84720976a45ea875053c7d12fac",
+        "revCount": 23326,
         "type": "git",
         "url": "ssh://git@github.com/GraphideHQ/monolith"
       },
@@ -700,23 +699,6 @@
       }
     },
     "vscode-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1790307657,
-        "narHash": "sha256-ik/S5+aczpBeJyo3RRRNYkFBP01e4Zi+8QqWtRnuYHU=",
-        "owner": "microsoft",
-        "repo": "vscode",
-        "rev": "04c0d99f4fb0d8afe6ce4f0c58e31e183ac3e4b1",
-        "type": "github"
-      },
-      "original": {
-        "owner": "microsoft",
-        "ref": "1.139.1",
-        "repo": "vscode",
-        "type": "github"
-      }
-    },
-    "vscode-src_2": {
       "flake": false,
       "locked": {
         "lastModified": 1790307657,
