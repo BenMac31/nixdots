@@ -1,26 +1,6 @@
 { lib, config, pkgs, inputs, flakeAttr, ... }:
 let
-  router = config.services.ai-router;
-  wrap = ''
-    for exe in gr grug grat; do
-      if [ -e "$out/bin/$exe" ]; then
-        wrapProgram "$out/bin/$exe" \
-          --set AI_ROUTER_URL ${lib.escapeShellArg router.url} \
-          --set CODEX_PATH ${lib.escapeShellArg "${config.home.profileDirectory}/bin/codex"} \
-          --prefix PATH : ${lib.escapeShellArg "${config.home.profileDirectory}/bin"}
-      fi
-    done
-  '';
-  # The Go programs only need new launchers, not a recompilation.
-  routeCommands = package: pkgs.symlinkJoin {
-    name = "${package.name}-routed";
-    inherit (package) pname meta;
-    paths = [ package ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = wrap;
-  };
   system = pkgs.stdenv.hostPlatform.system;
-  packages = inputs.graphide.packages.${system};
   # The shell's `gr` runs the same build as the running daemon. grug points
   # ~/.config/graphide/bin/gr at its own gr on every start (monolith
   # grug/harness, EnsureGrShim), so this follows a `gdev swap` to a newer
@@ -37,11 +17,6 @@ let
       self=$(${pkgs.coreutils}/bin/readlink -f "$0")
       target=$(${pkgs.coreutils}/bin/readlink -f "$shim")
       if [ -n "$target" ] && [ "$target" != "$self" ]; then
-        ${lib.optionalString router.enable ''
-          export AI_ROUTER_URL=${lib.escapeShellArg router.url}
-          export CODEX_PATH=${lib.escapeShellArg "${config.home.profileDirectory}/bin/codex"}
-          export PATH=${lib.escapeShellArg "${config.home.profileDirectory}/bin"}:"$PATH"
-        ''}
         exec "$shim" "$@"
       fi
     fi
@@ -55,17 +30,7 @@ in {
     inputs.graphide-tools.packages.${system}.gdev
     (lib.hiPrio grFollowsDaemon)
   ];
-  # The release's desktop launcher and bundled daemon inherit these settings.
-  # Keeping the override here also reapplies it after automatic release updates.
-  graphide.releaseFlake = if router.enable then inputs.graphide // {
-    packages = inputs.graphide.packages // {
-      ${system} = packages // {
-        gr-prod = routeCommands packages.gr-prod;
-        gr-dev = routeCommands packages.gr-dev;
-        grat = routeCommands packages.grat;
-      };
-    };
-  } else inputs.graphide;
+  graphide.releaseFlake = inputs.graphide;
   graphide.autoUpdate = {
     flakeAttr = flakeAttr;
     homeManagerPackage = inputs.home-manager.packages.${pkgs.stdenv.hostPlatform.system}.home-manager;

@@ -9,7 +9,7 @@ in
       ../../modules/nixos
       ./hardware-configuration.nix
       ./agent-throttle.nix
-      ./ai-router.nix
+      ../../modules/nixos/codex-pool.nix
       ./remote-builds.nix
       ./remote-macs.nix
       ./nix-store-hygiene.nix

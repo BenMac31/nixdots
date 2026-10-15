@@ -1,21 +1,10 @@
 { config, lib, inputs, pkgs, ... }:
 let
   cfg = config.services.graphide-accounts;
-  # Every agent session, and everything it spawns, runs in agents.slice
-  # (hosts/nixBlade/agent-throttle.nix: low CPU/IO weight, 11G memory kill
-  # line). This wrapper is the one launch path every terminal, alias and GUI
-  # launcher goes through, so the slice lives here rather than in a shell
-  # alias: on 2026-09-23 the alias had been shadowed, no session was in the
-  # slice, and one agent's `nix eval` grew to 13 GB and swapped the desktop
-  # to a standstill. The wrapper re-execs itself inside a scope once; when the
-  # user manager cannot be reached (a bare ssh, a container) it runs unconfined.
-  #
-  # The socket existing is not enough. Inside a bwrap sandbox with its own pid
-  # namespace (agent-sandbox, which runs the dev editor) the socket is there
-  # but the manager refuses the connection ("Failed to connect to user scope
-  # bus via local transport: No data available"), and systemd-run exits 1
-  # before the CLI starts: every agent the sandboxed editor launched died ~4 s
-  # in. So ask the manager (~6 ms) before handing the launch to it.
+  # Every agent session runs in agents.slice (hosts/nixBlade/agent-throttle.nix),
+  # and these wrappers are the one launch path every terminal and GUI uses.
+  # Ask the user manager first: inside a bwrap pid namespace the bus socket
+  # exists but refuses connections, and systemd-run would fail the launch.
   intoAgentsSlice = ''
     if [[ $(< /proc/self/cgroup) != */agents.slice/* && -S "''${XDG_RUNTIME_DIR:-/nonexistent}/bus" ]] \
         && command -v systemd-run >/dev/null \
@@ -41,8 +30,8 @@ let
     export GRAPHIDE_CODEX_BIN=${lib.escapeShellArg (lib.getExe pkgs.master.unfree.codex)}
     exec ${cfg.finalPackage}/bin/graphide-codex "$@"
   '';
-  # Graphide needs the ACP adapter. Default other ACP clients to the same
-  # account-aware CLI, while preserving an explicit CODEX_PATH from the caller.
+  # Graphide drives Codex through this adapter: point it at the account-aware
+  # codex unless the caller set CODEX_PATH.
   selectedCodexAcp = pkgs.writeShellScriptBin "codex-acp" ''
     export CODEX_PATH="''${CODEX_PATH:-${lib.getExe selectedCodex}}"
     exec ${lib.getExe pkgs.unstable.unfree.codex-acp} "$@"
@@ -52,26 +41,19 @@ let
     paths = [ selectedClaude selectedCodex selectedCodexAcp ];
   };
 in {
-  imports = [
-    inputs.graphide-tools.homeManagerModules.accounts
-    inputs.graphide-tools.homeManagerModules.ai-router
-  ];
-  # Codex keeps its router; Claude uses vendor-owned configuration directories.
-  services.ai-router.enable = lib.mkDefault config.ai.enable;
+  imports = [ inputs.graphide-tools.homeManagerModules.accounts ];
   services.graphide-accounts = {
     enable = lib.mkDefault config.ai.enable;
     claudeCommand = lib.getExe config.ai.claude.package;
-    # This flake's master package set lives under the unfree-enabled overlay.
     codexCommand = lib.getExe pkgs.master.unfree.codex;
-    # Each poll cold-starts `codex app-server`: ~15 MB read and ~2 MB of sqlite
-    # writes. 240s still refreshes inside the snapshot's 300s stale cutoff.
+    # Each poll cold-starts `codex app-server`; 240s stays inside the
+    # snapshot's 300s stale cutoff.
     interval = 240;
     idleInterval = 900;
     claudeUsage.enable = config.ai.claude.enable;
   };
-  # High-priority executable names make selection apply to every new launch
-  # through PATH, including GUI launchers and child applications. The account
-  # service keeps absolute paths to the real vendor binaries, avoiding loops.
+  # These shadow the vendors' `claude` and `codex` on PATH; the account
+  # service calls the vendor binaries by absolute path.
   home.packages = lib.mkIf cfg.enable [
     pkgs.master.unfree.codex
     (lib.hiPrio selectedAccountCommands)
