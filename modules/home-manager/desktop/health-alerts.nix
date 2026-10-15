@@ -129,6 +129,24 @@ let
       fi
     done
 
+    STATE_DIR="''${XDG_RUNTIME_DIR:-/tmp}/health-alerts"
+    mkdir -p "$STATE_DIR"
+    STATE_FILE="$STATE_DIR/disk"
+    level=""
+    case "$warnings" in
+      *CRITICAL*) level=critical ;;
+      ?*) level=warning ;;
+    esac
+    last_level=""
+    if [ -f "$STATE_FILE" ]; then
+      read -r last_level < "$STATE_FILE" || true
+    fi
+    if [ -n "$level" ] && [ "$level" != "$last_level" ]; then
+      ${pkgs.libnotify}/bin/notify-send -u critical "Disk ''${level}" \
+        "$(printf '%b' "$warnings")Look in /tmp/claude-1000 first"
+    fi
+    printf '%s\n' "$level" > "$STATE_FILE"
+
     if [ -n "$warnings" ]; then
       printf '%b' "$warnings" > "$WARN_FILE"
     else
@@ -251,10 +269,10 @@ in
 
     systemd.user.timers.health-alerts-disk = {
       Unit = {
-        Description = "Daily disk space check";
+        Description = "Disk space check every 15 minutes";
       };
       Timer = {
-        OnCalendar = "daily";
+        OnCalendar = "*:0/15";
         Persistent = true;
       };
       Install.WantedBy = [ "timers.target" ];

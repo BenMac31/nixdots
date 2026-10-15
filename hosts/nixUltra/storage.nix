@@ -17,7 +17,13 @@
     TIMELINE_LIMIT_YEARLY = 0;
   };
   # Snapper expects the .snapshots subvolume to exist; `v` makes one.
-  systemd.tmpfiles.rules = [ "v /home/.snapshots 0750 root users -" ];
+  # Claude Code sessions keep scratchpads, podman stores and Go caches under
+  # /tmp/claude-1000 on this same disk; the 10-day /tmp default let 760 GB
+  # pile up in a week and fill it. Anything untouched for 3 days goes.
+  systemd.tmpfiles.rules = [
+    "v /home/.snapshots 0750 root users -"
+    "e /tmp/claude-1000 - - - 3d"
+  ];
 
   # Every subvolume is the same filesystem, so scrubbing / covers all four.
   services.btrfs.autoScrub = {
