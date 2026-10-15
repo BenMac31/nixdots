@@ -87,7 +87,6 @@ in
           };
           in
           listToAttrs [
-            # EXTENSIONS
             (extension "multi-account-containers" "@testpilot-containers")
             (extension "ublock-origin" "uBlock0@raymondhill.net")
             (extension "bitwarden-password-manager" "{446900e4-71c2-419f-a6a7-df9c091e268b}")
@@ -95,8 +94,6 @@ in
             (extension "darkreader" "addon@darkreader.org")
             (extension "deep-fake-detector" "{ddd3c206-589e-431d-93d0-897378f9200a}")
             (extension "tridactyl-vim" "tridactyl.vim@cmcaine.co.uk")
-            # lib.mkIf config.desktop.japanese.enable (extension "furiganaize" "{a2503cd4-4083-4c2f-bef2-37767a569867}")
-            # lib.mkIf config.desktop.japanese.enable (extension "yomitan" "{6b733b82-9261-47ee-a595-2dda294a4d08}")
             (extension "furiganaize" "{a2503cd4-4083-4c2f-bef2-37767a569867}")
             (extension "yomitan" "{6b733b82-9261-47ee-a595-2dda294a4d08}")
             (extension "sponsorblock" "sponsorBlocker@ajay.app")
@@ -157,8 +154,6 @@ in
             "sidebar.main.tools" = "";
             "sidebar.expandOnHover" = true;
             "browser.tabs.groups.enabled" = true;
-            # Hand-set in the browser on nixWorks and never declared, so a new
-            # machine came up with a different toolbar, theme and DRM setting.
             # user.js reapplies these at every start: customize here, not in the UI.
             "browser.uiCustomization.state" = builtins.toJSON {
               placements = {

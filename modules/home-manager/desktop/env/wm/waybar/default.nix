@@ -40,7 +40,6 @@
           "custom/right"
         ];
 
-        # Network Module
         network = {
           tooltip = true;
           format-wifi = "<span foreground='#FF8B49'> {bandwidthDownBytes}</span> <span foreground='#FF6962'> {bandwidthUpBytes}</span>";
@@ -53,18 +52,15 @@
           on-click-right = "~/.config/waybar/network.py";
         };
 
-        # Temperature Module
         temperature = {
           format = "{temperatureC}°C ";
         };
 
-        # Custom Rofi Launcher
         "custom/rofi" = {
           format = "  {}";
           on-click = "rofi -show drun";
         };
 
-        # Workspaces
         "hyprland/workspaces" = {
           format = "{icon}";
           disable-scroll = true;
@@ -81,7 +77,6 @@
           sort-by-number = true;
         };
 
-        # Battery Module
         battery = {
           states = {
             good = 95;
@@ -108,7 +103,6 @@
           ];
         };
 
-        # PulseAudio Module
         pulseaudio = {
           format = "{icon} {volume}";
           format-muted = "󰖁";
@@ -133,13 +127,11 @@
           };
         };
 
-        # Tray Module
         tray = {
           icon-size = 20;
           spacing = 9;
         };
 
-        # Clock Module
         clock = {
           format = " {:%H:%M}";
           on-click = "~/.config/eww/scripts/toggle_control_center.sh";
@@ -171,7 +163,6 @@
           on-click-right = "waybar-module-pomodoro reset";
         };
 
-        # Backlight Module
         backlight = {
           device = "intel_backlight";
           on-scroll-up = "light -A 7";
@@ -191,7 +182,6 @@
           ];
         };
 
-        # Padding Custom Modules
         "custom/left" = {
           format = " ";
           interval = "once";

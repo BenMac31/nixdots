@@ -27,8 +27,7 @@
         fcitx5-gtk
         qt6Packages.fcitx5-configtool
       ];
-      # Without this fcitx5 starts with keyboard-us only, and Mozc had to be
-      # added by hand in the config tool on every new machine.
+      # Without this fcitx5 starts with keyboard-us only.
       fcitx5.settings.inputMethod = {
         GroupOrder."0" = "Default";
         "Groups/0" = {

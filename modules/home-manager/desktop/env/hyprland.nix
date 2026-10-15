@@ -10,8 +10,7 @@ let
   graphideShell = lib.attrByPath [ "programs" "graphide-shell" "enable" ] false config;
 in
 {
-  # Only merge Waybar / rofi / hyprpaper when the OS enables Hyprland; otherwise
-  # headless hosts still pulled these modules in and built e.g. waybar-pomodoro.
+  # Only with Hyprland, so headless hosts do not build waybar-pomodoro and co.
   imports = lib.optionals osConfig.programs.hyprland.enable [
     ./wm/rofi
     ./wm/hyprpaper.nix
@@ -42,7 +41,6 @@ in
       NIXOS_OZONE_WL = "1";
     };
     home.packages = [
-      #
       pkgs.wlsunset
       pkgs.grimblast
       pkgs.ydotool
@@ -275,7 +273,6 @@ in
         "$mainMod" = "SUPER";
 
         bind = [
-          #
           "$mainMod,Q,exec,kitty"
           "$mainMod,SPACE,exec,${config.home.homeDirectory}/.cache/gred-rs/bin/gred"
           "$mainMod,C,killactive,"
@@ -393,10 +390,6 @@ in
           ",XF86AudioNext,    exec, ${playerctl} next"
           ",XF86AudioMicMute, exec, ${pactl} set-source-mute @DEFAULT_SOURCE@ toggle"
         ];
-        # plugins = [
-        #   pkgs.hyprlandPlugins.hyprexpo
-        # ];
-
         bindm = [
           "$mainMod,mouse:272,movewindow"
           "$mainMod,mouse:273,resizewindow"

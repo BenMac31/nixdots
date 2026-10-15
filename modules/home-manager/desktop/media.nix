@@ -19,10 +19,6 @@
     ];
     services.mpd = {
       enable = true;
-      # extraConfig = ''
-      #   # must specify one or more outputs in order to play audio!
-      #   # (e.g. ALSA, PulseAudio, PipeWire), see next sections
-      # '';
     };
     programs.ncmpcpp = {
       enable = true;

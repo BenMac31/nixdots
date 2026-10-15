@@ -28,13 +28,12 @@
     enable = lib.mkIf config.desktop.enable true;
     platformTheme.name = lib.mkDefault "qt5ct";
     style = {
-      # package = pkgs.adwaita-qt6;
       name = lib.mkDefault "kvantum";
     };
   };
   services.flatpak = lib.mkIf config.desktop.enable {
-    # Kvantum is a Flatpak extension, not a regular app — it must match the KDE
-    # platform version used by Qt flatpaks (e.g. qBittorrent on org.kde.Platform//6.10).
+    # Kvantum is a Flatpak extension, so it must match the KDE platform version
+    # of the Qt flatpaks (qBittorrent is on org.kde.Platform//6.10).
     packages = lib.optionals (!config.desktop.verdigris.enable) [
       "org.kde.KStyle.Kvantum//6.10"
     ];

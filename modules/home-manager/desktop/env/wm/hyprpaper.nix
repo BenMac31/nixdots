@@ -5,7 +5,6 @@
   };
   services.hyprpaper = {
     settings = {
-      # ipc = "off";
       preload = [ "~/.cache/wall.png" ];
       wallpaper = [
         "eDP-1,~/.cache/wall.png"

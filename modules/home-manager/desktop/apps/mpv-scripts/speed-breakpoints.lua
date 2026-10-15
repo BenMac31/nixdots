@@ -34,9 +34,8 @@ local function segment_index_for_time(t)
   return idx
 end
 
--- Record whatever speed was actually in effect for the segment we're about
--- to leave. Always keyed off the tracked current_idx, never recomputed from
--- time-pos, so it's correct even mid-seek when time-pos is unreliable.
+-- Save the live speed into the segment being left. Keyed off current_idx, not
+-- time-pos, which is unreliable mid-seek.
 local function finalize_current_segment()
   local spd = mp.get_property_number("speed")
   if spd then
@@ -44,9 +43,7 @@ local function finalize_current_segment()
   end
 end
 
--- Respects the user's OSD preference: if they've set --osd-level=0 (or
--- `no-osd`), stay silent -- explicit mp.osd_message() calls otherwise
--- bypass osd-level entirely, which would defeat a "clean player" setup.
+-- mp.osd_message() ignores osd-level, so check it to stay quiet at 0.
 local function debug_osd(text)
   local level = mp.get_property_number("osd-level", 1)
   if level and level <= 0 then
@@ -58,11 +55,8 @@ end
 local function apply_segment_speed(idx, reason)
   current_idx = idx
   local target = breakpoints[idx].speed
-  -- Always force the write. Trusting a read-back comparison here let a
-  -- single desync between the "speed" property and real playback pacing
-  -- become permanent: once they disagreed, the guard kept concluding
-  -- "already correct" and skipped every future write for that value,
-  -- while the log/OSD below fired regardless and looked like success.
+  -- Always write. A read-back guard sticks once the "speed" property and real
+  -- playback pacing disagree, and then skips every later write.
   mp.set_property_number("speed", target)
   if reason then
     msg.info(string.format("apply idx=%d speed=%.4f segment@=%.3f reason=%s",
@@ -73,9 +67,8 @@ local function apply_segment_speed(idx, reason)
   end
 end
 
--- Merge breakpoints that land implausibly close together (e.g. accidental
--- double-presses, or stale data from a buggy prior run) into one, keeping
--- whichever speed came later in the sorted list.
+-- Merge breakpoints closer than MIN_GAP (double presses, stale saves),
+-- keeping the later speed.
 local function coalesce(list)
   table.sort(list, function(a, b) return a.time < b.time end)
   local result = {}
@@ -89,10 +82,7 @@ local function coalesce(list)
   return result
 end
 
--- Puts breakpoints on mpv's real seekbar as chapter ticks (same rendering
--- YouTube-style chapter markers use), merged with any chapters the file
--- actually shipped with. Purely additive to mpv's native OSD/OSC, so it's
--- already silent under --no-osc --osd-level=0 -- there's no bar to mark.
+-- Breakpoints show as chapter ticks on the seekbar, beside the file's own chapters.
 local function sync_chapters()
   local combined = {}
   for _, ch in ipairs(original_chapters) do
@@ -154,7 +144,7 @@ local function on_file_loaded()
   original_chapters = mp.get_property_native("chapter-list") or {}
 
   if not path or path:match("^%a[%w+.-]*://") then
-    -- Not a local file (stream/URL) -- nothing to persist against.
+    -- A stream or URL: nowhere to save breakpoints.
     save_path = nil
     breakpoints = { { time = 0, speed = mp.get_property_number("speed") or DEFAULT_SPEED } }
     current_idx = 1
@@ -239,16 +229,9 @@ local function on_playback_restart()
   apply_segment_speed(segment_index_for_time(pos), "seek")
 end
 
--- Natural forward playback crossing into a later (e.g. previously saved)
--- segment -- not a seek, just normal play-through reaching a breakpoint.
---
--- Driven by a fixed-cadence wall-clock timer rather than the "time-pos"
--- property observer: mpv only notifies on its own schedule, and at very
--- high speed a single gap between notifications can cover many video
--- seconds, so a short segment can pass entirely between two notifications
--- with no observed position ever landing inside it. Polling on a tight
--- real-time interval bounds how much video-time can go unseen regardless
--- of playback speed.
+-- Play-through into a later segment, as opposed to a seek. Polled on a
+-- wall-clock timer because at high speed a short segment can pass entirely
+-- between two time-pos notifications.
 local function check_crossing()
   if pending_seek then
     return
@@ -259,9 +242,7 @@ local function check_crossing()
   end
   local idx = segment_index_for_time(pos)
   if idx > current_idx + 1 then
-    -- Position is already past one or more breakpoints we never saw.
-    -- Rewind to the first skipped segment so it's actually experienced at
-    -- its recorded speed instead of silently blown through.
+    -- Skipped past breakpoints unseen: rewind so the first plays at its speed.
     local skipped_time = breakpoints[current_idx + 1].time
     msg.info(string.format(
       "skip detected: pos=%.3f jumped from idx=%d to idx=%d -- rewinding to %.3f",
@@ -273,9 +254,7 @@ local function check_crossing()
   end
 end
 
--- 20ms cadence: bounds unseen video-time to POLL_INTERVAL * speed, e.g. at
--- 100x that's at most 2s of video per tick -- comfortably under any
--- realistic breakpoint spacing while staying cheap (a short table scan).
+-- At most POLL_INTERVAL * speed of video goes unseen per tick: 2 s at 100x.
 local POLL_INTERVAL = 0.02
 
 mp.register_event("file-loaded", on_file_loaded)
