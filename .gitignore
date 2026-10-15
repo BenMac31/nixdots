@@ -1,25 +1,11 @@
-confs/lvim/lazy-lock.json
 confs/nvim/doc/
 confs/nvim/lazy-lock.json
 result
 result-*
 STYLE_GUIDE.md
 THEME_VIOLATIONS.md
-.graphide/extract-cache.db
-.graphide/extract-cache.db-shm
-.graphide/extract-cache.db-wal
-.graphide/compliance-cache.db
-.graphide/compliance-cache.db-shm
-.graphide/compliance-cache.db-wal
-.graphide/noderank.db
-.graphide/noderank.db-shm
-.graphide/noderank.db-wal
-.graphide/history-snapshots/
-.graphide/presentations/
-.graphide/filters.json
-.graphide/graph_rev
-.graphide/cloud-init-allowed
 .claude/settings.local.json
+.graphide/*
 
 # Company data and plaintext connector configuration never belong in this public repo.
 **/hackerboard/config.toml
@@ -28,6 +14,3 @@ THEME_VIOLATIONS.md
 **/hackerboard/*.db-wal
 secrets/plaintext/
 **/secrets.env
-
-# Graphide: everything under .graphide/ is local.
-.graphide/*

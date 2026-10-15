@@ -36,7 +36,7 @@
       font-family: "JetBrainsMono Nerd Font Mono", monospace;
     }
 
-    /* Blurred wallpaper — matches Hyprland blur_size=3 passes=1 */
+    /* Blurred wallpaper, matching Hyprland blur_size=3 passes=1 */
     body::before {
       content: '';
       position: fixed;
@@ -543,7 +543,7 @@
 })();
 
 // ╔══════════════════════════════════════════════════════════╗
-// ║  CONFIG — edit here or via the settings panel (,)       ║
+// ║  CONFIG: edit here or via the settings panel (,)        ║
 // ╚══════════════════════════════════════════════════════════╝
 const CFG = {
   links: [
@@ -781,7 +781,7 @@ async function checkServer(srv) {
   }
   if (srv.method === "ping") {
     const host = srv.host || "";
-    // Try bridge first — does real ICMP ping + TCP fallback
+    // Try the bridge first: it does a real ICMP ping with TCP fallback
     try {
       const r = await fetch(
         `${BRIDGE}/ping?host=${encodeURIComponent(host)}`,
@@ -793,7 +793,7 @@ async function checkServer(srv) {
         return { up: d.up, meta, latCls: d.up ? latClass(d.latency) : "" };
       }
     } catch {}
-    // Bridge not running — fall back to HTTP probe
+    // Bridge not running: fall back to an HTTP probe
     for (const url of [`https://${host}`, `http://${host}`]) {
       try {
         const ctrl = new AbortController();

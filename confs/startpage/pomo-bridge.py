@@ -36,7 +36,7 @@ threading.Thread(target=_stream, daemon=True).start()
 
 def ping_host(host):
     """ICMP ping with TCP-connect fallback. Returns {up, latency}."""
-    # Try ICMP first — works even if the host runs no TCP services
+    # Try ICMP first: it works even if the host runs no TCP services
     try:
         result = subprocess.run(
             ["ping", "-c", "1", "-W", "2", host],
@@ -49,7 +49,7 @@ def ping_host(host):
     except Exception:
         pass
 
-    # TCP fallback — connection refused still means the host is up
+    # TCP fallback: connection refused still means the host is up
     for port in [80, 443, 22, 25565]:
         t0 = time.monotonic()
         try:

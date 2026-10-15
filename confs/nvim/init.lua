@@ -17,7 +17,7 @@ vim.opt.timeoutlen = 300 -- How fast whickey should pop up
 vim.opt.list = true
 vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 vim.api.nvim_set_option("clipboard", "unnamed")
-vim.opt.inccommand = "split" -- Preview substitutions live, as you type! vim.opt.cursorline = true
+vim.opt.inccommand = "split" -- Preview substitutions live, as you type!
 vim.opt.scrolloff = 10
 
 -- Local colorscheme loads before plugins and also works without plugin downloads.
@@ -63,7 +63,6 @@ require("lazy").setup({
 		lazy = false,
 		ft = { "tex", "latex", "bib" },
 		config = function()
-			-- require "plugins.vimtex"
 			vim.cmd([[
       call vimtex#init()
       let g:vimtex_view_method = 'zathura'
@@ -158,21 +157,16 @@ require("lazy").setup({
 	{
 		"NickvanDyke/opencode.nvim",
 		dependencies = {
-			-- Recommended for `ask()` and `select()`.
-			-- Required for `snacks` provider.
 			---@module 'snacks' <- Loads `snacks.nvim` types for configuration intellisense.
 			{ "folke/snacks.nvim", opts = { input = {}, picker = {}, terminal = {} } },
 		},
 		config = function()
 			---@type opencode.Opts
-			vim.g.opencode_opts = {
-				-- Your configuration, if any — see `lua/opencode/config.lua`, or "goto definition".
-			}
+			vim.g.opencode_opts = {}
 
 			-- Required for `opts.auto_reload`.
 			vim.o.autoread = true
 
-			-- Recommended/example keymaps.
 			vim.keymap.set({ "n", "x" }, "<C-a>", function()
 				require("opencode").ask("@this: ", { submit = true })
 			end, { desc = "Ask opencode" })
@@ -191,7 +185,7 @@ require("lazy").setup({
 			vim.keymap.set("n", "<S-C-d>", function()
 				require("opencode").command("session.half.page.down")
 			end, { desc = "opencode half page down" })
-			-- You may want these if you stick with the opinionated "<C-a>" and "<C-x>" above — otherwise consider "<leader>o".
+			-- opencode takes <C-a> and <C-x>, so increment and decrement move to + and -.
 			vim.keymap.set("n", "+", "<C-a>", { desc = "Increment", noremap = true })
 			vim.keymap.set("n", "-", "<C-x>", { desc = "Decrement", noremap = true })
 		end,
@@ -602,11 +596,9 @@ require("lazy").setup({
 
 	{
 		"iurimateus/luasnip-latex-snippets.nvim",
-		-- vimtex isn't required if using treesitter
 		requires = { "L3MON4D3/LuaSnip", "lervag/vimtex" },
 		config = function()
 			require("luasnip-latex-snippets").setup()
-			-- or setup({ use_treesitter = true })
 		end,
 	},
 
@@ -616,20 +608,10 @@ require("lazy").setup({
 
 		dependencies = {
 			"nvim-lua/plenary.nvim",
-
-			-- optional dependencies:
-
-			-- a completion engine
-			--    hrsh7th/nvim-cmp or Saghen/blink.cmp are popular choices
-
-			-- 'nvim-telescope/telescope.nvim', -- for 2 Lean-specific pickers
-			-- 'andymass/vim-matchup',          -- for enhanced % motion behavior
-			-- 'andrewradev/switch.vim',        -- for switch support
-			-- 'tomtom/tcomment_vim',           -- for commenting
 		},
 
 		---@type lean.Config
-		opts = { -- see below for full configuration options
+		opts = {
 			mappings = true,
 		},
 	},
@@ -678,10 +660,6 @@ require("lazy").setup({
 			--  Check out: https://github.com/echasnovski/mini.nvim
 		end,
 	},
-	-- {
-	-- 	"3rd/image.nvim",
-	-- 	opts = {},
-	-- },
 	{
 		"Thiago4532/mdmath.nvim",
 		dependencies = {
@@ -692,30 +670,13 @@ require("lazy").setup({
 	{
 		"HakonHarnes/img-clip.nvim",
 		event = "VeryLazy",
-		opts = {
-			-- add options here
-			-- or leave it empty to use the default settings
-		},
+		opts = {},
 		keys = {
-			-- suggested keymap
 			{ "<leader>p", "<cmd>PasteImage<cr>", desc = "Paste image from system clipboard" },
 		},
 	},
-	-- {
-	-- 	"OXY2DEV/markview.nvim",
-	-- 	lazy = false,
-	--
-	-- 	-- Completion for `blink.cmp`
-	-- 	-- dependencies = { "saghen/blink.cmp" },
-	-- },
-	-- }, {
-	--     rocks = {
-	--         hererocks = true,  -- recommended if you do not have global installation of Lua 5.1.
-	--     },
 	{ -- Highlight, edit, and navigate code
-		-- `main` branch is the rewrite; required on Neovim 0.12+. The old
-		-- `master` branch is archived and crashes on Nvim 0.12 markdown
-		-- buffers (query directive uses the pre-0.11 match shape).
+		-- Neovim 0.12+ needs `main`; the archived `master` crashes on markdown buffers.
 		"nvim-treesitter/nvim-treesitter",
 		branch = "main",
 		lazy = false,
@@ -777,29 +738,11 @@ require("lazy").setup({
 	-- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
 	--    This is the easiest way to modularize your config.
 	--
-	-- {
-	--   'startup-nvim/startup.nvim',
-	--   dependencies = { 'nvim-telescope/telescope.nvim', 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope-file-browser.nvim' },
-	--   config = function()
-	--     require('startup').setup()
-	--   end,
-	-- },
-	-- {
-	--   'jmbuhr/otter.nvim',
-	--   dependencies = {
-	--     'nvim-treesitter/nvim-treesitter',
-	--   },
-	--   config = function()
-	--     require('otter').activate()
-	--   end,
-	-- },
 	"jamessan/vim-gnupg",
 	"ThePrimeagen/vim-be-good",
 	{
 		"MeanderingProgrammer/render-markdown.nvim",
-		dependencies = { "nvim-treesitter/nvim-treesitter", "echasnovski/mini.nvim" }, -- if you use the mini.nvim suite
-		-- dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.icons' }, -- if you use standalone mini plugins
-		-- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, -- if you prefer nvim-web-devicons
+		dependencies = { "nvim-treesitter/nvim-treesitter", "echasnovski/mini.nvim" },
 		---@module 'render-markdown'
 		---@type render.md.UserConfig
 		opts = {},
