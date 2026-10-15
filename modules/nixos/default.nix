@@ -1,8 +1,5 @@
 { config, lib, pkgs, inputs, ... }:
 
-let
-  upkgs = pkgs.unstable;
-in
 {
   options.custom.flakeAttr = lib.mkOption {
     type = lib.types.str;

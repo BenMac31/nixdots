@@ -80,7 +80,7 @@
       };
 
       homeConfigurations = {
-        nixWorks = home "nixWorks" ./hosts/nixBlade/home.nix;
+        nixWorks = home "nixWorks" ./hosts/laptop/home.nix;
         nixUltra = home "nixUltra" ./hosts/nixUltra/home.nix;
         phantomServ = home "phantomServ" ./hosts/phantomServ/home.nix;
         omegaServ = home "omegaServ" ./hosts/omegaServ/home.nix;

@@ -1,10 +1,5 @@
 { config, lib, pkgs, inputs, ... }:
 
-# The ZBook that replaces nixWorks. Same desktop and home as nixBlade; the
-# nixBlade files that are not tied to the Framework or its i7 are imported
-# from there rather than copied. Left out on purpose:
-#   - agent-throttle.nix: sized for four cores and 15 GB.
-#   - prochot-watch.nix: Intel MSRs and the Framework EC.
 {
   imports =
     [
@@ -14,10 +9,10 @@
       ./storage.nix
       ./secure-boot.nix
       ../../modules/nixos/codex-pool.nix
-      ../nixBlade/remote-builds.nix
-      ../nixBlade/remote-macs.nix
-      ../nixBlade/nix-store-hygiene.nix
-      ../nixBlade/coredump.nix
+      ../laptop/remote-builds.nix
+      ../laptop/remote-macs.nix
+      ../laptop/nix-store-hygiene.nix
+      ../laptop/coredump.nix
     ];
   networking.hostName = "nixUltra";
   custom.flakeAttr = "nixUltra";

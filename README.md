@@ -27,8 +27,8 @@ machine from `custom.flakeAttr`.
   set: stable nixpkgs, plus `pkgs.unfree`, `pkgs.unstable.unfree` and
   `pkgs.master.unfree`.
 - `hosts/<host>/`: `configuration.nix`, `home.nix` and hardware for one
-  machine. nixUltra reuses the nixBlade files that are not tied to the
-  Framework.
+  machine. `hosts/laptop/` holds the files both laptops import, home included;
+  nixBlade uses that home as it is.
 - `modules/nixos/`: system modules every host imports; `head/` is the desktop,
   `serv/` the services.
 - `modules/home-manager/`: `desktop/`, `term/` (shell, editors, AI tools) and

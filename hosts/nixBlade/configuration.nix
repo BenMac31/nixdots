@@ -1,8 +1,5 @@
 { config, lib, pkgs, inputs, ... }:
 
-let
-  upkgs = pkgs.unstable;
-in
 {
   imports =
     [
@@ -10,10 +7,10 @@ in
       ./hardware-configuration.nix
       ./agent-throttle.nix
       ../../modules/nixos/codex-pool.nix
-      ./remote-builds.nix
-      ./remote-macs.nix
-      ./nix-store-hygiene.nix
-      ./coredump.nix
+      ../laptop/remote-builds.nix
+      ../laptop/remote-macs.nix
+      ../laptop/nix-store-hygiene.nix
+      ../laptop/coredump.nix
       ./prochot-watch.nix
     ];
   networking.hostName = "nixWorks";
@@ -111,7 +108,7 @@ in
   boot.initrd.systemd.enable = true;
 
   home-manager = {
-    users."greencheetah" = import ./home.nix;
+    users."greencheetah" = import ../laptop/home.nix;
   };
   services.openssh = {
     enable = true;
