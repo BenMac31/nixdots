@@ -38,6 +38,9 @@
       libgbm libxkbcommon nspr nss pango
       libx11 libxcomposite libxdamage libxext
       libxfixes libxrandr libxcb
+      # The native app (grim) opens these for its window; libGL's EGL is its
+      # fallback where Vulkan has no driver.
+      fontconfig libGL libxcursor libxi vulkan-loader wayland
     ];
     kdeconnect.enable = true;
     noisetorch.enable = true;
