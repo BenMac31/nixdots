@@ -1,13 +1,12 @@
 { lib, pkgs, modulesPath, ... }:
 # Live USB that installs nixUltra: boot it, run `sudo install-nixUltra`.
 #
-# Nothing secret is in this image -- it is built on XiaServer and its store
-# is readable there. Every saved wifi profile, the GitHub key and a tarball of
-# dev credentials ride on a separate NIXSECRETS FAT partition that
-# scripts/nixultra-usb.sh appends to the stick after the ISO. usb-secrets
-# below loads the wifi and the key at boot, before NetworkManager starts;
-# the install unpacks the tarball into the new home, so gh, ssh, gpg/pass and
-# the Claude/Codex accounts work at first login, before `migrate-from` runs.
+# The image holds no secrets, since XiaServer builds it and its store is
+# readable there. Wifi profiles, the GitHub key and a tarball of dev credentials
+# sit on a NIXSECRETS partition that scripts/nixultra-usb.sh appends after the
+# ISO. usb-secrets loads the wifi and key before NetworkManager starts; the
+# install unpacks the tarball so gh, ssh, pass and the Claude/Codex accounts
+# work at first login.
 let
   install = pkgs.writeShellApplication {
     name = "install-nixUltra";

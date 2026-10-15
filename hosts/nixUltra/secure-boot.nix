@@ -1,6 +1,6 @@
 { config, lib, pkgs, inputs, ... }:
 # Secure Boot through lanzaboote, which signs the kernel and initrd with keys
-# made on this machine. Off until those keys exist -- lanzaboote cannot sign
+# made on this machine. Off until those keys exist: lanzaboote cannot sign
 # without them, and install-nixUltra runs before they can be made. To turn on:
 #
 #   sudo sbctl create-keys

@@ -1,15 +1,8 @@
 { pkgs, ... }:
-# Record why the CPU is pinned below its 400 MHz floor.
-#
-# Since 2026-09-21 the i7-1185G7 has repeatedly dropped to 200 MHz at ~50 C
-# on AC, on battery, and on every charger tried; the EC can hold it for 25+ min.
-# That is BD PROCHOT asserted by the EC, not thermal throttling. This logs the
-# limit-reason MSRs, battery/AC state and the PD contract on every transition
-# into and out of that state, so the next episode names its cause:
-#
-#   journalctl -u prochot-watch
-#
-# The watcher only reads; prochot-clear below is the manual override.
+# The i7-1185G7 drops to 200 MHz at ~50 C, on AC, on battery and on every
+# charger, for 25 minutes or more: BD PROCHOT from the EC, not thermal
+# throttling. This logs the limit-reason MSRs, power state and PD contract on
+# each transition in and out (journalctl -u prochot-watch) to find the cause.
 let
   watch = pkgs.writeShellApplication {
     name = "prochot-watch";
@@ -74,8 +67,7 @@ in
     };
   };
 
-  # Manual escape hatch, bound to CTRL+SUPER+Y. Lasts until reboot or until
-  # the EC asserts PROCHOT again.
+  # Manual override, bound to CTRL+SUPER+Y. Lasts until the EC asserts it again.
   systemd.services.prochot-clear = {
     description = "Clear BD PROCHOT on every core";
     serviceConfig = {

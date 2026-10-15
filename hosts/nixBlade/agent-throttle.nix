@@ -1,35 +1,16 @@
-# Keep the laptop usable while several coding agents build and test at once.
-#
-# Measured 2026-09-07 with seven Claude Code sessions up: 7 GB of the 16 GB
-# swapfile in use and a memory-stall PSI of 28%, i.e. every task on the box
-# blocked on memory for over a quarter of the time. Four cores and 15 GB do not
-# get faster by scheduling, but they can stop taking the desktop down with them.
-#
-# Three levers, all undone by dropping this file from the host's imports:
-#   1. an `agents.slice` user slice with a low CPU/IO weight and a memory
-#      ceiling, which the claude/codex wrappers start each session inside;
-#   2. nix builds capped at two jobs of four cores instead of eight of eight,
-#      and nix-daemon, where builds actually run (outside the user's cgroup,
-#      so the slice cannot reach them), given the same low weight;
-#   3. zram swap ahead of the swapfile, so the swapping that still happens is
-#      compressed in RAM instead of paged to disk. The swapfile stays: lid
-#      close hibernates, and hibernation needs a real swap device.
-#
-# The Go-side caps (the build-slot queue, GOFLAGS, GOMAXPROCS) live in the
-# monorepo's scripts/ and flake.nix, not here.
+# Keep the desktop usable while several coding agents build and test at once.
+# The Go-side caps (build-slot queue, GOFLAGS, GOMAXPROCS) live in the monorepo.
 { pkgs, ... }:
 {
-  # MemoryHigh throttles and reclaims; MemoryMax is the kill line. Both are
-  # for the slice as a whole, so seven sessions share one budget rather than
-  # each getting their own. Agents get squeezed first and the desktop last,
-  # and a runaway race-detector run dies before it takes the box with it.
+  # The claude and codex wrappers in term/ai/accounts.nix start each session
+  # here. Limits are for the slice as a whole, so all sessions share one budget:
+  # MemoryHigh throttles and reclaims, MemoryMax is the kill line.
   systemd.user.slices.agents = {
     description = "Coding agents and everything they spawn";
     sliceConfig = {
       CPUWeight = 30;
-      # A weight only yields to the desktop; agents contending with each other
-      # still filled all eight threads (load 60 on 2026-09-29). The quota keeps
-      # two threads free regardless.
+      # The weight only yields to the desktop; agents competing with each
+      # other still fill all eight threads. The quota keeps two free.
       CPUQuota = "600%";
       IOWeight = 30;
       MemoryHigh = "8G";
@@ -37,11 +18,10 @@
     };
   };
 
-  # The dev editor that agents launch moves its main process into its own
-  # app-code\x2doss\x2ddev-<pid>.scope under app.slice, out of agents.slice and
-  # out of any systemd-run cap it was started under; one ran at 115% CPU. This
-  # prefix drop-in applies to every such scope. It ships as a package because
-  # NixOS's unit generator mangles the backslashes in a systemd.user.units name.
+  # The dev editor agents launch moves itself into its own
+  # app-code\x2doss\x2ddev-<pid>.scope, out of agents.slice and any cap it was
+  # started under. This prefix drop-in caps every such scope. It is a package
+  # because the NixOS unit generator mangles backslashes in unit names.
   systemd.packages = [
     (pkgs.writeTextDir "lib/systemd/user/app-code\\x2doss\\x2ddev-.scope.d/cpu.conf" ''
       [Scope]
@@ -50,23 +30,18 @@
     '')
   ];
 
-  # The `claude` and `codex` wrappers in modules/home-manager/term/ai/
-  # accounts.nix put each session in this slice. That used to be a shell alias
-  # here, which any later `claude` alias silently replaced.
-
-  # Defaults are cores = 0 (every thread per build) and max-jobs = auto (one
-  # build per thread): up to 64 build threads on an 8-thread laptop before a
-  # single test runs.
+  # The defaults (cores = 0, max-jobs = auto) allow 64 build threads on this
+  # 8-thread laptop.
   nix.settings = {
     cores = 4;
     max-jobs = 2;
   };
+  # Builds run under nix-daemon, out of reach of agents.slice.
   systemd.services.nix-daemon.serviceConfig = {
     CPUWeight = 30;
     IOWeight = 30;
   };
 
-  # Half of RAM as compressed swap (the module default), at a higher priority
-  # than the swapfile so it fills first.
+  # Fills before the swapfile, which stays because hibernation needs it.
   zramSwap.enable = true;
 }

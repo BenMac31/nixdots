@@ -1,6 +1,5 @@
-# Host identities for the physical macOS test machines opened from Graphide's
-# Quickshell desktop picker. Pinning the key makes the non-interactive reachability
-# probe safe and keeps a first connection from disappearing behind a prompt.
+# macOS test machines opened from Graphide's desktop picker. The pin lets the
+# non-interactive reachability probe connect without a host-key prompt.
 { ... }:
 {
   programs.ssh.knownHosts.bans-mac-mini = {
@@ -13,9 +12,8 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFR6tDhrJsvG0FGsqbxmv94LkJIMWwvaDKX0sRTCnorK";
   };
 
-  # Stable operator-facing name for scripts and one-off ssh sessions. The
-  # compute dispatcher still probes the literal LAN address and Bonjour name
-  # so an unavailable Mac falls back to XiaServer instead of wedging work.
+  # A name for scripts and one-off sessions. The compute dispatcher probes the
+  # IP and Bonjour name instead, so an offline Mac falls back to XiaServer.
   programs.ssh.extraConfig = ''
     Host graphide-m6
       HostName 10.0.0.217

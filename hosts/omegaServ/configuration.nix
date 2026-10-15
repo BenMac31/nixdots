@@ -9,13 +9,10 @@ in
       ./hardware-configuration.nix
       ../../modules/nixos
     ];
-  # services.home-assistant.enable = true;
-  # services.mullvad-vpn.enable = true;
   serv = {
     enable = true;
     wireguard.enable = true;
     minecraft.enable = true;
-    # media.enable = true;
     continuwuity = {
       enable = true;
       serverName = "chat.benmac.xyz";
