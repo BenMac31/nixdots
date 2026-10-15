@@ -31,6 +31,7 @@ in
       hoverReveal = false;
       launcherSideCards = false;
       wallpaper = chart;
+      reminders = [ { text = "Show BF"; } ];
     };
     # Bridge must keep running after `connect.py proton` pairs it, or IMAP sync
     # dies the moment that CLI session exits.
