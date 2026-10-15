@@ -1,38 +1,15 @@
-# AI Agent Instructions
+# Working in this repo
 
-## Design Principles
-
-Future AI agents working on this NixOS/home-manager configuration should adhere to the following design principles:
-
-### Modular Structure
-- Use separate `.nix` files for different functionalities (e.g., `ssh.nix`, `firefox.nix`)
-- Group related configurations together in dedicated modules
-- Import modules in parent files (e.g., `term/default.nix` imports `./ssh.nix`)
-
-### Options and Conditionals
-- Define `options` for enable flags (e.g., `options.ssh.enable = lib.mkEnableOption "Enable SSH";`)
-- Use `lib.mkIf config.<option>.enable` to conditionally apply configurations
-- Set defaults with `lib.mkDefault true` in parent modules to enable by default
-
-### Consistency with Existing Patterns
-- Follow the pattern seen in `desktop/apps/` where individual apps have their own files with `lib.mkIf config.programs.<program>.enable`
-- Use `programs.<program>.enable = lib.mkDefault true` in aggregating modules
-- Maintain separation between program-specific configs and broader system settings
-
-### Code Organization
-- Keep configurations clean and readable
-- Use comments to explain non-obvious configurations
-- Avoid duplication by leveraging shared options and imports
-- Group code with the most similar code in a file instead of adding it at the bottom
-
-### Security and Best Practices
-- Never introduce code that exposes secrets or logs sensitive information
-- Follow NixOS and home-manager best practices
-- Ensure configurations are idempotent and reversible
-
-### Commit Practices
-- Make atomic commits with clear, concise messages
-- Test configurations with `nixtest` before committing
-- Keep the git history clean and meaningful
-
-This ensures the configuration remains maintainable, modular, and follows established patterns.
+- One option per feature: `options.<name>.enable = lib.mkEnableOption ...`, the
+  config under `lib.mkIf`, and `lib.mkDefault true` from the parent module that
+  turns a group on. Apps follow `desktop/apps/`, one file per program.
+- Put new code next to the code it most resembles, not at the bottom of a file.
+- Comments explain a why the code cannot show, in a line or two. No history.
+- No secrets in Nix: they end up in the world-readable store. Keys stay runtime
+  files (see `modules/home-manager/term/ai/pool.nix`).
+- Check that a change evaluates one output at a time, for example
+  `nix eval .#nixosConfigurations.nixUltra.config.system.build.toplevel.drvPath`.
+  Never evaluate all of `.#nixosConfigurations` or `.#homeConfigurations` at
+  once.
+- Do not run `nix fmt` here: it reformats the whole tree.
+- `nixtest` tries a system change without making it the boot default.
