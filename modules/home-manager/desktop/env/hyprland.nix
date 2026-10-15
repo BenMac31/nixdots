@@ -8,6 +8,34 @@ let
   hyprctl = "${pkgs.hyprland}/bin/hyprctl";
   jq = "${pkgs.jq}/bin/jq";
   graphideShell = lib.attrByPath [ "programs" "graphide-shell" "enable" ] false config;
+  # The newest master build on the real ~/.graphide, not an isolated gdev
+  # instance: `gdev swap` moves the daemon onto it (agents carry over) and the
+  # app attaches to that. A newer master is fetched for the next press, unless
+  # the isolated master instance is running, which a refresh would stop.
+  graphideMaster = pkgs.writeShellScript "graphide-master" ''
+    gdev=${config.home.profileDirectory}/bin/gdev
+    notify() { ${pkgs.libnotify}/bin/notify-send "Graphide" "$1"; }
+    build() { "$gdev" which master --json 2>/dev/null | ${jq} -r ".$1 // empty"; }
+
+    if [ -z "$(build editor)" ]; then
+      notify "Fetching the newest master build"
+      "$gdev" run master --no-open -q || { notify "gdev run master --no-open failed"; exit 1; }
+    fi
+    app=$(build editor)
+    grug=$(build grug)
+
+    pinned=$(${jq} -r '.binary // empty' "$HOME/.graphide/daemon-pin.json" 2>/dev/null)
+    if [ "$pinned" != "$grug" ]; then
+      "$gdev" swap master -q || notify "gdev swap master failed; the app opens on the daemon that runs"
+    fi
+
+    state=$("$gdev" status --json 2>/dev/null | ${jq} -r '.instances[] | select(.instance.id == "master") | .state')
+    if [ "$state" != running ]; then
+      ${pkgs.util-linux}/bin/setsid -f "$gdev" run master --no-open -q >/dev/null 2>&1
+    fi
+
+    exec env -u GRAPHIDE_HOME -u GRAPHIDE_GRUG_SOCKET -u GRAPHIDE_SANDBOX "$app" "$@"
+  '';
 in
 {
   # Only with Hyprland, so headless hosts do not build waybar-pomodoro and co.
@@ -274,7 +302,7 @@ in
 
         bind = [
           "$mainMod,Q,exec,kitty"
-          "$mainMod,SPACE,exec,${config.home.homeDirectory}/.cache/gred-rs/bin/gred"
+          "$mainMod,SPACE,exec,${graphideMaster}"
           "$mainMod,C,killactive,"
           "CTRLSHIFT$mainMod,C,exit,"
           "$mainMod,E,exec,xdg-open '/'"
