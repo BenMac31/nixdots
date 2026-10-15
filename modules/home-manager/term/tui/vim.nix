@@ -1,4 +1,4 @@
-{ lib, config, inputs, upgks, pkgs, flakeAttr, ... }:
+{ lib, config, inputs, pkgs, flakeAttr, ... }:
 {
   config = lib.mkIf config.programs.neovim.enable {
     programs.neovim = {
@@ -29,15 +29,8 @@
       pkgs.luajitPackages.magick
       pkgs.clang-tools
     ];
-    xdg.configFile = lib.mkIf (lib.elem flakeAttr [ "nixWorks" "nixUltra" ]) {
-      "lvim" = {
-        enable = true;
-        source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos/confs/lvim";
-      };
-      "nvim" = {
-        enable = true;
-        source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos/confs/nvim";
-      };
+    xdg.configFile.nvim = lib.mkIf (lib.elem flakeAttr [ "nixWorks" "nixUltra" ]) {
+      source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/nixos/confs/nvim";
     };
   };
 }

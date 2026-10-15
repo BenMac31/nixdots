@@ -72,7 +72,7 @@ in
           ];
         };
         
-        "editor.command" = ["foot" "lvim" "{file}"];
+        "editor.command" = ["foot" "nvim" "{file}"];
         
         "fonts" = {
           "default_family" = config.colorScheme.fonts.primary;

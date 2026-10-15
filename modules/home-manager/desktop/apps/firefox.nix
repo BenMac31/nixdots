@@ -299,7 +299,7 @@ in
             bind gR reader --tab
 
             " set editorcmd to foot, or use the defaults on other platforms
-            js tri.browserBg.runtime.getPlatformInfo().then(os=>{const editorcmd = os.os=="linux" ? "foot lvim" : "auto"; tri.config.set("editorcmd", editorcmd)})
+            js tri.browserBg.runtime.getPlatformInfo().then(os=>{const editorcmd = os.os=="linux" ? "foot nvim" : "auto"; tri.config.set("editorcmd", editorcmd)})
 
             " Sane hinting mode
             set hintfiltermode vimperator-reflow
