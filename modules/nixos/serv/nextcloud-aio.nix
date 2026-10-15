@@ -41,7 +41,7 @@ in
       defaultText = lib.literalExpression "config.time.timeZone";
       description = ''
         Timezone passed to the mastercontainer. Null omits TZ entirely, leaving
-        the timezone AIO has already persisted — which is what the default
+        the timezone AIO has already persisted. That is what the default
         resolves to on hosts running services.automatic-timezoned, since that
         forces time.timeZone to null.
       '';

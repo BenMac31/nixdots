@@ -52,10 +52,8 @@ in
   config = lib.mkIf cfg.enable {
     services.matrix-continuwuity = {
       enable = true;
-      # 0.5.10, nixpkgs' default, carries the embargoed SEC8 bug and is marked
-      # insecure; nixpkgs ships the fixed 26.9.x line as _latest so the default
-      # does not jump a major version under anyone. The first start on it
-      # migrates the RocksDB database in place.
+      # nixpkgs' default, 0.5.10, has the SEC8 bug and is marked insecure. The
+      # first start on _latest migrates the RocksDB database in place.
       package = pkgs.matrix-continuwuity_latest;
 
       settings.global = {
@@ -113,19 +111,15 @@ in
 
     networking.firewall.allowedTCPPorts = [ 443 ];
 
-    # database_path is readOnly upstream, pinned to the systemd StateDirectory,
-    # so relocating the database off the root filesystem needs a bind mount.
-    # DynamicUser makes /var/lib/continuwuity a symlink, hence the private path.
+    # DynamicUser makes /var/lib/continuwuity a symlink into /var/lib/private.
     systemd.tmpfiles.rules = lib.mkIf (cfg.dataDir != null) [
       "d ${cfg.dataDir} 0700 root root -"
       "d /var/lib/private 0700 root root -"
       "d /var/lib/private/continuwuity 0700 root root -"
     ];
 
-    # Deliberately systemd.mounts and not fileSystems: a fileSystems entry is
-    # boot-critical, so a failure here would fail local-fs.target and drop the
-    # whole machine to emergency mode with no sshd. RequiresMountsFor on the
-    # service below pulls this in and confines a failure to continuwuity.
+    # Not fileSystems: a failed entry there fails local-fs.target and drops the
+    # machine to emergency mode without sshd. This way only continuwuity fails.
     systemd.mounts = lib.mkIf (cfg.dataDir != null) [
       {
         what = cfg.dataDir;

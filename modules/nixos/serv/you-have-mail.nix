@@ -110,7 +110,7 @@ in
     accounts = lib.mkOption {
       default = [ ];
       description = ''
-        Accounts to watch. Listing an account here does not log it in — run
+        Accounts to watch. Listing an account here does not log it in; run
         `you-have-mail-setup` once afterwards to supply the password and TOTP.
       '';
       type = lib.types.listOf (lib.types.submodule {
@@ -142,8 +142,8 @@ in
             example = "https://ntfy.sh/some-unguessable-topic";
             description = ''
               Full topic URL to POST to. This ends up in the Nix store, which is
-              world-readable, and anyone who knows a topic can read and write it
-              — so treat the topic name as public and rely on authTokenFile for
+              world-readable, and anyone who knows a topic can read and write it,
+              so treat the topic name as public and rely on authTokenFile for
               access control on instances that support it.
             '';
           };

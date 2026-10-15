@@ -31,14 +31,9 @@ in
           pkgs.gutenprint
         ];
       };
-      # avahi = {
-      #   # Networking stuff
-      #   enable = true;
-      #   nssmdns4 = true;
-      # };
     };
 
-    i18n.supportedLocales = [ "all" ]; # Support all languages
+    i18n.supportedLocales = [ "all" ];
 
     security.rtkit.enable = true;
 
@@ -83,13 +78,12 @@ in
       flags = [
         "--update-input"
         "nixpkgs"
-        "-L" # print build logs
+        "-L"
       ];
       dates = "02:00";
       randomizedDelaySec = "45min";
     };
     home-manager = {
-      # also pass inputs to home-manager modules
       extraSpecialArgs = {
         inherit inputs pkgs;
         flakeAttr = config.custom.flakeAttr;

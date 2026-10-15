@@ -66,7 +66,7 @@ in
       example = "ntfy.benmac.xyz";
       description = ''
         Public FQDN for the server. Must already resolve to this machine's
-        public address, unproxied, before the first rebuild — Caddy requests a
+        public address, unproxied, before the first rebuild: Caddy requests a
         certificate on start-up and fails if the name does not reach it.
       '';
     };
@@ -105,7 +105,7 @@ in
         rather than the public name: this machine routes the VPS's public
         address down the WireGuard tunnel, and the VPS only DNATs traffic
         arriving on its ethernet interface, so the public URL is refused from
-        here. Access control is unaffected — ntfy still requires the token.
+        here. Access control is unaffected; ntfy still requires the token.
       '';
     };
   };
