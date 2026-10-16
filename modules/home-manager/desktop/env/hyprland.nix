@@ -9,32 +9,43 @@ let
   jq = "${pkgs.jq}/bin/jq";
   graphideShell = lib.attrByPath [ "programs" "graphide-shell" "enable" ] false config;
   # The newest master build on the real ~/.graphide, not an isolated gdev
-  # instance: `gdev swap` moves the daemon onto it (agents carry over) and the
-  # app attaches to that. A newer master is fetched for the next press, unless
-  # the isolated master instance is running, which a refresh would stop.
+  # instance. The window opens at once on the daemon that runs; `gdev swap`
+  # moves the daemon onto the newest master (agents carry over) once the last
+  # master window has closed. Swapping before the window held it for the old
+  # daemon's drain and then a cold daemon's worktree reads, several seconds on
+  # most presses since master publishes every few minutes. A daemon that is no
+  # master build at all (a release, after a reboot) is still swapped first. A
+  # newer master is fetched for the next press, unless the isolated master
+  # instance is running, which a refresh would stop.
   graphideMaster = pkgs.writeShellScript "graphide-master" ''
     gdev=${config.home.profileDirectory}/bin/gdev
     notify() { ${pkgs.libnotify}/bin/notify-send "Graphide" "$1"; }
     build() { "$gdev" which master --json 2>/dev/null | ${jq} -r ".$1 // empty"; }
+    pinned() { ${jq} -r '.binary // empty' "$HOME/.graphide/daemon-pin.json" 2>/dev/null; }
+    swap() {
+      [ "$(pinned)" = "$(build grug)" ] || "$gdev" swap master -q || notify "gdev swap master failed; $1"
+    }
 
     if [ -z "$(build editor)" ]; then
       notify "Fetching the newest master build"
       "$gdev" run master --no-open -q || { notify "gdev run master --no-open failed"; exit 1; }
     fi
     app=$(build editor)
-    grug=$(build grug)
 
-    pinned=$(${jq} -r '.binary // empty' "$HOME/.graphide/daemon-pin.json" 2>/dev/null)
-    if [ "$pinned" != "$grug" ]; then
-      "$gdev" swap master -q || notify "gdev swap master failed; the app opens on the daemon that runs"
-    fi
+    case "$(pinned)" in
+      */gdev/builds/master-*) ;;
+      *) swap "the app opens on the daemon that runs" ;;
+    esac
 
     state=$("$gdev" status --json 2>/dev/null | ${jq} -r '.instances[] | select(.instance.id == "master") | .state')
     if [ "$state" != running ]; then
       ${pkgs.util-linux}/bin/setsid -f "$gdev" run master --no-open -q >/dev/null 2>&1
     fi
 
-    exec env -u GRAPHIDE_HOME -u GRAPHIDE_GRUG_SOCKET -u GRAPHIDE_SANDBOX "$app" "$@"
+    env -u GRAPHIDE_HOME -u GRAPHIDE_GRUG_SOCKET -u GRAPHIDE_SANDBOX "$app" "$@"
+    if ! ${pkgs.procps}/bin/pgrep -f '/gdev/builds/master-[^/]+/tree/graphide( |$)' >/dev/null; then
+      swap "the daemon stays on the build it runs"
+    fi
   '';
 in
 {
