@@ -10,9 +10,9 @@
     ALLOW_USERS = [ "greencheetah" ];
     TIMELINE_CREATE = true;
     TIMELINE_CLEANUP = true;
-    TIMELINE_LIMIT_HOURLY = 48;
-    TIMELINE_LIMIT_DAILY = 14;
-    TIMELINE_LIMIT_WEEKLY = 8;
+    TIMELINE_LIMIT_HOURLY = 12;
+    TIMELINE_LIMIT_DAILY = 7;
+    TIMELINE_LIMIT_WEEKLY = 2;
     TIMELINE_LIMIT_MONTHLY = 0;
     TIMELINE_LIMIT_YEARLY = 0;
   };
@@ -23,6 +23,12 @@
   systemd.tmpfiles.rules = [
     "v /home/.snapshots 0750 root users -"
     "e /tmp/claude-1000 - - - 3d"
+  ];
+  # gred-rs's local cargo lanes and sccache; snapshots held 1.1 TB of rebuilt
+  # target dirs on 2026-10-16. Made at login if missing, as the user.
+  systemd.user.tmpfiles.users.greencheetah.rules = [
+    "v %C/gred-rs/target - - - -"
+    "v %C/gred-rs/sccache - - - -"
   ];
 
   # Every subvolume is the same filesystem, so scrubbing / covers all four.
