@@ -19,7 +19,11 @@
         enable = true;
         place = { name = "San Francisco"; latitude = 37.7749; longitude = -122.4194; };
       };
-      reminders = [ { text = "Show BF"; } ];
+      reminders = [
+        { text = "Show BF"; }
+        { text = "Onboard Sam"; }
+        { text = "Message the golden 5"; }
+      ];
     };
     # Bridge must keep running after `connect.py proton` pairs it, or IMAP sync
     # dies the moment that CLI session exits.
