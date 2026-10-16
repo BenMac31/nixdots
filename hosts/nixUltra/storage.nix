@@ -29,6 +29,9 @@
   systemd.user.tmpfiles.users.greencheetah.rules = [
     "v %C/gred-rs/target - - - -"
     "v %C/gred-rs/sccache - - - -"
+    # ubuntu-vm's 32 GB disk image rewrites constantly; no CoW, no snapshots.
+    "v %h/.local/share/vms - - - -"
+    "h %h/.local/share/vms - - - - +C"
   ];
 
   # Every subvolume is the same filesystem, so scrubbing / covers all four.

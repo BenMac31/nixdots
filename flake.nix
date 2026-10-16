@@ -48,6 +48,7 @@
             unstable.unfree = unfree inputs.nixpkgs-unstable;
             master.unfree = unfree inputs.nixpkgs-master;
             waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+            ubuntu-vm = prev.callPackage ./pkgs/ubuntu-vm.nix { };
           })
         ];
       };

@@ -9,6 +9,7 @@
     ./zsh.nix
     ./media.nix
     ./ssh.nix
+    ./ubuntu-vm.nix
   ];
   config = {
     tui.enable = lib.mkDefault true;
