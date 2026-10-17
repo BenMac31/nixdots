@@ -60,6 +60,8 @@ in
             "https://proton.me"
             "https://protonmail.com"
             "https://ycombinator.com"
+            "https://linkedin.com"
+            "https://x.com"
           ];
         };
         Preferences = {
