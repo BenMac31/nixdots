@@ -40,6 +40,17 @@ writeShellApplication {
           for key in id_ed25519.pub "$HOME/.ssh/id_rsa.pub"; do
             if [ -e "$key" ]; then sed 's/^/  - /' "$key"; fi
           done
+          # The account has no password; the console socket is as private as the key.
+          printf '%s\n' \
+            "write_files:" \
+            "  - path: /etc/systemd/system/serial-getty@ttyS0.service.d/autologin.conf" \
+            "    content: |" \
+            "      [Service]" \
+            "      ExecStart=" \
+            "      ExecStart=-/usr/sbin/agetty --autologin ubuntu --noreset --noclear --keep-baud 115200,57600,38400,9600 - \''${TERM}" \
+            "runcmd:" \
+            "  - [systemctl, daemon-reload]" \
+            "  - [systemctl, restart, serial-getty@ttyS0.service]"
         } > seed/user-data
         xorriso -as genisoimage -quiet -output seed.iso -volid cidata -joliet -rock \
           seed/user-data seed/meta-data
