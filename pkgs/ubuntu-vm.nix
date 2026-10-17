@@ -1,8 +1,35 @@
-{ writeShellApplication, qemu_kvm, xorriso, socat, curl, openssh, coreutils, gawk }:
+{ writeShellApplication, writeText, qemu_kvm, virt-viewer, xorriso, socat, curl, openssh, coreutils, gawk }:
 
+let
+  # Runs as root in the guest. The account has no password, so nothing may
+  # ask for one: GDM logs in, the screen never locks, polkit lets sudo through,
+  # and the welcome wizard counts as done.
+  desktop = writeText "ubuntu-vm-desktop" ''
+    #!/bin/sh
+    set -eu
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -q
+    apt-get install -y -q -o Dpkg::Options::=--force-confold ubuntu-desktop-minimal spice-vdagent
+    printf '[daemon]\nAutomaticLoginEnable=true\nAutomaticLogin=ubuntu\n' > /etc/gdm3/custom.conf
+    printf '%s\n' '[org.gnome.desktop.screensaver]' 'lock-enabled=false' \
+      '[org.gnome.desktop.session]' 'idle-delay=uint32 0' \
+      > /usr/share/glib-2.0/schemas/90_ubuntu-vm.gschema.override
+    glib-compile-schemas /usr/share/glib-2.0/schemas
+    printf '%s\n' 'polkit.addRule(function (action, subject) {' \
+      '  if (subject.isInGroup("sudo")) return polkit.Result.YES;' '});' \
+      > /etc/polkit-1/rules.d/49-ubuntu-vm.rules
+    . /etc/os-release
+    cfg=/home/ubuntu/.config
+    install -d -o ubuntu -g ubuntu "$cfg" "$cfg/gnome-initial-setup"
+    install -o ubuntu -g ubuntu -m 644 /dev/null "$cfg/gnome-initial-setup-done"
+    install -o ubuntu -g ubuntu -m 644 /dev/null "$cfg/gnome-initial-setup/upgrade-$VERSION_ID-done"
+    systemctl set-default graphical.target
+    systemctl restart display-manager
+  '';
+in
 writeShellApplication {
   name = "ubuntu-vm";
-  runtimeInputs = [ qemu_kvm xorriso socat curl openssh coreutils gawk ];
+  runtimeInputs = [ qemu_kvm virt-viewer xorriso socat curl openssh coreutils gawk ];
   text = ''
     release=26.04
     cpus=6
@@ -48,9 +75,15 @@ writeShellApplication {
             "      [Service]" \
             "      ExecStart=" \
             "      ExecStart=-/usr/sbin/agetty --autologin ubuntu --noreset --noclear --keep-baud 115200,57600,38400,9600 - \''${TERM}" \
+            "  - path: /usr/local/sbin/ubuntu-vm-desktop" \
+            "    permissions: '0755'" \
+            "    content: |"
+          sed 's/^/      /' ${desktop}
+          printf '%s\n' \
             "runcmd:" \
             "  - [systemctl, daemon-reload]" \
-            "  - [systemctl, restart, serial-getty@ttyS0.service]"
+            "  - [systemctl, restart, serial-getty@ttyS0.service]" \
+            "  - [/usr/local/sbin/ubuntu-vm-desktop]"
         } > seed/user-data
         xorriso -as genisoimage -quiet -output seed.iso -volid cidata -joliet -rock \
           seed/user-data seed/meta-data
@@ -68,7 +101,11 @@ writeShellApplication {
         -drive if=virtio,file=seed.iso,format=raw,readonly=on \
         -nic "user,model=virtio-net-pci,hostfwd=tcp:127.0.0.1:$port-:22" \
         -device virtio-rng-pci \
-        -display none \
+        -display none -vga none -device virtio-vga-gl \
+        -spice "unix=on,addr=$run/spice.sock,disable-ticketing=on,gl=on" \
+        -device virtio-serial-pci -chardev spicevmc,id=vdagent,name=vdagent \
+        -device virtserialport,chardev=vdagent,name=com.redhat.spice.0 \
+        -device qemu-xhci -device usb-tablet \
         -chardev "socket,id=console,path=$run/console.sock,server=on,wait=off,logfile=$dir/console.log" \
         -serial chardev:console \
         -qmp "unix:$run/qmp.sock,server=on,wait=off"
@@ -80,23 +117,34 @@ writeShellApplication {
       while kill -0 "$MAINPID" 2> /dev/null; do sleep 1; done
     }
 
-    case "''${1:-ssh}" in
-      start)
-        if systemctl --user -q is-active ubuntu-vm; then
-          echo "ubuntu-vm is already running"
-        else
-          prepare
-          self=$(realpath "''${BASH_SOURCE[0]}")
-          systemd-run --user -q --unit=ubuntu-vm --collect \
-            -p TimeoutStopSec=90 -p "ExecStop=$self powerdown" "$self" boot
+    start() {
+      if systemctl --user -q is-active ubuntu-vm; then
+        echo "ubuntu-vm is already running"
+      else
+        prepare
+        self=$(realpath "''${BASH_SOURCE[0]}")
+        systemd-run --user -q --unit=ubuntu-vm --collect \
+          -p TimeoutStopSec=90 -p "ExecStop=$self powerdown" "$self" boot
+      fi
+      echo "waiting for ssh on 127.0.0.1:$port"
+      for _ in $(seq 180); do
+        if ssh_vm -o BatchMode=yes -o ConnectTimeout=2 true 2> /dev/null; then
+          echo "waiting for cloud-init; a new VM spends ~15 min installing the desktop"
+          ssh_vm cloud-init status --wait > /dev/null \
+            || echo "cloud-init reported errors: ubuntu-vm ssh cloud-init status --long" >&2
+          return
         fi
-        echo "waiting for ssh on 127.0.0.1:$port"
-        for _ in $(seq 180); do
-          ssh_vm -o BatchMode=yes -o ConnectTimeout=2 true 2> /dev/null && exit 0
-          sleep 1
-        done
-        echo "ssh did not come up; see $dir/console.log" >&2
-        exit 1
+        sleep 1
+      done
+      echo "ssh did not come up; see $dir/console.log" >&2
+      exit 1
+    }
+
+    case "''${1:-ssh}" in
+      start) start ;;
+      view)
+        systemctl --user -q is-active ubuntu-vm || start
+        exec remote-viewer --title ubuntu-vm "spice+unix://$run/spice.sock"
         ;;
       stop) systemctl --user stop ubuntu-vm ;;
       status) systemctl --user status ubuntu-vm ;;
@@ -108,7 +156,7 @@ writeShellApplication {
       boot) boot ;;
       powerdown) powerdown ;;
       *)
-        echo "usage: ubuntu-vm [start|stop|status|ssh [cmd...]|console]" >&2
+        echo "usage: ubuntu-vm [start|view|stop|status|ssh [cmd...]|console]" >&2
         exit 2
         ;;
     esac
