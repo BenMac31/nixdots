@@ -13,6 +13,8 @@
       # No panel opens from pointer position, by choice. Keep it that way.
       hoverReveal = false;
       launcherSideCards = false;
+      # The to-do column in the shell's dark palette, not on paper.
+      todoColumn.theme = "dark";
       # The panel's mode, so the plates are drawn at its own resolution.
       layout = { width = 2880; height = 1800; scale = 1.6; };
       plates = {
