@@ -3,6 +3,7 @@
   imports = [
     ./firefox.nix
     ./foot.nix
+    ./grail.nix
     ./kitty.nix
     ./mpv.nix
     ./startpage.nix
