@@ -33,5 +33,26 @@
       };
       Install.WantedBy = [ "timers.target" ];
     };
+
+    # Sends the outbound emails grail scheduled (outside sending hours or
+    # over the day's cap) once they fall due, catching up after sleep
+    # (gred-rs/mail/README.md, `grail-mcp send-due`). Without it a
+    # scheduled email never goes.
+    systemd.user.services.grail-send-due = {
+      Unit.Description = "Send grail's due scheduled emails";
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${grail}/bin/grail-mcp send-due";
+        Environment = [ "PATH=/run/current-system/sw/bin:/etc/profiles/per-user/${config.home.username}/bin" ];
+      };
+    };
+    systemd.user.timers.grail-send-due = {
+      Unit.Description = "Check grail's scheduled emails every five minutes";
+      Timer = {
+        OnCalendar = "*:0/5";
+        Persistent = true;
+      };
+      Install.WantedBy = [ "timers.target" ];
+    };
   });
 }
