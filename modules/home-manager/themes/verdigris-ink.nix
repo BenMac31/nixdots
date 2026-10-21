@@ -118,21 +118,6 @@ in {
           "Menu/TextMargin" = { Left = 10; Right = 10; Top = 6; Bottom = 6; };
         };
       };
-      programs.librewolf.profiles.default.userChrome = lib.mkAfter (with c; ''
-        :root {
-          --lwt-accent-color: ${page} !important;
-          --lwt-text-color: ${text} !important;
-          --toolbar-bgcolor: ${raised} !important;
-          --toolbar-color: ${text} !important;
-          --toolbar-field-background-color: ${sunken} !important;
-          --toolbar-field-color: ${text} !important;
-          --sidebar-background-color: ${page} !important;
-          --sidebar-text-color: ${text} !important;
-          --tab-selected-bgcolor: ${secondary} !important;
-          --focus-outline-color: ${accent} !important;
-          --color-accent-primary: ${accent} !important;
-        }
-      '');
     })
   ];
 }
