@@ -280,6 +280,7 @@ in
     programs.graphide-browser = {
       enable = true;
       browser = "librewolf";
+      darkSites = false;
       tridactyl.extraConfig = /*vim*/ ''
         " Comment toggler for Reddit, Hacker News and Lobste.rs
         bind ;c hint -Jc [class*="expand"],[class*="togg"],[class="comment_folder"]
