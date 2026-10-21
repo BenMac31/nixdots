@@ -13,7 +13,7 @@
   ai.enable = true;
   yc.enable = true;
   graphide.enable = true;
-  # Separate toggle: the timer reinstalls gr/grat under you every 30 min.
+  # Separate toggle: the timer moves gr/grat to each new release every 30 min.
   graphide.autoUpdate.enable = true;
   desktop = {
     enable = true;

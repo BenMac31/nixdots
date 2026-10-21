@@ -25,10 +25,8 @@
     waybar-pomodoro = { url = "github:Andeskjerf/waybar-module-pomodoro"; flake = false; };
 
     # Private, so SSH rather than `github:`, which would need an API token.
-    # No nixpkgs follows: gr and grat stay on the nixpkgs Graphide tests them with.
-    graphide.url = "git+ssh://git@github.com/graphideHQ/monolith";
-    # The shared modules and tools, pinned apart so the release updater can
-    # move `graphide` without rolling them back.
+    # The shared modules and tools only: graphide-autoupdate keeps gr and grat
+    # in a profile of its own, so no Graphide release is pinned here.
     graphide-tools.url = "git+ssh://git@github.com/GraphideHQ/monolith";
   };
 
