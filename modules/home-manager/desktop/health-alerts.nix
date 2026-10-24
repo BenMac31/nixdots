@@ -201,7 +201,7 @@ let
             "║  WARNING: NixOS $ver is $status_label" \
             "║  Channel: $CHANNEL" \
             "║  Security support ends: $eol_date" \
-            "║  Upgrade: cd ~/nixos && nix flake lock --update-input nixpkgs && nixswitch" \
+            "║  Upgrade: cd ~/nixos && nix flake update nixpkgs && nixswitch" \
             "║  https://nixos.org/manual/nixos/stable/index.html#sec-upgrading" \
             "╚══════════════════════════════════════════════════════════════╝"
         } > "$WARN_FILE"

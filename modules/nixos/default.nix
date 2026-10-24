@@ -72,9 +72,14 @@
     system.autoUpgrade = {
       enable = lib.mkDefault true;
       flake = inputs.self.outPath;
-      flags = [
-        "--update-input"
+      # Lix dropped --update-input; overriding with the locked ref works on both.
+      flags = let
+        lock = builtins.fromJSON (builtins.readFile "${inputs.self}/flake.lock");
+        nixpkgs = lock.nodes.${lock.nodes.root.inputs.nixpkgs}.original;
+      in [
+        "--override-input"
         "nixpkgs"
+        "github:${nixpkgs.owner}/${nixpkgs.repo}/${nixpkgs.ref}"
         "-L"
       ];
       dates = "02:00";
