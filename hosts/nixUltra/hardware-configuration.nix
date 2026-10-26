@@ -14,7 +14,12 @@
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   # The webcam (AMD ISP4) has a driver only from 7.2; 6.18 LTS has none.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # 7.3.0 panicked on both of its boots here (MGLRU list corruption,
+  # 2026-10-25 and -26), so it is skipped until a point release.
+  boot.kernelPackages =
+    if pkgs.linuxPackages_latest.kernel.version == "7.3"
+    then pkgs.linuxPackages_7_2
+    else pkgs.linuxPackages_latest;
   boot.extraModulePackages = [ ];
   # Early KMS, so the LUKS prompt and plymouth come up at native resolution.
   hardware.amdgpu.initrd.enable = true;
