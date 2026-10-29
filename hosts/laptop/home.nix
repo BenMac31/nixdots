@@ -12,6 +12,7 @@
   programming.enable = true;
   ai.enable = true;
   yc.enable = true;
+  boxes-dev.enable = true;
   graphide.enable = true;
   # Separate toggle: the timer moves gr/grat to each new release every 30 min.
   graphide.autoUpdate.enable = true;

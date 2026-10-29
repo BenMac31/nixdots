@@ -4,6 +4,7 @@
     ./term/graphide.nix
     ./term/transcripts.nix
     ./term/yc.nix
+    ./term/boxes-dev.nix
     ./term/ai/accounts.nix
     ./term/ai/pool.nix
     ./desktop/apps/graphide-browser.nix
