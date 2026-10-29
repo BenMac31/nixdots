@@ -42,6 +42,12 @@
       # fallback where Vulkan has no driver.
       fontconfig libGL libxcursor libxi vulkan-loader wayland
     ];
+    # boxes.dev rewrites its launcher and boxesdesktop:// handler to exec the
+    # raw AppImage on every start; binfmt runs that through appimage-run.
+    appimage = {
+      enable = true;
+      binfmt = true;
+    };
     kdeconnect.enable = true;
     noisetorch.enable = true;
   };
