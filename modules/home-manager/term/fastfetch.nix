@@ -5,7 +5,7 @@ let
   flatLogo = pkgs.runCommand "graphide-flat-logo.png" {
     nativeBuildInputs = [ pkgs.librsvg ];
   } ''
-    rsvg-convert -w 512 -h 512 ${inputs.graphide-tools}/website/public/logo.svg > "$out"
+    rsvg-convert -w 512 -h 512 ${inputs.graphide-website}/public/logo.svg > "$out"
   '';
 in {
   programs.fastfetch = lib.mkIf config.programs.fastfetch.enable {

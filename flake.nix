@@ -25,9 +25,11 @@
     waybar-pomodoro = { url = "github:Andeskjerf/waybar-module-pomodoro"; flake = false; };
 
     # Private, so SSH rather than `github:`, which would need an API token.
-    # The shared modules and tools only: graphide-autoupdate keeps gr and grat
+    # The shared modules and tools only: graphide-autoupdate keeps gr and grug
     # in a profile of its own, so no Graphide release is pinned here.
-    graphide-tools.url = "git+ssh://git@github.com/GraphideHQ/monolith";
+    graphide-tools.url = "git+ssh://git@github.com/GraphideHQ/graphide-tools";
+    # The brand mark fastfetch draws, which left the monolith with the site.
+    graphide-website = { url = "git+ssh://git@github.com/GraphideHQ/graphide-website"; flake = false; };
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs:

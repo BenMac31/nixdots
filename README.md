@@ -38,14 +38,17 @@ machine from `custom.flakeAttr`.
 
 ## Graphide
 
-`graphide` pins the released `gr` and `grat`, and `graphide-autoupdate` moves it
-to each new release. `graphide-tools` pins the shared Home Manager modules and
-tools from the same repo. Bump it by explicit revision, since Lix cannot
-resolve the branch ref:
+`graphide-autoupdate` keeps the released `gr` and `grug` in a Nix profile of its
+own, so no Graphide release is pinned here. `graphide-tools` pins
+GraphideHQ/graphide-tools: the shared Home Manager modules, grail, gdev and the
+internal scripts, which left the monolith when it was split (2026-10-28). It
+locks the monolith it builds against itself. `graphide-website` supplies the
+brand mark fastfetch draws. Bump them with upstream Nix, since Lix cannot
+resolve graphide-tools' monolith input by its branch ref:
 
 ```sh
 nix run nixpkgs#nixVersions.latest -- --extra-experimental-features 'nix-command flakes' \
-  flake lock --override-input graphide-tools "git+ssh://git@github.com/GraphideHQ/monolith?rev=<sha>"
+  flake update graphide-tools graphide-website
 ```
 
 Codex goes through the shared account pool on XiaServer

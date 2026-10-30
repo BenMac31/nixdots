@@ -14,7 +14,7 @@
     home.packages = [ grail ];
 
     # The bug watch: a pass over new mail and chats every five minutes,
-    # filing what the reader takes for a Graphide bug (gred-rs/mail/README.md,
+    # filing what the reader takes for a Graphide bug (grail/README.md,
     # "Bug watch"). Its settings are `[bug_watch]` in the config, whose key
     # commands run `nix shell`, hence the system's PATH.
     systemd.user.services.grail-bug-watch = {
@@ -36,7 +36,7 @@
 
     # Sends the outbound emails grail scheduled (outside sending hours or
     # over the day's cap) once they fall due, catching up after sleep
-    # (gred-rs/mail/README.md, `grail-mcp send-due`). Without it a
+    # (grail/README.md, `grail-mcp send-due`). Without it a
     # scheduled email never goes.
     systemd.user.services.grail-send-due = {
       Unit.Description = "Send grail's due scheduled emails";
