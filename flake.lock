@@ -203,22 +203,61 @@
         "type": "github"
       }
     },
+    "graphide-fold": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793299063,
+        "narHash": "sha256-hhFFARQKC74hg/d28//+Sq8W46tcAHzLK93Nue20WHU=",
+        "ref": "main",
+        "rev": "4b69c38dc0bdbdae7cb4a4355b3b7611a4d72f55",
+        "revCount": 5291,
+        "type": "git",
+        "url": "ssh://git@github.com/GraphideHQ/graphide-fold"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/GraphideHQ/graphide-fold"
+      }
+    },
+    "graphide-ide": {
+      "inputs": {
+        "nixpkgs": [
+          "graphide-tools",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793537037,
+        "narHash": "sha256-6zdnc9ZsF7+89/lhXXx5Z/3R0x8BLtGMiKfisv2HNqg=",
+        "ref": "refs/heads/master",
+        "rev": "5533d4c586f6948174527742a7b90e433ac60b9a",
+        "revCount": 11479,
+        "type": "git",
+        "url": "ssh://git@github.com/GraphideHQ/graphide-ide"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/GraphideHQ/graphide-ide"
+      }
+    },
     "graphide-tools": {
       "inputs": {
         "agenix": "agenix",
         "disko": "disko",
         "flake-utils": "flake-utils",
+        "graphide-fold": "graphide-fold",
+        "graphide-ide": "graphide-ide",
         "monolith": "monolith",
         "monolith-fullgr": "monolith-fullgr",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-matrix": "nixpkgs-matrix"
       },
       "locked": {
-        "lastModified": 1793333275,
-        "narHash": "sha256-jtix7BKMZ4SyLMKIqvfp6kfGVjuEYFakPsrdggSW6jI=",
+        "lastModified": 1793659693,
+        "narHash": "sha256-pKXBlJuGDvC6rgafcC0OFgPpXfoqJLvQGNfW1E8juH8=",
         "ref": "refs/heads/master",
-        "rev": "823f1ae361a164af51b920047c59b59b88d13162",
-        "revCount": 3012,
+        "rev": "167c99d41ed5e40dc7bcea9dc92cba9bfa6586db",
+        "revCount": 3164,
         "type": "git",
         "url": "ssh://git@github.com/GraphideHQ/graphide-tools"
       },
@@ -312,11 +351,11 @@
         "sops-nix": "sops-nix"
       },
       "locked": {
-        "lastModified": 1793291167,
-        "narHash": "sha256-2e7lldzb/GcPOoiMl1NJU4kzW/YpB/6uIXzR9b2hYNI=",
+        "lastModified": 1793528294,
+        "narHash": "sha256-j8P8B14lsbqYVtF47/DwXZTCDIkbzd9NDO4jW2wB9YU=",
         "ref": "master",
-        "rev": "81698b0ed4d8cde69d47a6c21158f39e0f06577f",
-        "revCount": 37282,
+        "rev": "7d420e9b47815b35f853aae9c553978a8fb6d601",
+        "revCount": 37610,
         "type": "git",
         "url": "ssh://git@github.com/GraphideHQ/monolith"
       },
