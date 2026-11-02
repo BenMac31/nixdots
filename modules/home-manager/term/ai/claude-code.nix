@@ -21,7 +21,7 @@
       };
       autoCompactWindow = lib.mkOption {
         type = lib.types.nullOr lib.types.ints.positive;
-        default = 400000;
+        default = 300000;
         description = "Context size in tokens at which a session compacts. Every request re-sends the whole context, so this caps the cost of a long session. Activation writes it into ~/.claude/settings.json, which each Graphide account profile copies at launch; null leaves the file alone.";
       };
     };
