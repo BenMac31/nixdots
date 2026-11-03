@@ -227,11 +227,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793663283,
-        "narHash": "sha256-+P+eb3MNHlAYxBR2yrMpk78Ab8ecGyGKal+4xurFzLw=",
+        "lastModified": 1793664631,
+        "narHash": "sha256-+yun/a5U726jRRFkvv/j/bxEWPpuJ3b5ibx4bZFAeCQ=",
         "ref": "refs/heads/master",
-        "rev": "08ab022d0d07f7e8ade613a3a26bf224f0f541b3",
-        "revCount": 11485,
+        "rev": "c118cd00867aacbeae33a23612025618e098fdd1",
+        "revCount": 11486,
         "type": "git",
         "url": "ssh://git@github.com/GraphideHQ/graphide-ide"
       },
@@ -253,11 +253,11 @@
         "nixpkgs-matrix": "nixpkgs-matrix"
       },
       "locked": {
-        "lastModified": 1793663379,
-        "narHash": "sha256-76MZZtnk2apGpI/DlBtCIxxgTYVKBpV4Wk2Y0xEVc18=",
+        "lastModified": 1793664853,
+        "narHash": "sha256-Lk/3viVODz20P12bgu8a+Um4jiDS5PvnnwqUm3/m8DQ=",
         "ref": "refs/heads/master",
-        "rev": "f5a3f0c30f43fb51f0315f59240e3d58c83c1179",
-        "revCount": 3165,
+        "rev": "2f77854f2cdb3194306979f3ed2660102de8a8b5",
+        "revCount": 3166,
         "type": "git",
         "url": "ssh://git@github.com/GraphideHQ/graphide-tools"
       },

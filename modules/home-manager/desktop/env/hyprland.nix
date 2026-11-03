@@ -33,7 +33,7 @@ let
     app=$(build editor)
 
     case "$(pinned)" in
-      */gdev/builds/master-*) ;;
+      */gdev/builds/native-master-*) ;;
       *) swap "the app opens on the daemon that runs" ;;
     esac
 
@@ -43,7 +43,7 @@ let
     fi
 
     env -u GRAPHIDE_HOME -u GRAPHIDE_GRUG_SOCKET -u GRAPHIDE_SANDBOX "$app" "$@"
-    if ! ${pkgs.procps}/bin/pgrep -f '/gdev/builds/master-[^/]+/tree/graphide( |$)' >/dev/null; then
+    if ! ${pkgs.procps}/bin/pgrep -f '/gdev/builds/native-master-[^/]+/tree/graphide( |$)' >/dev/null; then
       swap "the daemon stays on the build it runs"
     fi
   '';
