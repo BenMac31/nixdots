@@ -16,7 +16,9 @@
       acmeEmail = "acme@benmac.xyz";
       dataDir = "/home/continuwuity";
     };
-    mautrixBridges.enable = true;
+    # Off until finished (bridge.permissions, registration, logins): both
+    # crash-looped and failed every switch, so the nightly upgrade never passed.
+    mautrixBridges.enable = false;
     nextcloudAio = {
       enable = true;
       domain = "cloud.benmac.xyz";
