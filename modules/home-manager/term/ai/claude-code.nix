@@ -24,6 +24,11 @@
         default = 300000;
         description = "Context size in tokens at which a session compacts. Every request re-sends the whole context, so this caps the cost of a long session. Activation writes it into ~/.claude/settings.json, which each Graphide account profile copies at launch; null leaves the file alone.";
       };
+      maxConcurrentSubagents = lib.mkOption {
+        type = lib.types.nullOr lib.types.ints.positive;
+        default = 40;
+        description = "Subagents one session may run at once. The account wrapper exports it as CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS unless the caller set it; null leaves Claude Code's default of 20.";
+      };
     };
   };
 

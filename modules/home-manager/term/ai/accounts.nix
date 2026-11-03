@@ -20,8 +20,11 @@ let
   };
   sessionSettings = lib.optionalString (claudeSettings != { })
     "--settings ${lib.escapeShellArg (builtins.toJSON claudeSettings)}";
+  subagentLimit = lib.optionalString (config.ai.claude.maxConcurrentSubagents != null)
+    "export CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS=\"\${CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS:-${toString config.ai.claude.maxConcurrentSubagents}}\"";
   selectedClaude = pkgs.writeShellScriptBin "claude" ''
     ${intoAgentsSlice}
+    ${subagentLimit}
     export GRAPHIDE_CLAUDE_BIN=${lib.escapeShellArg (lib.getExe config.ai.claude.package)}
     exec ${cfg.finalPackage}/bin/graphide-claude ${sessionSettings} "$@"
   '';
