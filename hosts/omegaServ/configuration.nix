@@ -56,8 +56,8 @@
   networking.hostName = "omegaServ";
   custom.flakeAttr = "omegaServ";
 
-  time.timeZone = lib.mkDefault "America/Chicago";
-  # A server does not move, so pin its zone rather than geolocate it.
+  # Cincinnati. Geolocation finds the Chicago VPS it egresses through instead.
+  time.timeZone = lib.mkDefault "America/New_York";
   services.automatic-timezoned.enable = false;
 
   users.users.carol = {
