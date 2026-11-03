@@ -22,7 +22,7 @@
     networking.networkmanager.enable = true;
 
     services = {
-      automatic-timezoned.enable = true;
+      automatic-timezoned.enable = lib.mkDefault true;
       printing = {
         drivers = [
           pkgs.gutenprint

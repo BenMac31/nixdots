@@ -57,6 +57,8 @@
   custom.flakeAttr = "omegaServ";
 
   time.timeZone = lib.mkDefault "America/New_York";
+  # It geolocates the egress IP, which is the Chicago VPS, not the house.
+  services.automatic-timezoned.enable = false;
 
   users.users.carol = {
     isNormalUser = true;
