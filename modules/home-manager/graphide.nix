@@ -3,6 +3,7 @@
   imports = [
     ./term/graphide.nix
     ./term/transcripts.nix
+    ./term/jobs-endpoint.nix
     ./term/yc.nix
     ./term/boxes-dev.nix
     ./term/ai/accounts.nix
