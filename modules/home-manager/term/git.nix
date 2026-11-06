@@ -10,4 +10,12 @@
       pushtillnow = ''!git push origin $(git rev-list -1 --before="@{now}" HEAD):master'';
     };
   };
+
+  # gh serves github.com https credentials to git and sits on PATH, so a store
+  # garbage collection cannot break a helper path pinned in ~/.gitconfig.
+  programs.gh = {
+    enable = true;
+    gitCredentialHelper.enable = true;
+    settings.aliases.co = "pr checkout";
+  };
 }
