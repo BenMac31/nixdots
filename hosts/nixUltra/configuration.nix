@@ -127,6 +127,30 @@
   # Also what resumes from the swapfile: systemd's initrd reads the
   # HibernateLocation EFI variable, so no resume_offset is needed.
   boot.initrd.systemd.enable = true;
+  # Thawing devices to write the image makes mt7925e reset the chip, and its
+  # reset worker oopses in napi_disable on an RX queue the MT7925 does not
+  # have (c4edf9e3e0e5). The image is never written and the next boot is
+  # cold: all five hibernations from 2026-10-25 to 11-05, each with the trace
+  # in /var/lib/systemd/pstore. Unloaded, there is nothing to reset. Drop
+  # once the kernel has "remove wm2_complete_mask from mt7925_irq_map".
+  systemd.services.hibernate-unload-wifi = {
+    description = "Unload mt7925e across hibernation";
+    wantedBy = [ "hibernate.target" "hybrid-sleep.target" "suspend-then-hibernate.target" ];
+    before = [ "systemd-hibernate.service" "systemd-hybrid-sleep.service" "systemd-suspend-then-hibernate.service" ];
+    unitConfig.StopWhenUnneeded = true;
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.kmod}/bin/modprobe -r mt7925e";
+      ExecStop = "${pkgs.kmod}/bin/modprobe mt7925e";
+    };
+  };
+  # At the default image_size (2/5 of RAM) preallocation leaves ~11 GB free,
+  # then amdgpu evicts VRAM into RAM while devices freeze; past ~5 GB of it
+  # the copy no longer fits ("Error -12 creating image", 10-25, 10-30, 11-03)
+  # and the laptop stays up at 5% until it dies. 0 shrinks the image as far
+  # as reclaim can first.
+  systemd.tmpfiles.rules = [ "w /sys/power/image_size - - - - 0" ];
 
   home-manager = {
     users."greencheetah" = import ./home.nix;
