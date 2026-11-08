@@ -44,6 +44,8 @@ in
   systemd.user.tmpfiles.users.greencheetah.rules = [
     "v %C/gred-rs/target - - - -"
     "v %C/gred-rs/sccache - - - -"
+    # Agent worktrees, 96% of what hourly snapshots caught on 2026-11-07.
+    "v %h/Projects/wt - - - -"
     # ubuntu-vm's 32 GB disk image rewrites constantly; no CoW, no snapshots.
     "v %h/.local/share/vms - - - -"
     "h %h/.local/share/vms - - - - +C"

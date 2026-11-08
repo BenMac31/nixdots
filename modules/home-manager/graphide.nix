@@ -7,6 +7,7 @@
     ./term/yc.nix
     ./term/boxes-dev.nix
     ./term/worktree-prune.nix
+    ./term/scratch-subvolumes.nix
     ./term/ai/accounts.nix
     ./term/ai/pool.nix
     ./desktop/apps/graphide-browser.nix
