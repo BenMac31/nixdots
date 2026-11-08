@@ -6,6 +6,7 @@
     ./term/jobs-endpoint.nix
     ./term/yc.nix
     ./term/boxes-dev.nix
+    ./term/worktree-prune.nix
     ./term/ai/accounts.nix
     ./term/ai/pool.nix
     ./desktop/apps/graphide-browser.nix
