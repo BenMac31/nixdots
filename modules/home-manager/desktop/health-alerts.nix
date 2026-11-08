@@ -129,6 +129,35 @@ let
       fi
     done
 
+    # df counts free space inside data chunks only. Metadata can grow only
+    # into unallocated space; when both run out every write blocks.
+    for fs in /sys/fs/btrfs/*-*; do
+      [ -d "$fs/allocation" ] || continue
+      label=$(cat "$fs/label")
+      label=''${label:-''${fs##*/}}
+      size=0
+      for dev in "$fs"/devices/*; do
+        size=$((size + $(cat "$dev/size") * 512))
+      done
+      allocated=0
+      for kind in data metadata system; do
+        allocated=$((allocated + $(cat "$fs/allocation/$kind/disk_total")))
+      done
+      unallocated=$(((size - allocated) >> 30))
+      meta="$fs/allocation/metadata"
+      total=$(cat "$meta/total_bytes")
+      copies=$(($(cat "$meta/disk_total") / total))
+      left=$(((total - $(cat "$meta/bytes_used") + (size - allocated) / copies) >> 30))
+      fix="sudo btrfs balance start -dusage=50 /"
+      if [ "$left" -lt ${toString cfg.disk.metadataCritGiB} ]; then
+        warnings="''${warnings}CRITICAL: btrfs $label metadata has ''${left} GiB left; writes hang at 0 ($fix)\n"
+      elif [ "$left" -lt ${toString cfg.disk.metadataWarnGiB} ]; then
+        warnings="''${warnings}WARNING: btrfs $label metadata has ''${left} GiB left ($fix)\n"
+      elif [ "$unallocated" -lt ${toString cfg.disk.unallocatedWarnGiB} ]; then
+        warnings="''${warnings}WARNING: btrfs $label has ''${unallocated} GiB unallocated, metadata cannot grow ($fix)\n"
+      fi
+    done
+
     STATE_DIR="''${XDG_RUNTIME_DIR:-/tmp}/health-alerts"
     mkdir -p "$STATE_DIR"
     STATE_FILE="$STATE_DIR/disk"
@@ -221,6 +250,21 @@ in
         type = lib.types.int;
         default = 95;
         description = "Disk usage percentage that triggers a critical terminal warning.";
+      };
+      metadataWarnGiB = lib.mkOption {
+        type = lib.types.int;
+        default = 16;
+        description = "Room left for btrfs metadata, allocated or not, that triggers a warning.";
+      };
+      metadataCritGiB = lib.mkOption {
+        type = lib.types.int;
+        default = 4;
+        description = "Room left for btrfs metadata that triggers a critical warning.";
+      };
+      unallocatedWarnGiB = lib.mkOption {
+        type = lib.types.int;
+        default = 8;
+        description = "Unallocated btrfs space that triggers a warning.";
       };
     };
 
