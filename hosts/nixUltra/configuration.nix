@@ -8,6 +8,7 @@
       ./migrate.nix
       ./storage.nix
       ./secure-boot.nix
+      ./agent-throttle.nix
       ../../modules/nixos/codex-pool.nix
       ../laptop/remote-builds.nix
       ../laptop/remote-macs.nix
