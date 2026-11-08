@@ -12,21 +12,24 @@ let
       exec systemd-run --user --scope --slice=agents.slice --quiet --collect -- "$0" "$@"
     fi
   '';
-  claudeSettings = lib.optionalAttrs (config.ai.claude.effort != null) {
-    effortLevel = config.ai.claude.effort;
-  } // lib.optionalAttrs config.ai.claude.bypassPermissions {
+  claudeSettings = lib.optionalAttrs config.ai.claude.bypassPermissions {
     permissions.defaultMode = "bypassPermissions";
     skipDangerousModePermissionPrompt = true;
   };
   sessionSettings = lib.optionalString (claudeSettings != { })
     "--settings ${lib.escapeShellArg (builtins.toJSON claudeSettings)}";
+
+  # Saved modelSettings.<model>.effortLevel can beat --settings effortLevel.
+  # A CLI effort sets the launch default while allowing a later caller flag.
+  sessionEffort = effort: lib.optionalString (effort != null)
+    "--effort ${lib.escapeShellArg effort}";
   subagentLimit = lib.optionalString (config.ai.claude.maxConcurrentSubagents != null)
     "export CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS=\"\${CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS:-${toString config.ai.claude.maxConcurrentSubagents}}\"";
   selectedClaude = pkgs.writeShellScriptBin "claude" ''
     ${intoAgentsSlice}
     ${subagentLimit}
     export GRAPHIDE_CLAUDE_BIN=${lib.escapeShellArg (lib.getExe config.ai.claude.package)}
-    exec ${cfg.finalPackage}/bin/graphide-claude ${sessionSettings} "$@"
+    exec ${cfg.finalPackage}/bin/graphide-claude ${sessionSettings} ${sessionEffort config.ai.claude.effort} "$@"
   '';
   selectedCodex = pkgs.writeShellScriptBin "codex" ''
     ${intoAgentsSlice}

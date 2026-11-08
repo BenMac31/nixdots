@@ -12,7 +12,7 @@
       effort = lib.mkOption {
         type = lib.types.nullOr (lib.types.enum [ "low" "medium" "high" "xhigh" ]);
         default = "high";
-        description = "Effort every new session starts at. The account wrapper passes it as --settings; a per-model default /effort saves to the profile settings.json still wins for that model, and account handoffs copy it to the new profile.";
+        description = "Effort every new session starts at. The account wrapper passes it as --effort, overriding saved per-model defaults. An explicit --effort from the caller or /effort during the session can change it; null leaves the default to Claude Code.";
       };
       bypassPermissions = lib.mkOption {
         type = lib.types.bool;
