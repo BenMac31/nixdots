@@ -12,6 +12,13 @@ let
       exec systemd-run --user --scope --slice=agents.slice --quiet --collect -- "$0" "$@"
     fi
   '';
+  # Agent temp files go on the capped /scratch image where a host has one
+  # (hosts/nixUltra/scratch.nix); /tmp is RAM there.
+  intoScratchTmp = ''
+    if [[ -d /scratch/tmp/$USER && -w /scratch/tmp/$USER ]]; then
+      export TMPDIR=/scratch/tmp/$USER
+    fi
+  '';
   claudeSettings = lib.optionalAttrs config.ai.claude.bypassPermissions {
     permissions.defaultMode = "bypassPermissions";
     skipDangerousModePermissionPrompt = true;
@@ -27,12 +34,14 @@ let
     "export CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS=\"\${CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS:-${toString config.ai.claude.maxConcurrentSubagents}}\"";
   selectedClaude = pkgs.writeShellScriptBin "claude" ''
     ${intoAgentsSlice}
+    ${intoScratchTmp}
     ${subagentLimit}
     export GRAPHIDE_CLAUDE_BIN=${lib.escapeShellArg (lib.getExe config.ai.claude.package)}
     exec ${cfg.finalPackage}/bin/graphide-claude ${sessionSettings} ${sessionEffort config.ai.claude.effort} "$@"
   '';
   selectedCodex = pkgs.writeShellScriptBin "codex" ''
     ${intoAgentsSlice}
+    ${intoScratchTmp}
     export GRAPHIDE_CODEX_BIN=${lib.escapeShellArg (lib.getExe pkgs.master.unfree.codex)}
     exec ${cfg.finalPackage}/bin/graphide-codex "$@"
   '';

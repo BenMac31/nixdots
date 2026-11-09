@@ -7,6 +7,9 @@
       ./hardware-configuration.nix
       ./migrate.nix
       ./storage.nix
+      ./scratch.nix
+      ../../modules/nixos/btrfs-rescue.nix
+      ../../modules/nixos/disk-guard.nix
       ./secure-boot.nix
       ./agent-throttle.nix
       ../../modules/nixos/codex-pool.nix
