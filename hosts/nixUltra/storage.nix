@@ -2,9 +2,6 @@
 # Snapshots, scrub and swap for the LUKS + btrfs disk install-nixUltra lays
 # out. NixOS generations already roll the system back; these cover the data.
 {
-  imports = [ ./rust-targets.nix ];
-  services.rustTargetSubvolumes.enable = lib.mkDefault true;
-
   # Hourly snapshots of /home; browse them under /home/.snapshots or roll
   # back with `snapper -c home undochange`. Nested subvolumes are not
   # snapshotted, so a churny directory can be kept out by making it one.
