@@ -30,10 +30,14 @@ let
         } 2>/dev/null >"$used" || true
       }
       busy() { grep -qxF -- "$1" "$used" || grep -qF -- "$1/" "$used"; }
+      # Go's module cache is read-only, so a plain rm -rf of a stage that holds
+      # one fails, and errexit then stopped every run from 2026-11-08 23:01
+      # to 11-09 04:45, leaving r3 and flaky-tests in the snapshots.
+      nuke() { chmod -R u+w -- "$1" 2>/dev/null || true; rm -rf -- "$1"; }
       changed() { local d=$1; shift; [ -n "$(find "$d" "$@" -print -quit 2>/dev/null)" ]; }
       scan
       for left in "$scratch"/.*.subvol; do
-        if [ -e "$left" ] && ! busy "$left"; then rm -rf "$left"; fi
+        if [ -e "$left" ] && ! busy "$left"; then nuke "$left"; fi
       done
       for d in "$scratch"/*/; do
         d=''${d%/}
@@ -47,7 +51,7 @@ let
         touch "$stamp"
         btrfs subvolume create "$stage" >/dev/null
         if ! cp -a --reflink=always "$d/." "$stage/"; then
-          rm -rf "$stage"
+          nuke "$stage"
           echo "skipped $d: copy failed" >&2
           continue
         fi
@@ -55,7 +59,7 @@ let
         touch --reference="$d" "$stage"
         scan
         if busy "$d" || changed "$d" -newer "$stamp"; then
-          rm -rf "$stage"
+          nuke "$stage"
           echo "deferred $d: written during the copy"
           continue
         fi
@@ -64,7 +68,7 @@ let
           mv -T "$stage" "$scratch/.''${d##*/}.leftover-$(date +%s)"
           echo "converted $d; a write during the swap is in the leftover dir" >&2
         else
-          rm -rf "$stage"
+          nuke "$stage"
           echo "converted $d"
         fi
       done
