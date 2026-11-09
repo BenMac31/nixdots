@@ -50,6 +50,9 @@
               # nixpkgs' cargo hook now forces system AWS-LC and zstd, which codex lacks.
               codex = master.codex.overrideAttrs { dontCargoUseSystemLibs = true; };
             };
+            quickshell = prev.quickshell.overrideAttrs (old: {
+              patches = (old.patches or [ ]) ++ prev.lib.optional (old.version == "0.3.0") ./pkgs/quickshell-fileview-watcher.patch;
+            });
             waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
             ubuntu-vm = prev.callPackage ./pkgs/ubuntu-vm.nix { };
           })
