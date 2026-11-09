@@ -9,6 +9,10 @@ let
   # origin branch, not locked, no process inside, idle a day (parked) or
   # three (active). `git worktree remove` keeps the branch and refuses
   # untracked files itself.
+  # The workspace root (~/Projects/graphide/*) is swept too: trees made there
+  # before the skill moved them out sat in the snapshotted /home subvolume,
+  # and on 2026-11-09 about 1,100 of them held 350 GiB the glob never reached.
+  # The main checkouts there have a .git directory, not a file, so they stay.
   prune = pkgs.writeShellApplication {
     name = "worktree-prune";
     runtimeInputs = [ pkgs.git pkgs.git-lfs pkgs.coreutils pkgs.gnugrep ];
@@ -17,7 +21,7 @@ let
       cwds=$(for p in /proc/[0-9]*; do readlink "$p/cwd" 2>/dev/null || true; done)
       inside() { grep -qxF -e "$1" <<<"$cwds" || grep -qF -e "$1/" <<<"$cwds"; }
       removed=0
-      for d in "$HOME"/Projects/*-wt/* "$HOME"/Projects/wt/*/*; do
+      for d in "$HOME"/Projects/*-wt/* "$HOME"/Projects/wt/*/* "$HOME"/Projects/graphide/*; do
         case $d in
           */*-parked-wt/* | */wt/*-parked/*) idle=$((24 * 3600)) ;;
           *) idle=$((72 * 3600)) ;;
