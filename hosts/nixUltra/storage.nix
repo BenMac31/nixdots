@@ -2,6 +2,9 @@
 # Snapshots, scrub and swap for the LUKS + btrfs disk install-nixUltra lays
 # out. NixOS generations already roll the system back; these cover the data.
 {
+  imports = [ ./rust-targets.nix ];
+  services.rustTargetSubvolumes.enable = lib.mkDefault true;
+
   # Hourly snapshots of /home; browse them under /home/.snapshots or roll
   # back with `snapper -c home undochange`. Nested subvolumes are not
   # snapshotted, so a churny directory can be kept out by making it one.
@@ -58,6 +61,13 @@
 
   # swapfile-release and btrfs-ram-rescue, for when btrfs has gone read-only.
   services.btrfsRescue.enable = lib.mkDefault true;
+  # The systemd initrd locks root, so its emergency shell needs a password.
+  # The hash stays out of this public repo; impure builds read it locally.
+  boot.initrd.systemd.emergencyAccess =
+    let hash = "/home/greencheetah/.config/nixos/emergency-access.hash"; in
+    if builtins ? currentSystem && builtins.pathExists hash
+    then lib.removeSuffix "\n" (builtins.readFile hash)
+    else false;
 
   # Every subvolume is the same filesystem, so scrubbing / covers all four.
   services.btrfs.autoScrub = {
