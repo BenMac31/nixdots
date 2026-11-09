@@ -46,7 +46,12 @@
           (final: prev: {
             unfree = unfree nixpkgs;
             unstable.unfree = unfree inputs.nixpkgs-unstable;
-            master.unfree = unfree inputs.nixpkgs-master;
+            master.unfree = let master = unfree inputs.nixpkgs-master; in master // {
+              # nixpkgs' cargo hook now demands a system AWS-LC that codex does not depend on.
+              codex = master.codex.overrideAttrs (old: {
+                preBuild = (old.preBuild or "") + "unset AWS_LC_SYS_USE_SYSTEM\n";
+              });
+            };
             waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
             ubuntu-vm = prev.callPackage ./pkgs/ubuntu-vm.nix { };
           })
