@@ -47,10 +47,8 @@
             unfree = unfree nixpkgs;
             unstable.unfree = unfree inputs.nixpkgs-unstable;
             master.unfree = let master = unfree inputs.nixpkgs-master; in master // {
-              # nixpkgs' cargo hook now demands a system AWS-LC that codex does not depend on.
-              codex = master.codex.overrideAttrs (old: {
-                preBuild = (old.preBuild or "") + "unset AWS_LC_SYS_USE_SYSTEM\n";
-              });
+              # nixpkgs' cargo hook now forces system AWS-LC and zstd, which codex lacks.
+              codex = master.codex.overrideAttrs { dontCargoUseSystemLibs = true; };
             };
             waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
             ubuntu-vm = prev.callPackage ./pkgs/ubuntu-vm.nix { };
@@ -89,6 +87,12 @@
         nixUltra = home "nixUltra" ./hosts/nixUltra/home.nix;
         phantomServ = home "phantomServ" ./hosts/phantomServ/home.nix;
         omegaServ = home "omegaServ" ./hosts/omegaServ/home.nix;
+      };
+
+      # nix build .#checks.x86_64-linux.disk-guard
+      checks.${system}.disk-guard = import ./tests/disk-guard.nix {
+        pkgs = nixpkgs.legacyPackages.${system};
+        diskGuardModule = ./modules/nixos/disk-guard.nix;
       };
     };
 }
