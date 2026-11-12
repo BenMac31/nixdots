@@ -4,8 +4,8 @@
 # after closing everything there. Nothing is deleted on either side.
 #
 # Profiles and generation links point into the old machine's store, so they
-# stay behind; the closing home-manager restart relinks the managed dotfiles
-# rsync just overwrote with the old ones.
+# stay behind; the closing activation of the standalone home-manager profile
+# relinks the managed dotfiles rsync just overwrote with the old ones.
 let
   migrate = pkgs.writeShellApplication {
     name = "migrate-from";
@@ -20,7 +20,7 @@ let
         --exclude=/.nix-profile \
         --exclude=/.nix-defexpr/ \
         "greencheetah@$src:/home/greencheetah/" /home/greencheetah/
-      sudo systemctl restart home-manager-greencheetah.service
+      "$HOME/.local/state/nix/profiles/home-manager/activate"
     '';
   };
 in

@@ -1,6 +1,9 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 let
-  home = config.home-manager.users.greencheetah;
+  # nixUltra's home is the standalone profile (agent-setup U31); a host that
+  # still embeds its home in NixOS keeps reading that copy.
+  home = config.home-manager.users.greencheetah
+    or inputs.self.homeConfigurations.${config.custom.flakeAttr}.config;
   pool = home.services.ai-pool;
 in
 {

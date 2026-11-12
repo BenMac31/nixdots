@@ -156,9 +156,11 @@
   # as reclaim can first.
   systemd.tmpfiles.rules = [ "w /sys/power/image_size - - - - 0" ];
 
-  home-manager = {
-    users."greencheetah" = import ./home.nix;
-  };
+  # greencheetah's home is the standalone profile only (`homeswitch`,
+  # homeConfigurations.nixUltra). An embedded copy here was re-activated by
+  # home-manager-greencheetah.service at every boot and by each system
+  # switch, rolling the home back to whatever the last system build carried
+  # (2026-11-11: the board and page units vanished at a reboot; agent-setup U31).
   services.openssh = {
     enable = true;
     ports = [ 22 ];
