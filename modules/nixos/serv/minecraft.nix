@@ -8,7 +8,6 @@ let
     -XX:+ParallelRefProcEnabled
     -XX:MaxGCPauseMillis=200
     -XX:+UnlockExperimentalVMOptions
-    -XX:+DisableExplicitGC
     -XX:+AlwaysPreTouch
     -XX:G1NewSizePercent=30
     -XX:G1MaxNewSizePercent=40
