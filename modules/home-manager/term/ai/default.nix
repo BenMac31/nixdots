@@ -4,6 +4,7 @@
     ./aichat.nix
     ./aiclip.nix
     ./claude-code.nix
+    ./claude-fast.nix
     ./localrun.nix
   ];
   options = {

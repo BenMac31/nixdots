@@ -253,11 +253,11 @@
         "nixpkgs-matrix": "nixpkgs-matrix"
       },
       "locked": {
-        "lastModified": 1794431182,
-        "narHash": "sha256-jMO6E8uF0LyqEAfVbXhro3XCfwJNoSkDRXVc76GWEtY=",
+        "lastModified": 1794538384,
+        "narHash": "sha256-dfvsv7N7vANz0bSTY00aqz3B2EBfGrcFNuNtgxJ1oYI=",
         "ref": "refs/heads/master",
-        "rev": "2c71bf06c32b27a82ea8eeba074397435050ecaf",
-        "revCount": 3654,
+        "rev": "905945bb91e5a3cd17ac7f6ebd82e307c9fc887d",
+        "revCount": 3681,
         "type": "git",
         "url": "ssh://git@github.com/GraphideHQ/graphide-tools"
       },
