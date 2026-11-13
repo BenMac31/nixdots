@@ -9,7 +9,10 @@
   serv = {
     enable = true;
     wireguard.enable = true;
-    minecraft.enable = true;
+    minecraft = {
+      enable = true;
+      operators = [ "carol" ];
+    };
     continuwuity = {
       enable = true;
       serverName = "chat.benmac.xyz";
@@ -47,7 +50,7 @@
     ports = [ 23 ];
     settings = {
       PasswordAuthentication = false;
-      AllowUsers = [ "carol" ];
+      AllowUsers = [ "carol" "sistermcserver" ];
       UseDns = true;
       X11Forwarding = false;
     };

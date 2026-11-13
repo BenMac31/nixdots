@@ -33,6 +33,11 @@ in
       default = "8G";
       description = "Fixed JVM heap (-Xms and -Xmx). The host has 16 GB shared with Nextcloud, so heap plus ~2 GB JVM overhead must leave room for it.";
     };
+    operators = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "Users who may start, stop and restart minecraft-server without sudo, and whose ssh keys log in as sistermcserver. sshd's AllowUsers must list sistermcserver too.";
+    };
   };
   config = lib.mkIf cfg.enable
     {
@@ -41,8 +46,19 @@ in
         shell = pkgs.bash;
         group = "sistermcserver";
         description = "Minecraft server user";
+        openssh.authorizedKeys.keys = lib.concatMap (u: config.users.users.${u}.openssh.authorizedKeys.keys) cfg.operators;
       };
       users.groups.sistermcserver = { };
+
+      security.polkit.extraConfig = lib.mkIf (cfg.operators != [ ]) ''
+        polkit.addRule(function (action, subject) {
+          if (action.id == "org.freedesktop.systemd1.manage-units" &&
+              action.lookup("unit") == "minecraft-server.service" &&
+              ${builtins.toJSON cfg.operators}.indexOf(subject.user) >= 0) {
+            return polkit.Result.YES;
+          }
+        });
+      '';
 
       systemd.services.minecraft-server = {
         description = "Minecraft server in screen session";
@@ -68,6 +84,7 @@ in
           MemorySwapMax = 0;
           CPUWeight = 500;
           IOWeight = 500;
+          UMask = "0002";
         };
       };
     };
