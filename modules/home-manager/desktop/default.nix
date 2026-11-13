@@ -25,6 +25,16 @@
     services.flatpak.packages = [
       "com.github.tchx84.Flatseal"
     ];
+    home.file = lib.genAttrs [
+      ".var/app/com.brave.Browser/config/brave-flags.conf"
+      ".var/app/com.google.Chrome/config/chrome-flags.conf"
+    ] (_: {
+      force = true;
+      text = ''
+        --enable-unsafe-webgpu
+        --enable-features=Vulkan
+      '';
+    });
     home.packages = with pkgs; [
       brightnessctl
       wl-clipboard
