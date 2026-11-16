@@ -6,6 +6,7 @@
     ./claude-code.nix
     ./claude-fast.nix
     ./localrun.nix
+    ./reason.nix
   ];
   options = {
     ai = {
@@ -17,6 +18,7 @@
       aichat.enable = lib.mkDefault true;
       aiclip.enable = lib.mkDefault true;
       claude.enable = lib.mkDefault true;
+      reason.enable = lib.mkDefault true;
     };
     home.packages = [ pkgs.unstable.unfree.cursor-cli ];
   };
