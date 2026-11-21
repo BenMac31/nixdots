@@ -9,10 +9,8 @@
   serv = {
     enable = true;
     wireguard.enable = true;
-    minecraft = {
-      enable = true;
-      operators = [ "carol" ];
-    };
+    # Moved to mcServ on GCP (docs/mcserv.md); the old copy stays in /var/lib/mc.
+    minecraft.enable = false;
     continuwuity = {
       enable = true;
       serverName = "chat.benmac.xyz";
@@ -50,7 +48,7 @@
     ports = [ 23 ];
     settings = {
       PasswordAuthentication = false;
-      AllowUsers = [ "carol" "sistermcserver" ];
+      AllowUsers = [ "carol" ];
       UseDns = true;
       X11Forwarding = false;
     };
@@ -79,8 +77,5 @@
   nix.settings.trusted-users = [ "root" "carol" ];
   virtualisation.docker.enable = true;
   virtualisation.docker.daemon.settings."data-root" = "/home/docker";
-  # Minecraft (25565) and Simple Voice Chat (24454) are opened here rather than
-  # in the minecraft module, so every port this host exposes is listed together.
-  networking.firewall.allowedTCPPorts = [ 23 80 8080 25565 8443 3478 ];
-  networking.firewall.allowedUDPPorts = [ 24454 ];
+  networking.firewall.allowedTCPPorts = [ 23 80 8080 8443 3478 ];
 }

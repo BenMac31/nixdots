@@ -6,7 +6,8 @@ NixOS and Home Manager configurations for my machines.
 | --- | --- | --- |
 | `nixUltra` | `hosts/nixUltra` | HP ZBook, the daily laptop |
 | `nixWorks` | `hosts/nixBlade` | Framework laptop |
-| `omegaServ` | `hosts/omegaServ` | Home server: Matrix, Minecraft, WireGuard |
+| `omegaServ` | `hosts/omegaServ` | Home server: Matrix, Nextcloud, WireGuard |
+| `mcServ` | `hosts/mcServ` | Minecraft on a GCP VM ([docs/mcserv.md](docs/mcserv.md)) |
 | `phantomServ` | `hosts/phantomServ` | Home Assistant and media |
 | `nixUltraInstaller` | `hosts/nixUltra/installer.nix` | Install ISO for nixUltra |
 

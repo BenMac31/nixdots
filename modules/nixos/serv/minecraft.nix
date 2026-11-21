@@ -30,7 +30,7 @@ in
     heap = lib.mkOption {
       type = lib.types.str;
       default = "8G";
-      description = "Fixed JVM heap (-Xms and -Xmx). The host has 16 GB shared with Nextcloud, so heap plus ~2 GB JVM overhead must leave room for it.";
+      description = "Fixed JVM heap (-Xms and -Xmx). Heap plus ~2 GB JVM overhead must fit in the host's free RAM.";
     };
     operators = lib.mkOption {
       type = lib.types.listOf lib.types.str;
@@ -48,6 +48,11 @@ in
         openssh.authorizedKeys.keys = lib.concatMap (u: config.users.users.${u}.openssh.authorizedKeys.keys) cfg.operators;
       };
       users.groups.sistermcserver = { };
+
+      systemd.tmpfiles.rules = [
+        "d /var/lib/mc 0755 sistermcserver root -"
+        "d /var/lib/mc/server 0775 sistermcserver users -"
+      ] ++ map (u: "A+ /var/lib/mc/server - - - - u:${u}:rwX,d:u:${u}:rwX") cfg.operators;
 
       security.polkit.extraConfig = lib.mkIf (cfg.operators != [ ]) ''
         polkit.addRule(function (action, subject) {

@@ -79,6 +79,8 @@
         nixUltra = host ./hosts/nixUltra/configuration.nix;
         phantomServ = host ./hosts/phantomServ/configuration.nix;
         omegaServ = host ./hosts/omegaServ/configuration.nix;
+        # nix build .#nixosConfigurations.mcServ.config.system.build.googleComputeImage
+        mcServ = host ./hosts/mcServ/configuration.nix;
         # nix build .#nixosConfigurations.nixUltraInstaller.config.system.build.isoImage
         nixUltraInstaller = nixpkgs.lib.nixosSystem {
           modules = [ ./hosts/nixUltra/installer.nix ];
