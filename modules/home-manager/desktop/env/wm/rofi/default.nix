@@ -12,6 +12,19 @@
   ];
   programs = {
     rbw = {
+      # rbw 1.15.0 plus doy/rbw PR #379 (organization and collection
+      # support: `rbw add --org X --collection Y`), pinned to its reviewed
+      # head commit. Same Cargo.lock as 1.15.0, so nixpkgs' vendored
+      # crates are reused. Drop this override once a release includes it.
+      package = pkgs.rbw.overrideAttrs (old: {
+        version = "1.15.0-pr379";
+        src = pkgs.fetchFromGitHub {
+          owner = "leoc";
+          repo = "rbw";
+          rev = "901d2248810e2f23037ac3e3650ba55f9de14adb";
+          hash = "sha256-GP/ZOFAfu+U6AwEjNmdXIBemo3zeLdXU6a82JsfCjHk=";
+        };
+      });
       settings = {
         pinentry = pkgs.pinentry-rofi;
         email = "benjaminmcintyre06@protonmail.com";
