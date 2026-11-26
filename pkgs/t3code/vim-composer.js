@@ -32,15 +32,19 @@
   const lsGet = (k) => { try { return window.localStorage.getItem(k); } catch { return null; } };
   const lsSet = (k, v) => { try { window.localStorage.setItem(k, v); } catch { /* ignore */ } };
 
-  /* An incomplete key sequence (<leader>a, <C-w>, g, ]) is dropped after this
-     long. Graphide's timeoutlen is 300 ms, but it has a which-key bar to
-     read; this gives the hint panel below time to be read too. */
-  const SEQ_TIMEOUT_MS = 1000;
+  /* Graphide's `timeoutlen`, whose default is 300 ms (gred's config.rs). It
+     is both how long a pending prefix waits before the which-key bar comes
+     up, and the one wait modal::Resolver makes: "A sequence that is bound
+     and also starts a longer one waits for the timeout, Vim's timeoutlen,
+     then runs. One that only leads on waits as long as it takes where
+     commands are typed, while the which-key bar shows what can follow."
+
+     So <leader> and <C-w> wait for their next key as long as it takes, and
+     only g, which is vim's own command as well as the app's prefix, is on a
+     clock. */
+  const TIMEOUTLEN_MS = 300;
   /* How long a "no T3 equivalent" or "not mapped" message stays up. */
   const FLASH_MS = 1600;
-  /* How long a pending prefix waits before the which-key panel paints.
-     Graphide's `timeoutlen` default, which is what the which-key bar waits. */
-  const HINT_DELAY_MS = 300;
 
   const NORMAL = "NORMAL", INSERT = "INSERT", VISUAL = "VISUAL", VLINE = "V-LINE";
 
@@ -1155,7 +1159,7 @@
     timer: 0,
     flash: "",       // a short message for the hint panel
     flashTimer: 0,
-    show: false,     // the hint panel has waited HINT_DELAY_MS and may paint
+    show: false,     // the hint panel has waited TIMEOUTLEN_MS and may paint
     showTimer: 0,
     sent: 0,         // chords dispatched, for the tests
   };
@@ -1176,7 +1180,7 @@
     SEQ.showTimer = setTimeout(() => {
       SEQ.showTimer = 0;
       if (SEQ.node) { SEQ.show = true; refresh(); }
-    }, HINT_DELAY_MS);
+    }, TIMEOUTLEN_MS);
   }
 
   function seqFlash(msg) {
@@ -1187,9 +1191,13 @@
 
   const composerVim = () => !!(S.el && S.el.isConnected && S.mode !== INSERT);
 
+  /* Only a prefix that is also a command of its own is on a clock: g, which
+     vim has as well. A prefix that only leads on waits for its next key as
+     long as it takes, with the which-key bar up, as gred's resolver does. */
   function seqArm() {
     seqArmHint();
-    if (SEQ.timer) clearTimeout(SEQ.timer);
+    if (SEQ.timer) { clearTimeout(SEQ.timer); SEQ.timer = 0; }
+    if (!(SEQ.node && SEQ.node.name === "g" && SEQ.local && composerVim())) return;
     SEQ.timer = setTimeout(() => {
       SEQ.timer = 0;
       const n = SEQ.node, local = SEQ.local;
@@ -1198,7 +1206,7 @@
          typing speed. */
       if (n && n.name === "g" && local && composerVim()) S.pending = "g";
       refresh();
-    }, SEQ_TIMEOUT_MS);
+    }, TIMEOUTLEN_MS);
   }
 
   function seqStart(key, local) {
@@ -1278,21 +1286,23 @@
     return "eat";
   }
 
-  /* What the hint panel shows: the pending prefix's next keys, or a message. */
+  /* What the which-key bar shows: a line per key that continues the pending
+     prefix. gred's Hint is {keys, label, group}, the label being the group's
+     name where the keys lead to more keys and the binding's description
+     where they do not. What gred says in words it says on the message line,
+     not here. */
   function seqHint() {
-    if (SEQ.node && SEQ.show) {
-      const items = [];
-      for (const [k, n] of SEQ.node.kids) {
-        items.push({
-          key: k === " " ? "SPC" : k,
-          desc: n.kids.size ? "+" + (n.group || "more") : n.leaf ? n.leaf.desc : "",
-          none: !n.kids.size && !(n.leaf && n.leaf.chord),
-        });
-      }
-      return { title: SEQ.node.name + (SEQ.node.group ? "  " + SEQ.node.group : ""), items, message: "" };
+    if (!SEQ.node || !SEQ.show) return null;
+    const items = [];
+    for (const [k, n] of SEQ.node.kids) {
+      items.push({
+        key: k === " " ? "<Space>" : k,
+        desc: n.kids.size ? (n.group || "more") : n.leaf ? n.leaf.desc : "",
+        group: !!n.kids.size,
+        none: !n.kids.size && !(n.leaf && n.leaf.chord),
+      });
     }
-    if (SEQ.flash) return { title: "", items: [], message: SEQ.flash };
-    return null;
+    return { title: SEQ.node.name, items };
   }
 
   /* Where every key belongs to the focused thing: anything that takes text,
@@ -1364,7 +1374,7 @@
     const k = e.key;
     if (k === "g" && !e.shiftKey) {
       if (e.repeat) return true;                            /* a held g is not gg */
-      if (LIST.g && Date.now() - LIST.g < SEQ_TIMEOUT_MS) {
+      if (LIST.g && Date.now() - LIST.g < TIMEOUTLEN_MS) {
         LIST.g = 0; listMove(row, "Home"); return true;
       }
       LIST.g = Date.now();
@@ -1379,49 +1389,139 @@
 
   /* ------------------------------------------------------------------- ui -- */
 
-  let badge = null, blockEl = null, keysEl = null, keysShown = "", styled = false;
+  /* ------------------------------------------------------------ chrome -- */
+
+  /* gred's own measures, from gred-rs: chrome::LINE (the statusline and the
+     message line), which_key's COLUMN, ROW and RISE, control.rs's key chip
+     and tag, and typography.rs's steps. The colours are the theme's roles,
+     which T3 publishes as --app-theme-*; the fallbacks are Theme::ink's. */
+  const LINE = 24;          // chrome::LINE: the statusline, and the message line
+  const KEY_COLUMN = 220;   // chrome::which_key COLUMN
+  const KEY_ROW = 22;       // its ROW
+  const KEY_RISE = 10;      // its RISE: how far below its place the bar starts
+  const REVEAL_MS = 160;    // ui::motion REVEAL, the fade and rise it comes up on
+
+  /* The mode pill is ui::control's tag in Tone::Mode: gred gives the modes
+     their own grounds and inks (Theme::ink's `modes`), which are not T3 roles,
+     so they are written out. Ink first, Marble under :root:not(.dark). */
+  const MODE_INK = {
+    NORMAL: ["#4fa396", "#0a1218"],
+    INSERT: ["#152336", "#bcc6cd"],
+    VISUAL: ["#14251e", "#bcc6cd"],
+    "V-LINE": ["#14251e", "#bcc6cd"],
+  };
+  const MODE_MARBLE = {
+    NORMAL: ["#2a7a6e", "#ffffff"],
+    INSERT: ["#c8d8ef", "#24313a"],
+    VISUAL: ["#c2e2cf", "#24313a"],
+    "V-LINE": ["#c2e2cf", "#24313a"],
+  };
+  const modeRules = (table, prefix) =>
+    Object.keys(table).map((m) =>
+      prefix + '.t3vim-mode[data-mode="' + m + '"]{background:' + table[m][0] + ";color:" + table[m][1] + "}");
+
+  let statusEl = null, modeEl = null, keysOfEl = null, titleEl = null;
+  let blockEl = null, keysEl = null, keysShown = "", msgEl = null, styled = false;
 
   function ui() {
     if (styled) return;
     styled = true;
     const css = document.createElement("style");
     css.textContent = [
-      ".t3vim-badge{position:fixed;z-index:2147483000;pointer-events:none;",
-      "font:600 9.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.09em;",
-      "padding:3px 6px;border-radius:4px;text-transform:uppercase;white-space:nowrap;",
-      "background:var(--primary,#4fa396);color:var(--primary-foreground,#04120f);opacity:.95}",
-      '.t3vim-badge[data-mode="INSERT"]{background:transparent;opacity:.5;',
-      "color:var(--muted-foreground,#75838b);box-shadow:inset 0 0 0 1px currentColor}",
-      ".t3vim-block{position:fixed;z-index:2147482999;pointer-events:none;border-radius:1px;",
-      "background:var(--primary,#4fa396);opacity:.3}",
-      ".t3vim-normal{caret-color:transparent !important}",
-      /* The which-key panel: fixed, bottom-anchored, so it never needs its own
-         height measured. */
-      ".t3vim-keys{position:fixed;z-index:2147483001;pointer-events:none;display:none;",
-      "max-width:min(620px,calc(100vw - 16px));box-sizing:border-box;padding:6px 8px;border-radius:6px;",
-      "font:500 11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;",
-      "background:var(--popover,#10181c);color:var(--popover-foreground,#d5dde1);",
-      "box-shadow:0 0 0 1px var(--border,#2a363c),0 6px 18px rgba(0,0,0,.35)}",
-      ".t3vim-keys-title{font-weight:700;color:var(--primary,#4fa396);margin-bottom:3px}",
-      ".t3vim-keys-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));column-gap:14px}",
-      ".t3vim-keys-row{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-      ".t3vim-keys-row b{display:inline-block;min-width:3ch;color:var(--primary,#4fa396)}",
+      /* Shared ground: gred paints its chrome flat, with one hairline along
+         the top edge and no radius, no shadow. */
+      ".t3vim-status,.t3vim-keys,.t3vim-msg{position:fixed;left:0;right:0;z-index:2147483000;",
+      "box-sizing:border-box;pointer-events:none;",
+      'font-family:"Inter Variable","Inter",ui-sans-serif,system-ui,sans-serif;}',
+      ".t3vim-status,.t3vim-keys{background:var(--app-theme-chrome,#070d12);",
+      "border-top:1px solid var(--app-theme-border,#ffffff14)}",
+
+      /* The statusline: chrome::LINE tall, the mode pill at its left end, the
+         keys held beside it, then what gred puts there, the buffer's name. */
+      ".t3vim-status{display:none;bottom:0;height:" + LINE + "px;align-items:center;",
+      "gap:8px;padding:0 8px;white-space:nowrap;overflow:hidden}",
+      ".t3vim-status.on{display:flex}",
+      /* ui::control tag: height 18, radius 4, pad 7, caption 11/1.3, weight 600. */
+      ".t3vim-mode{flex:none;height:18px;border-radius:4px;padding:0 7px;",
+      "display:inline-flex;align-items:center;font-size:11px;line-height:1.3;",
+      "font-weight:600;letter-spacing:.01em}",
+      /* The keys held, as gred writes them with chrome = minimal: Vim notation. */
+      ".t3vim-status-keys{flex:none;font-family:var(--font-mono,ui-monospace),monospace;",
+      "font-size:11px;line-height:1.35;color:var(--app-theme-accent,#4fa396)}",
+      ".t3vim-status-title{min-width:0;overflow:hidden;text-overflow:ellipsis;",
+      "font-size:12px;line-height:1.4;color:var(--app-theme-text-muted,#75838b)}",
+      modeRules(MODE_INK, "").join(""),
+      modeRules(MODE_MARBLE, ":root:not(.dark) ").join(""),
+
+      /* The which-key bar, docked above the statusline: columns of 220, rows
+         of 22, 12 either end and 8 over and under, filled down each column
+         before the next, as chrome::which_key lays it out. */
+      ".t3vim-keys{display:none;padding:8px 12px;overflow:hidden}",
+      ".t3vim-keys.on{display:block}",
+      ".t3vim-keys-grid{display:grid;grid-auto-flow:column;",
+      "grid-auto-columns:" + KEY_COLUMN + "px;align-content:start}",
+      ".t3vim-keys-row{display:flex;align-items:center;gap:8px;height:" + KEY_ROW + "px;",
+      "padding-right:16px;min-width:0}",
+      /* ui::control key chip: height 18, radius 4, pad 5, mono-small 11/1.35,
+         the sunken ground and the hairline edge. */
+      ".t3vim-keys-row b{flex:none;height:18px;box-sizing:border-box;padding:0 5px;",
+      "display:inline-flex;align-items:center;border-radius:4px;font-weight:400;",
+      "font-family:var(--font-mono,ui-monospace),monospace;font-size:11px;line-height:1.35;",
+      "background:var(--app-theme-muted,#0d161c);color:var(--app-theme-text,#bcc6cd);",
+      "border:1px solid var(--app-theme-border,#ffffff14)}",
+      /* Type::Small for the label; a group, which leads to more keys, in the
+         accent, as gred paints one. */
+      ".t3vim-keys-row i{min-width:0;overflow:hidden;text-overflow:ellipsis;font-style:normal;",
+      "font-size:12px;line-height:1.4;color:var(--app-theme-text,#bcc6cd)}",
+      ".t3vim-keys-row.group i{color:var(--app-theme-accent,#4fa396)}",
       ".t3vim-keys-row.none{opacity:.45}",
+      /* It comes up from below as it fades in: ui::motion REVEAL. */
+      ".t3vim-rise{transform:translateY(" + KEY_RISE + "px);opacity:0;",
+      "transition:transform " + REVEAL_MS + "ms ease-out," + "opacity " + REVEAL_MS + "ms ease-out}",
+      ".t3vim-rise.up{transform:none;opacity:1}",
+      "@media (prefers-reduced-motion:reduce){.t3vim-rise{transition:none}}",
+
+      /* The message line: gred puts the last message under the statusline, on
+         the page itself, in the colour of its level. */
+      ".t3vim-msg{display:none;bottom:0;height:" + LINE + "px;align-items:center;",
+      "padding:0 10px;font-size:12px;line-height:1.4;white-space:nowrap;overflow:hidden;",
+      "text-overflow:ellipsis;background:var(--app-theme-canvas,#0a1218);",
+      "color:var(--app-theme-text,#bcc6cd)}",
+      ".t3vim-msg.on{display:flex}",
+
+      /* The statusline stands where T3 put its own bottom gutter, so the
+         composer is lifted clear of it for as long as the bar is up. The
+         selector is one of T3's documented stable ones. */
+      "html.t3vim-lined [data-chat-composer-form]{margin-bottom:" + LINE + "px}",
+      "html.t3vim-lined.t3vim-said [data-chat-composer-form]{margin-bottom:" + 2 * LINE + "px}",
+
+      /* The caret gred draws over the character in normal mode. */
+      ".t3vim-block{position:fixed;z-index:2147482999;pointer-events:none;border-radius:1px;",
+      "background:var(--app-theme-accent,#4fa396);opacity:.3}",
+      ".t3vim-normal{caret-color:transparent !important}",
     ].join("");
     document.head.appendChild(css);
-    badge = document.createElement("div");
-    badge.className = "t3vim-badge";
+
+    statusEl = document.createElement("div");
+    statusEl.className = "t3vim-status";
+    modeEl = document.createElement("span");
+    modeEl.className = "t3vim-mode";
+    keysOfEl = document.createElement("span");
+    keysOfEl.className = "t3vim-status-keys";
+    titleEl = document.createElement("span");
+    titleEl.className = "t3vim-status-title";
+    statusEl.append(modeEl, keysOfEl, titleEl);
+
     blockEl = document.createElement("div");
     blockEl.className = "t3vim-block";
     keysEl = document.createElement("div");
     keysEl.className = "t3vim-keys";
-    document.body.appendChild(badge);
-    document.body.appendChild(blockEl);
-    document.body.appendChild(keysEl);
+    msgEl = document.createElement("div");
+    msgEl.className = "t3vim-msg";
+    document.body.append(statusEl, blockEl, keysEl, msgEl);
   }
 
   function hideUI() {
-    if (badge) badge.style.display = "none";
     if (blockEl) blockEl.style.display = "none";
     document.querySelectorAll(".t3vim-normal").forEach((n) => n.classList.remove("t3vim-normal"));
   }
@@ -1432,71 +1532,116 @@
     pending = true;
     requestAnimationFrame(() => {
       pending = false;
+      try { paintStatus(); } catch { /* never let the UI break editing */ }
+      try { paintMsg(); } catch { /* never let the UI break editing */ }
       try { paintKeys(); } catch { /* never let the UI break editing */ }
       try { paint(); } catch { /* never let the UI break editing */ }
     });
   }
 
-  /* The which-key panel. Its content is rebuilt only when what it shows
-     changes; each paint just places it. Shown with or without a composer,
-     since the trees work app-wide. */
-  function paintKeys() {
-    const h = S.on ? seqHint() : null;
-    if (!h) { if (keysEl) keysEl.style.display = "none"; keysShown = ""; return; }
-    ui();
-    const sig = h.message || h.title;
-    if (sig !== keysShown) {
-      keysShown = sig;
-      keysEl.textContent = "";
-      if (h.message) {
-        keysEl.textContent = h.message;
-      } else {
-        const title = document.createElement("div");
-        title.className = "t3vim-keys-title";
-        title.textContent = h.title;
-        const grid = document.createElement("div");
-        grid.className = "t3vim-keys-grid";
-        for (const it of h.items) {
-          const row = document.createElement("div");
-          row.className = "t3vim-keys-row" + (it.none ? " none" : "");
-          const b = document.createElement("b");
-          b.textContent = it.key;
-          row.appendChild(b);
-          row.appendChild(document.createTextNode(" " + it.desc + (it.none ? " (no T3 equivalent)" : "")));
-          grid.appendChild(row);
-        }
-        keysEl.appendChild(title);
-        keysEl.appendChild(grid);
-      }
-    }
-    const anchor = S.el && S.el.isConnected ? (S.el.closest(FORM_SEL) || S.el) : null;
-    if (anchor) {
-      const fr = anchor.getBoundingClientRect();
-      keysEl.style.left = Math.max(8, fr.left + 8) + "px";
-      keysEl.style.bottom = Math.max(8, window.innerHeight - fr.top + 14) + "px";
-    } else {
-      keysEl.style.left = "16px";
-      keysEl.style.bottom = "16px";
-    }
-    keysEl.style.display = "block";
+  /* gred's words for a mode, from gred/src/segments.rs. */
+  const MODE_WORD = { NORMAL: "Normal", INSERT: "Insert", VISUAL: "Visual", "V-LINE": "V-Line" };
+
+  /* What the statusline says it is. A composer in normal or visual mode says
+     so; with nothing editable focused the app's trees are live, which is
+     Normal; inside anything that takes text it is Insert, as typing into a
+     field is in gred. */
+  function statusMode() {
+    if (S.el && S.el.isConnected) return S.mode;
+    const f = document.activeElement;
+    return f && f.closest && f.closest(TEXT_KEYS) ? INSERT : NORMAL;
   }
 
+  /* The title gred's statusline carries beside the pill is the buffer's. T3
+     keeps the open thread's name in the window title. */
+  function statusTitle() {
+    const t = (document.title || "").replace(/\s*[-|]\s*T3 Code\s*$/i, "").trim();
+    return t === "T3 Code" ? "" : t;
+  }
+
+  /* The statusline: gred's, as far as this can know it. It stands wherever
+     the app has a composer, which is wherever these keys do anything. */
+  function paintStatus() {
+    const live = S.on && (SEQ.node || (S.el && S.el.isConnected) || document.querySelector(FORM_SEL));
+    document.documentElement.classList.toggle("t3vim-lined", !!live);
+    if (!live) { if (statusEl) statusEl.classList.remove("on"); return; }
+    ui();
+    const mode = statusMode();
+    modeEl.dataset.mode = mode;
+    modeEl.textContent = MODE_WORD[mode] || mode;
+    keysOfEl.textContent = (SEQ.node ? SEQ.node.name : "")
+      + (S.operator ? " " + S.operator : "")
+      + (S.useClip ? ' "+' : "")
+      + ((S.opCount + S.count) ? " " + (S.opCount + S.count) : "");
+    titleEl.textContent = statusTitle();
+    statusEl.classList.add("on");
+  }
+
+  /* The message line, under the statusline: the last thing said, on the page
+     itself, in the colour of its level (gred's chrome::message_line). */
+  function paintMsg() {
+    const say = S.on && SEQ.flash ? SEQ.flash : "";
+    document.documentElement.classList.toggle("t3vim-said", !!say);
+    if (say) ui();
+    /* The statusline stands on the message line while one is up, as gred
+       keeps the message under it. */
+    if (statusEl) statusEl.style.bottom = say ? LINE + "px" : "0px";
+    if (!say) { if (msgEl) { msgEl.classList.remove("on"); msgEl.textContent = ""; } return; }
+    msgEl.textContent = say;
+    msgEl.classList.add("on");
+  }
+
+  /* How far the bars above the bottom edge start: the message line, then the
+     statusline, as gred stacks them. */
+  const chromeBelow = () =>
+    (msgEl && msgEl.classList.contains("on") ? LINE : 0)
+    + (statusEl && statusEl.classList.contains("on") ? LINE : 0);
+
+  /* The which-key bar. gred docks it above the statusline, full width, and
+     lays its hints in columns of 220 filled top to bottom, so the keys read
+     down a column rather than across the window. */
+  function paintKeys() {
+    const h = S.on ? seqHint() : null;
+    if (!h || !h.items.length) {
+      if (keysEl) { keysEl.classList.remove("on", "up"); }
+      keysShown = "";
+      return;
+    }
+    ui();
+    if (h.title !== keysShown) {
+      keysShown = h.title;
+      keysEl.textContent = "";
+      const grid = document.createElement("div");
+      grid.className = "t3vim-keys-grid";
+      for (const it of h.items) {
+        const row = document.createElement("div");
+        row.className = "t3vim-keys-row" + (it.none ? " none" : "") + (it.group ? " group" : "");
+        const b = document.createElement("b");
+        b.textContent = it.key;
+        const i = document.createElement("i");
+        i.textContent = it.desc;
+        row.append(b, i);
+        grid.appendChild(row);
+      }
+      keysEl.appendChild(grid);
+    }
+    const grid = keysEl.firstChild;
+    const columns = Math.max(1, Math.floor((window.innerWidth - 24) / KEY_COLUMN));
+    const rows = Math.ceil(h.items.length / columns);
+    grid.style.gridTemplateRows = "repeat(" + rows + "," + KEY_ROW + "px)";
+    keysEl.style.bottom = chromeBelow() + "px";
+    if (!keysEl.classList.contains("on")) {
+      keysEl.classList.add("on", "t3vim-rise");
+      /* One frame down, then up: the transition needs a start to run from. */
+      requestAnimationFrame(() => keysEl.classList.add("up"));
+    }
+  }
+
+  /* The caret. What mode it is and what is pending are the statusline's, as
+     in gred; here only the block over the character is drawn. */
   function paint() {
     if (!S.on || !S.el || !S.el.isConnected) { hideUI(); return; }
     ui();
-
-    const form = S.el.closest(FORM_SEL) || S.el;
-    const fr = form.getBoundingClientRect();
-    const label = S.mode
-      + (S.operator ? " " + S.operator : "")
-      + (S.useClip ? ' "+' : "")
-      + ((S.opCount + S.count) ? " " + (S.opCount + S.count) : "")
-      + (SEQ.node ? " " + SEQ.node.name : "");
-    badge.style.display = "block";
-    badge.dataset.mode = S.mode;
-    badge.textContent = label;
-    badge.style.left = Math.max(4, fr.left + 8) + "px";
-    badge.style.top = Math.max(4, fr.top - 9) + "px";
 
     if (S.mode === INSERT) {
       S.el.classList.remove("t3vim-normal");
@@ -1656,6 +1801,12 @@
     else { S.el = null; hideUI(); }
   }, true);
   document.addEventListener("selectionchange", () => { if (S.el && S.mode !== INSERT) refresh(); });
+  /* The statusline carries the thread's name, which T3 keeps in the window
+     title: follow it, since switching thread presses no key here. */
+  try {
+    const title = document.querySelector("title");
+    if (title) new MutationObserver(refresh).observe(title, { childList: true, characterData: true, subtree: true });
+  } catch { /* a title that cannot be watched simply goes stale */ }
   window.addEventListener("resize", refresh, { passive: true });
   window.addEventListener("scroll", refresh, { passive: true, capture: true });
 
@@ -1690,8 +1841,11 @@
       return this.debug();
     },
     hint() { return seqHint(); },
-    paintNow() { paintKeys(); paint(); },
-    /* Fire the hint panel's HINT_DELAY_MS wait at once, so a test can check
+    /* The last thing said on the message line, as gred's `:messages` holds
+       it: what a key with no T3 counterpart answered with. */
+    said() { return SEQ.flash; },
+    paintNow() { paintStatus(); paintMsg(); paintKeys(); paint(); },
+    /* Fire the hint panel's TIMEOUTLEN_MS wait at once, so a test can check
        the panel without sleeping for it. */
     showHintNow() {
       if (SEQ.showTimer) { clearTimeout(SEQ.showTimer); SEQ.showTimer = 0; }
@@ -1700,7 +1854,7 @@
     },
     get sent() { return SEQ.sent; },
     get listSent() { return LIST.sent; },
-    seqTimeoutMs: SEQ_TIMEOUT_MS,
+    timeoutlenMs: TIMEOUTLEN_MS,
     debug() {
       const c = here();
       if (!c) return { mode: S.mode, seq: SEQ.node ? SEQ.node.name : "", count: S.count, pending: S.pending };
@@ -1715,7 +1869,7 @@
     setCaret(p) { const m = scan(S.el); caretTo(m, p); S.mode = NORMAL; refresh(); return this.debug(); },
     attach(el) { S.el = el; S.mode = NORMAL; reset(); seqCancel(); return this.debug(); },
     enable() { S.on = true; lsSet(SWITCH, "on"); refresh(); return "vim mode on"; },
-    disable() { S.on = false; lsSet(SWITCH, "off"); S.mode = INSERT; hideUI(); return "vim mode off, composer is a plain text box again"; },
+    disable() { S.on = false; lsSet(SWITCH, "off"); S.mode = INSERT; hideUI(); refresh(); return "vim mode off, composer is a plain text box again"; },
     version: 2,
   };
 })();

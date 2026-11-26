@@ -276,10 +276,10 @@
                      "<C-w>o", "<C-w>=", "<C-w>H", "<C-w><lt>"]) {
     ts("no counterpart " + seq, composer("hello world", 3), [seq],
        none((g) => want("text", "hello world")(g) || want("pos", 3)(g) || want("mode", "NORMAL")(g)
-         || (/no T3 equivalent/.test((V.hint() || {}).message || "") ? "" : "message " + JSON.stringify(V.hint()))));
+         || (/no T3 equivalent/.test(V.said()) ? "" : "said " + JSON.stringify(V.said()))));
   }
   ts("unmapped key after prefix is eaten", composer("hello", 0), ["<leader>", "x"],
-     none((g) => want("text", "hello")(g) || (/not mapped/.test((V.hint() || {}).message || "") ? "" : "message " + JSON.stringify(V.hint()))));
+     none((g) => want("text", "hello")(g) || (/not mapped/.test(V.said()) ? "" : "said " + JSON.stringify(V.said()))));
 
   /* Escape */
   ts("Escape cancels <leader>", composer("hello", 0), ["<leader>", "Escape", "l"],
@@ -467,20 +467,23 @@
      });
 
   /* Hint panel content */
+  /* One line per key that continues the prefix, as gred's Hint is: the
+     group's name where the keys lead to more keys, the binding's own words
+     where they do not, and a key written as gred writes it. */
   ts("hint after <leader>", composer("abc", 0), ["<leader>"], (g) => {
     const h = V.showHintNow();
     if (!h || g.seq !== "<leader>") return "no hint, seq " + g.seq;
-    const s = h.items.find((x) => x.key === "s"), sp = h.items.find((x) => x.key === "SPC");
-    if (!s || s.desc !== "+[S]earch") return "s item " + JSON.stringify(s);
-    if (!sp || sp.desc !== "switch agent") return "SPC item " + JSON.stringify(sp);
-    return "";
+    const s = h.items.find((x) => x.key === "s"), sp = h.items.find((x) => x.key === "<Space>");
+    if (!s || s.desc !== "[S]earch" || !s.group) return "s item " + JSON.stringify(s);
+    if (!sp || sp.desc !== "switch agent" || sp.group) return "SPC item " + JSON.stringify(sp);
+    return h.title === "<leader>" ? "" : "title " + h.title;
   });
   ts("hint after <leader>a", composer("abc", 0), ["<leader>a"], (g) => {
     const h = V.showHintNow();
     const n = h && h.items.find((x) => x.key === "n"), r = h && h.items.find((x) => x.key === "r");
     if (!n || n.desc !== "new agent" || n.none) return "n item " + JSON.stringify(n);
     if (!r || !r.none) return "r item " + JSON.stringify(r);
-    return /\[A\]gents/.test(h.title) ? "" : "title " + h.title;
+    return h.title === "<leader>a" ? "" : "title " + h.title;
   });
 
   /* The synthetic chord never re-enters the plugin. */
@@ -519,20 +522,23 @@
   }
 
   (async () => {
-    const T = V.seqTimeoutMs;
-    await ta("timeout is 1000 ms", async () => (T === 1000 ? "" : "seqTimeoutMs " + T));
-    await ta("timeout resets <leader>", async () => {
+    const T = V.timeoutlenMs;
+    await ta("timeoutlen is 300 ms", async () => (T === 300 ? "" : "timeoutlenMs " + T));
+    /* gred's resolver: a prefix that only leads on waits as long as it takes,
+       with the which-key bar up. Only one that is a command of its own is on
+       a clock, which here is g alone. */
+    await ta("a prefix that only leads on waits", async () => {
       setup("hello", 0); V.feedSeq("<leader>s");
-      await wait(T + 150);
-      if (V.debug().seq) return "seq still " + V.debug().seq;
-      V.feed("f"); V.feed("l");
-      return none(want("pos", 2))(V.debug(), sent);
-    });
-    await ta("each key re-arms the timeout", async () => {
-      setup("hello", 0); V.feedSeq("<leader>");
-      await wait(T * 0.6); V.feed("s");
-      await wait(T * 0.6); V.feed("f");
+      await wait(T * 4);
+      if (V.debug().seq !== "<leader>s") return "seq " + JSON.stringify(V.debug().seq);
+      V.feed("f");
       return oneChord("f")(V.debug(), sent);
+    });
+    await ta("<C-w> waits too", async () => {
+      setup("hello", 0); V.feed("w", { ctrl: true });
+      await wait(T * 4);
+      V.feed("s");
+      return oneChord("s")(V.debug(), sent);
     });
     await ta("a timed-out g is still vim's g (gg)", async () => {
       setup("abc\ndef", 5); V.feed("g");
@@ -540,24 +546,70 @@
       V.feed("g");
       return none(want("pos", 0))(V.debug(), sent);
     });
-    await ta("hint panel shows the leader tree", async () => {
+    await ta("the which-key bar shows the leader tree", async () => {
       setup("abc", 0); V.feedSeq("<leader>"); V.showHintNow();
       await frames();
       const p = document.querySelector(".t3vim-keys");
-      if (!p || p.style.display !== "block") return "panel hidden";
-      if (!/\[S\]earch/.test(p.textContent) || !/switch agent/.test(p.textContent)) return "panel text " + p.textContent.slice(0, 120);
+      if (!p || !p.classList.contains("on")) return "bar hidden";
+      if (!/\[S\]earch/.test(p.textContent) || !/switch agent/.test(p.textContent)) return "bar text " + p.textContent.slice(0, 120);
       V.feed("Escape");
       await frames();
-      return p.style.display === "none" ? "" : "panel still shown after Escape";
+      return p.classList.contains("on") ? "bar still shown after Escape" : "";
     });
-    await ta("hint panel works with nothing focused", async () => {
+    await ta("the which-key bar works with nothing focused", async () => {
       setup("abc", 0); el.blur(); document.body.focus(); V.feed("w", { ctrl: true });
       V.showHintNow();
       await frames();
       const p = document.querySelector(".t3vim-keys");
-      const ok = p && p.style.display === "block" && /Windows/.test(p.textContent);
+      const ok = p && p.classList.contains("on") && /focus left/.test(p.textContent);
       V.feed("Escape");
-      return ok ? "" : "panel " + (p ? p.style.display + " " + p.textContent.slice(0, 80) : "missing");
+      return ok ? "" : "bar " + (p ? p.className + " " + p.textContent.slice(0, 80) : "missing");
+    });
+    /* gred lays the bar out in columns of 220 filled top to bottom, docked
+       above the statusline, on the chrome with one hairline along its top. */
+    await ta("the which-key bar is docked and in columns", async () => {
+      setup("abc", 0); V.feedSeq("<leader>"); V.showHintNow();
+      await frames();
+      const p = document.querySelector(".t3vim-keys");
+      const grid = p && p.firstChild;
+      if (!grid) return "no grid";
+      const style = getComputedStyle(grid);
+      if (style.gridAutoFlow !== "column") return "flow " + style.gridAutoFlow;
+      const rows = style.gridTemplateRows.split(" ").length;
+      const columns = Math.max(1, Math.floor((window.innerWidth - 24) / 220));
+      const want = Math.ceil(V.hint().items.length / columns);
+      if (rows !== want) return "rows " + rows + " want " + want;
+      const box = getComputedStyle(p);
+      if (box.position !== "fixed" || p.style.bottom === "") return "not docked: " + box.position + " " + p.style.bottom;
+      V.feed("Escape");
+      return "";
+    });
+    /* The statusline carries the mode and the keys held, as gred's does. */
+    await ta("the statusline says the mode and the keys held", async () => {
+      setup("abc", 0); V.feed("Escape");
+      await frames();
+      const bar = document.querySelector(".t3vim-status");
+      const mode = document.querySelector(".t3vim-mode");
+      if (!bar || !bar.classList.contains("on")) return "statusline hidden";
+      if (mode.textContent !== "Normal" || mode.dataset.mode !== "NORMAL") return "mode " + mode.textContent;
+      V.feedSeq("<leader>s");
+      await frames();
+      const keys = document.querySelector(".t3vim-status-keys").textContent;
+      if (!/<leader>s/.test(keys)) return "keys " + JSON.stringify(keys);
+      V.feed("Escape");
+      V.feed("i");
+      await frames();
+      return mode.textContent === "Insert" ? "" : "mode after i: " + mode.textContent;
+    });
+    /* A key with no counterpart says so on the message line, not in the bar. */
+    await ta("the message line says what a key did", async () => {
+      setup("abc", 0); V.feed("Escape"); V.feedSeq("<leader>q");
+      await frames();
+      const msg = document.querySelector(".t3vim-msg");
+      if (!msg || !msg.classList.contains("on")) return "message line hidden";
+      if (!/no T3 equivalent/.test(msg.textContent)) return "message " + msg.textContent;
+      const bar = document.querySelector(".t3vim-keys");
+      return bar && bar.classList.contains("on") ? "the bar is up for a finished sequence" : "";
     });
 
     out.textContent = lines.join("\n") + "\n\nPASS " + pass + "  FAIL " + fail + "\n";

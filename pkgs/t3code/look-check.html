@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- A standing rig for looking at the chrome this plugin paints: the
+     statusline, the which-key bar and the message line, on a page dressed in
+     the Graphide Verdigris Ink roles, in a frame the shape of T3's.
+
+     Open it, or take a picture of it:
+       chromium --headless=new --screenshot=look.png --window-size=1600,1000 \
+                --virtual-time-budget=4000 file://$PWD/look-check.html?seq=<leader>
+
+     ?seq= drives a sequence in gred notation; ?msg=1 says something on the
+     message line instead. Compare with the rendered gred frames in
+     docs/Tech/gred/native/frames/. -->
+<html class="dark"><head><meta charset="utf-8"><title>Graphide CI</title>
+<style>
+  /* The theme's roles, as T3 publishes them. Theme::ink, verbatim. */
+  :root{
+    --app-theme-canvas:#0a1218; --app-theme-chrome:#070d12; --app-theme-border:#ffffff14;
+    --app-theme-text:#bcc6cd; --app-theme-text-muted:#75838b; --app-theme-muted:#0d161c;
+    --app-theme-accent:#4fa396; --app-theme-surface:#1f2c35; --app-theme-sidebar:#0a1218;
+    --app-theme-sidebar-row-selected:#18242c;
+    --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-sans:"Inter Variable","Inter",ui-sans-serif,system-ui,sans-serif;
+  }
+  html,body{margin:0;height:100%}
+  body{background:var(--app-theme-canvas);color:var(--app-theme-text);
+       font:400 13px/1.45 var(--font-sans);display:flex}
+  .side{width:272px;flex:none;background:var(--app-theme-sidebar);
+        border-right:1px solid var(--app-theme-border);padding:6px}
+  .eyebrow{font:600 9.5px/1.2 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;
+           color:#52616b;padding:8px 6px 4px}
+  .row{display:flex;gap:8px;padding:5px 8px;border-radius:3px;position:relative;color:#dae1e6}
+  .row .when{margin-left:auto;color:var(--app-theme-text-muted);font-size:12px}
+  .row.on{background:var(--app-theme-sidebar-row-selected)}
+  .row.on::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:2px;
+                  border-radius:1px;background:var(--app-theme-accent)}
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .head{height:36px;border-bottom:1px solid var(--app-theme-border);display:flex;align-items:center;
+        gap:10px;padding:0 12px;color:var(--app-theme-text-muted);font-size:12px}
+  .body{flex:1;padding:16px 20px;color:var(--app-theme-text);max-width:860px}
+  .body p{margin:0 0 10px}
+  form{margin:12px;border:1px solid var(--app-theme-border);border-radius:6px;padding:8px 10px}
+  .composer-tiptap{white-space:pre-wrap;word-break:break-word;font:400 13px/1.5 var(--font-mono);
+                   min-height:40px;outline:none}
+</style></head>
+<body>
+  <div class="side">
+    <div class="eyebrow">Needs you <span>1</span></div>
+    <div class="row on"><b>bob</b><span class="when">question</span></div>
+    <div class="eyebrow">Running <span>1</span></div>
+    <div class="row"><b>ann</b><span class="when">working</span></div>
+    <div class="eyebrow">Done <span>1</span></div>
+    <div class="row"><b>cat</b><span class="when">idle</span></div>
+  </div>
+  <div class="main">
+    <div class="head"><span>Overview</span><span>Search or ask</span></div>
+    <div class="body">
+      <p>The bar below is what this rig is for. Everything else here only gives
+      it something to stand on.</p>
+    </div>
+    <form data-chat-composer-form="true">
+      <div class="composer-tiptap" contenteditable="true">fix the keymap</div>
+    </form>
+  </div>
+  <script src="vim-composer.js"></script>
+  <script>
+    const q = new URLSearchParams(location.search);
+    const el = document.querySelector(".composer-tiptap");
+    el.focus();
+    window.__t3vim.attach(el);
+    window.__t3vim.setCaret(4);
+    document.title = "graphide  fix the keymap";
+    /* A sequence drops after SEQ_TIMEOUT_MS, and a headless run's clock moves
+       far faster than a person's, so hold it by typing it again. */
+    const show = () => {
+      window.__t3vim.feed("Escape");
+      if (q.get("msg")) window.__t3vim.feedSeq(q.get("msg") === "1" ? "<leader>q" : q.get("msg"));
+      else window.__t3vim.feedSeq(q.get("seq") || "<leader>");
+      window.__t3vim.showHintNow();
+      window.__t3vim.paintNow();
+    };
+    show();
+    setInterval(show, 150);
+  </script>
+</body></html>

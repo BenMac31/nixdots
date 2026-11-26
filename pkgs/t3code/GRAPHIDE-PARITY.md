@@ -68,6 +68,29 @@ every key stays its own.
 stay out of focused controls: `<leader>`, `g`, `]` and `[` run with nothing
 focused.
 
+## The look
+
+Ben runs gred's Vim window on Verdigris Ink (`[gred] base = "gred"`,
+`theme = "ink"`, `chrome = "minimal"`, density 1). Two things carry that look
+into T3, and both are read from the source rather than guessed:
+
+* **The theme**, `graphide-verdigris-ink.json` in this directory. Colours from
+  `Theme::ink` and `Theme::marble`; which surface takes which role from
+  `Docks::of_roles`, whose test pins `docks.sidebar == theme.page` and
+  `docks.statusbar == theme.chrome`. So the sidebar is the page's own ground
+  with a hairline beside it, not a lighter panel, the chrome is the darkest
+  surface, and `raised` is for what floats: dialogs, menus, cards.
+* **The chrome this plugin paints**: the statusline, the which-key bar and the
+  message line, to `chrome.rs`'s measures. See the README.
+
+The rendered frames in `docs/Tech/gred/native/frames/first-run-card/` are the
+thing to check against: `-gred-` is the Vim window, `-standard-` the windowed
+shell, `-ink-` and `-marble-` the two themes.
+
+What cannot be carried over: gred's panes, its tab line, the map, and the rest
+of the statusline's segments (the branch, the position, the agents' counts),
+which are gred's own surfaces and have no T3 counterpart.
+
 ## The `when` grammar
 
 T3's `when` grammar is `!`, `&&`, `||` and parens over these context keys, and

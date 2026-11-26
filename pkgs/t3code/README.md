@@ -54,11 +54,47 @@ command. At `window`, T3's `editableFocus` reads false. The key table is
 consumed and shows a message instead. In the composer, `:` sends the command
 palette's chord too.
 
+## The chrome it paints
+
+gred's Vim window carries three bars along its bottom edge, and this paints
+the same three, to the measures in `gred-rs/crates/gred/src/chrome.rs` and
+`crates/ui/src/control.rs`:
+
+| Bar | What | gred's measures |
+|---|---|---|
+| statusline | the mode pill, the keys held, the thread's name | `chrome::LINE` 24, the tag: 18 tall, radius 4, pad 7, caption 11 at weight 600, a ground and an ink per mode (`Theme::ink`'s `modes`) |
+| which-key bar | a line per key that continues the pending prefix | `chrome::which_key`: columns of 220 filled top to bottom, rows of 22, 12 either end, 8 over and under, on the chrome with one hairline along its top; key chips 18 tall, radius 4, pad 5, mono-small on the sunken ground; a group's words in the accent |
+| message line | the last thing said, under the statusline | `chrome::message_line`: 24 tall, on the page, 10 either end, Type::Small in the colour of its level |
+
+The colours are read from T3's own `--app-theme-*` properties, so they follow
+whatever theme is set; the fallbacks, and the mode pill's grounds, which are
+no T3 role, are `Theme::ink`'s.
+
+`look-check.html` is a rig for looking at them: open it, or
+
+    chromium --headless=new --screenshot=look.png --window-size=1600,1000 \
+      --virtual-time-budget=3000 "file://$PWD/look-check.html?seq=<leader>"
+
+and compare with the rendered gred frames in
+`docs/Tech/gred/native/frames/first-run-card/`.
+
+## Waiting, as gred waits
+
+`modal::Resolver`: "A sequence that is bound and also starts a longer one
+waits for the timeout, Vim's `timeoutlen`, then runs. One that only leads on
+waits as long as it takes where commands are typed, while the which-key bar
+shows what can follow."
+
+So `<leader>`, `<C-w>`, `]` and `[` wait for their next key as long as it
+takes, and only `g`, which is vim's own command as well as the app's prefix,
+is on a clock. `timeoutlen` is 300 ms, gred's default, and it is also how long
+a prefix waits before the which-key bar comes up. `Escape` abandons a sequence
+half typed.
+
 `g` is shared with vim: `gt gT ga gd gD gr*` are the app's, any other key
-after `g` goes to vim's own `g` (`gg gu gU g~`). An unfinished sequence drops
-after `SEQ_TIMEOUT_MS` (1000 ms; a lone `g` that times out stays vim's `g`),
-`Escape` drops it at once, and a which-key panel lists the next keys while one
-is pending. `__t3vim.feedSeq("<leader>sf")` drives it from devtools.
+after `g` goes to vim's own `g` (`gg gu gU g~`); a lone `g` that waits out
+`timeoutlen` stays vim's `g`. `__t3vim.feedSeq("<leader>sf")` drives the trees
+from devtools, and `__t3vim.said()` is the last thing on the message line.
 
 The keydown listener is on `window` in the capture phase. The plugin runs
 before T3's bundle, so it is registered ahead of T3's own handlers, and a key
@@ -99,6 +135,22 @@ Insert mode passes every key straight through, so T3's own send, mentions,
 slash commands and completion behave exactly as they do without this. In
 normal mode anything with a modifier is left to T3's keybindings, except
 `Ctrl-r` for redo, and `Enter` always sends.
+
+## The theme
+
+`graphide-verdigris-ink.json` is gred's Verdigris Ink as a T3 theme, built
+from `graphide-verdigris-ink.css` by `build-theme.py` (T3 carries a theme's
+CSS as one JSON string, which no diff can be read in; the stylesheet lives
+beside it as a real stylesheet). Every colour is read from
+`gred-rs/crates/ui/src/theme.rs`: `Theme::ink` and `Theme::marble` for the
+palette, and `Docks::of_roles` for which role each surface takes, which is
+where the sidebar gets the page's own ground rather than a lighter one.
+
+Install it by copying it to `~/.t3/userdata/themes/` and selecting it, or with
+the `t3_theme_set` MCP tool. The form it holds, rather than the hexes, is what
+carries the look: hairlines instead of fills, no shadow anywhere, the eyebrow
+on section headings, mono for keys, paths and the composer, radii of 4 to 8,
+and the accent kept for the one thing to look at.
 
 ## Off switches
 
