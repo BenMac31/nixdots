@@ -333,6 +333,139 @@
      }, [" "], (g, s) => { document.getElementById("tmp-cb").remove(); return none()(g, s); });
   ts("global: plain keys pass", global(), ["x", "c", "l"], none());
 
+  /* ------------------------------------------------------------- lists --- */
+
+  /* T3's own thread list, built as its bundle builds it: rows are
+     `div role="button" tabindex="0" data-sidebar-row`, and the container
+     listens in the capture phase for the arrows, Home and End, ignoring any
+     event that carries a modifier or is already handled. Copied from T3
+     rather than invented, so these fail if the keys the plugin sends stop
+     being the keys T3 waits for. */
+  function sidebar(rows) {
+    const box = document.createElement("div");
+    box.id = "tmp-sidebar";
+    for (let i = 0; i < rows; i++) {
+      const r = document.createElement("div");
+      r.setAttribute("role", "button");
+      r.tabIndex = 0;
+      r.dataset.sidebarRow = "row" + i;
+      r.textContent = "thread " + i;
+      box.appendChild(r);
+    }
+    box.addEventListener("keydown", (e) => {
+      const t = e.target;
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      if (!(t instanceof HTMLElement) || !t.matches("[data-sidebar-row]")) return;
+      const all = Array.from(box.querySelectorAll("[data-sidebar-row]"));
+      const at = all.indexOf(t);
+      if (at < 0) return;
+      let to = null;
+      switch (e.key) {
+        case "ArrowDown": to = all[Math.min(at + 1, all.length - 1)]; break;
+        case "ArrowUp": to = all[Math.max(at - 1, 0)]; break;
+        case "Home": to = all[0]; break;
+        case "End": to = all[all.length - 1]; break;
+        case "ArrowRight": box.dataset.expanded = "yes"; break;
+        case "ArrowLeft": box.dataset.expanded = "no"; break;
+        default: return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      if (to) to.focus({ preventScroll: true });
+    }, true);
+    document.body.appendChild(box);
+    return box;
+  }
+  /* name, rows, the row to start on, steps, check(box) */
+  function tl(name, rows, start, steps, check) {
+    const prep = () => {
+      setup("abc", 0);
+      el.blur();
+      const box = sidebar(rows);
+      box.querySelector('[data-sidebar-row="row' + start + '"]').focus();
+    };
+    ts("list: " + name, prep, steps, (g, s) => {
+      const box = document.getElementById("tmp-sidebar");
+      let prob;
+      try { prob = check(box, g, s); } finally { box.remove(); el.focus(); }
+      return prob;
+    });
+  }
+  const at = (row) => {
+    const a = document.activeElement;
+    const got = a && a.dataset ? a.dataset.sidebarRow : undefined;
+    return got === row ? "" : "focus " + JSON.stringify(got) + " want " + JSON.stringify(row);
+  };
+
+  tl("j moves down", 3, 0, ["j"], (b, g, s) => none(() => at("row1"))(g, s));
+  tl("k moves up", 3, 2, ["k"], (b, g, s) => none(() => at("row1"))(g, s));
+  tl("jj moves twice", 3, 0, ["jj"], () => at("row2"));
+  tl("j stops at the last row", 3, 2, ["jj"], () => at("row2"));
+  tl("k stops at the first row", 3, 0, ["k"], () => at("row0"));
+  tl("gg goes to the first row", 4, 3, ["gg"], () => at("row0"));
+  tl("G goes to the last row", 4, 0, ["G"], () => at("row3"));
+  tl("l opens a group, h closes it", 3, 0, ["l"], (b) => {
+    if (b.dataset.expanded !== "yes") return "l did not open: " + b.dataset.expanded;
+    V.feed("h");
+    return b.dataset.expanded === "no" ? "" : "h did not close: " + b.dataset.expanded;
+  });
+  /* Space still activates the focused row, and the leader is not taken. */
+  tl("Space is the row's", 3, 1, [" "], (b, g, s) => none(() => at("row1"))(g, s));
+  tl("Enter is the row's", 3, 1, ["Enter"], (b, g, s) => none(() => at("row1"))(g, s));
+  /* <C-j> is T3's own chord (terminal.toggle), not a move. */
+  tl("a chord is T3's", 3, 0, [["j", { ctrl: true }]], (b, g, s) => none(() => at("row0"))(g, s));
+  /* A thread being renamed is an input inside a row: every key is its own. */
+  tl("a rename input keeps its keys", 3, 0, [], (b) => {
+    const row = b.querySelector('[data-sidebar-row="row0"]');
+    const i = document.createElement("input");
+    row.appendChild(i);
+    i.focus();
+    const before = V.listSent;
+    V.feed("j"); V.feed("k"); V.feed("g"); V.feed("g");
+    if (V.listSent !== before) return "sent " + (V.listSent - before) + " arrows into a rename";
+    return document.activeElement === i ? "" : "focus left the input";
+  });
+  /* A stale pending g does not turn a later g into gg. */
+  tl("a lone g is dropped, not kept", 3, 1, ["g"], (b, g, s) => none(() => at("row1"))(g, s));
+
+  /* The settings page's navigation, the other list T3 drives with the arrows:
+     the same rows-plus-container shape on [data-settings-section], with no
+     Left or Right and no shift check. */
+  ts("list: j k move the settings navigation", () => {
+       setup("abc", 0);
+       el.blur();
+       const box = document.createElement("div");
+       box.id = "tmp-settings";
+       for (const name of ["general", "models", "keys"]) {
+         const r = document.createElement("button");
+         r.type = "button";
+         r.dataset.settingsSection = name;
+         box.appendChild(r);
+       }
+       box.addEventListener("keydown", (e) => {
+         const t = e.target;
+         if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+         if (!(t instanceof HTMLElement) || !t.matches("[data-settings-section]")) return;
+         const all = Array.from(box.querySelectorAll("[data-settings-section]"));
+         const n = all.indexOf(t);
+         const to = e.key === "ArrowDown" ? all[Math.min(n + 1, all.length - 1)]
+           : e.key === "ArrowUp" ? all[Math.max(n - 1, 0)]
+           : e.key === "Home" ? all[0]
+           : e.key === "End" ? all[all.length - 1] : undefined;
+         if (!to) return;
+         e.preventDefault();
+         to.focus({ preventScroll: true });
+       }, true);
+       document.body.appendChild(box);
+       box.querySelector('[data-settings-section="general"]').focus();
+     }, ["jj", "k"], (g, s) => {
+       const a = document.activeElement;
+       const got = a && a.dataset ? a.dataset.settingsSection : undefined;
+       document.getElementById("tmp-settings").remove();
+       el.focus();
+       return none()(g, s) || (got === "models" ? "" : "focus " + JSON.stringify(got) + " want models");
+     });
+
   /* Hint panel content */
   ts("hint after <leader>", composer("abc", 0), ["<leader>"], (g) => {
     const h = V.showHintNow();

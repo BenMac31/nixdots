@@ -64,6 +64,26 @@ The keydown listener is on `window` in the capture phase. The plugin runs
 before T3's bundle, so it is registered ahead of T3's own handlers, and a key
 it takes mid-sequence never reaches them.
 
+## j and k in T3's lists
+
+T3's thread list (the sidebar, and the thread panel, which is the same row
+component) and the settings navigation are roving-tabindex lists: every row is
+a `role="button"` with a `data-sidebar-row` or `data-settings-section`
+attribute, and T3 listens on the list's container for the arrow keys, Home and
+End. `workspace.focusPrevious` (`<C-h>`) lands on the current row.
+
+With a row focused, the plugin turns `j k h l gg G` into the arrows, `Home`
+and `End` that T3 already handles, dispatched at the row. Nothing about the
+list is reimplemented here, so expanding a group, loading more and the scroll
+into view stay T3's own. `Space` and `Enter` are left alone: they activate the
+focused row, and the leader is not taken over a focused control. A thread
+being renamed is an `input` inside a row, where every key stays its own.
+
+`[data-sidebar-row]` and `[data-settings-section]` are the only two lists T3
+drives this way. Its pickers are listboxes behind a text field, where a letter
+has to stay a letter. The key trees stay out of focused controls: `<leader>`,
+`g`, `]` and `[` run with nothing focused, not with a row focused.
+
 ## What it covers
 
 Modes (normal, insert, visual, visual line), counts, operators `d c y > <
@@ -90,11 +110,28 @@ If a T3 release moves the renderer entry point, `inject-vim.py` fails the
 build rather than shipping a half-patched bundle. Turn the flag off to get a
 working T3 back in one rebuild, then fix the injector.
 
+## Reading T3's bundle
+
+Finding what T3 itself does with a key (which lists it drives, what a command
+is wired to) means reading `app.asar`, which is one 270 MB blob of
+concatenated files, so a plain `grep` prints megabyte-long lines.
+`probe-asar.py` slices a window around each hit instead:
+
+    python3 -I probe-asar.py \
+      "$(readlink -f ~/.nix-profile/bin/t3code | sed 's|/bin/t3code||')/lib/t3code/resources/app.asar" \
+      data-sidebar-row 300 500 8
+
+It is a reading tool only, and no part of the build. Names in the renderer
+chunks are mangled and change with every T3 release, so read behaviour from it
+and never bind to a name it shows.
+
 ## Tests
 
 `./run-tests.sh` drives the plugin in headless Chromium against a DOM shaped
-like Tiptap's, with a stand-in for the HardBreak extension. 222 cases, 130
-of them for the key sequences.
+like Tiptap's, with a stand-in for the HardBreak extension. 269 cases, 130
+of them for the key sequences and 14 for the list keys, those last against a
+copy of T3's own list handler rather than an invented one, so they fail if the
+keys the plugin sends stop being the keys T3 waits for.
 
 `CHROME=/path/to/chromium ./run-tests.sh` to skip the nixpkgs build.
 

@@ -33,6 +33,43 @@ tree items. Taking the leader over a focused button would break Space on that
 button for the sake of a leader nobody presses with a button focused. The cost
 is that Space no longer pages a scroll area; PageDown still does.
 
+One set of keys does run on a focused control: `j k h l gg G` on a list row,
+below.
+
+## Moving in a list
+
+Graphide's workflow for the agents panel is `<C-h>` into the pane, then `j`
+and `k` down and up it. Both halves exist in T3, but they had to be joined up:
+
+* `<C-h>` / `<C-l>` are `workspace.focusPrevious` / `focusNext`, which is T3's
+  F6 landmark walk over `[data-workspace-area]` (`composer`, `conversation`,
+  `details`, `panel`, `pull-requests`, the sidebar). Landing on an area
+  focuses its `[data-sidebar-row][aria-current="page"]`, so `<C-h>` really
+  does put the cursor on the open thread's row. This is close to Graphide's
+  `pane.left` / `pane.right`, and it is what those two keys already did.
+* `j` and `k` then did nothing, because every row is a `role="button"` and the
+  plugin stands the trees aside on a focused control (so Space still activates
+  it). T3's own list handler listens for `ArrowUp`, `ArrowDown`, `ArrowLeft`,
+  `ArrowRight`, `Home` and `End` on the list's container.
+
+So with a row focused the plugin translates `j k h l gg G` into those keys and
+dispatches them at the row. No part of the list is reimplemented: expanding a
+group, "load more" and the scroll into view stay T3's own behaviour, and a T3
+release that changes the list changes these keys with it.
+
+This covers `[data-sidebar-row]` (the sidebar and the thread panel, one row
+component) and `[data-settings-section]` (the settings navigation, the same
+shape without Left and Right). They are the only two lists T3 drives with the
+arrows; its pickers are listboxes behind a text field, where a letter has to
+stay a letter, and a thread being renamed is an `input` inside a row, where
+every key stays its own.
+
+`Space` and `Enter` keep activating the focused row, and the key trees still
+stay out of focused controls: `<leader>`, `g`, `]` and `[` run with nothing
+focused.
+
+## The `when` grammar
+
 T3's `when` grammar is `!`, `&&`, `||` and parens over these context keys, and
 nothing else: `terminalFocus`, `terminalOpen`, `previewFocus`, `previewOpen`,
 `editableFocus`, `modelPickerOpen`, `usagePageOpen`, `rightPanelOpen`,

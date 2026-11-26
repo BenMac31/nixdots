@@ -1295,23 +1295,87 @@
     return null;
   }
 
-  /* Where keys belong to the focused thing, not to the trees: anything that
-     takes text, and widgets with their own key handling (menus with
-     typeahead, listboxes, dialogs, the terminal). The composer is handled
-     before this. */
-  const NATIVE_KEYS = [
+  /* Where every key belongs to the focused thing: anything that takes text,
+     and widgets with their own key handling (menus with typeahead, listboxes,
+     dialogs, the terminal). The composer is handled before this. A letter
+     here is a letter, so the list keys below stand aside on it too: a thread
+     being renamed is an input inside a list row. */
+  const TEXT_KEYS = [
     "input", "textarea", "select", "[contenteditable]:not([contenteditable='false'])",
     "[role='textbox']", "[role='combobox']", "[role='searchbox']", "[role='spinbutton']",
     "[role='slider']", "[role='menu']", "[role='menubar']", "[role='listbox']",
     "[role='dialog']", "[role='alertdialog']", ".xterm",
-    /* Space activates these, everywhere on the web. Taking the leader over
-       them would break a focused button for the sake of a leader nobody
-       presses with a button focused. Enter and PageDown are unaffected. */
+  ].join(",");
+
+  /* Space activates these, everywhere on the web. Taking the leader over them
+     would break a focused button for the sake of a leader nobody presses with
+     a button focused. Enter and PageDown are unaffected. */
+  const ACTIVATE_KEYS = [
     "button", "summary", "[role='button']", "[role='checkbox']",
     "[role='radio']", "[role='switch']", "[role='tab']", "[role='option']",
     "[role='treeitem']", "[role='menuitem']", "[role='menuitemcheckbox']",
     "[role='menuitemradio']",
   ].join(",");
+
+  const NATIVE_KEYS = TEXT_KEYS + "," + ACTIVATE_KEYS;
+
+  /* ----------------------------------------------------------- lists ----- */
+
+  /* T3's thread lists (the sidebar, and the thread panel, which is the same
+     row component) are a roving-tabindex list: each row is a
+     `div role="button" tabindex="0" data-sidebar-row="..."`, and T3 listens
+     on the list's container, in the capture phase, for ArrowUp, ArrowDown,
+     ArrowLeft, ArrowRight, Home and End. workspace.focusPrevious (<C-h>)
+     lands on the current row, and from there Graphide moves with j and k.
+
+     Every row is a button, so NATIVE_KEYS below stands the trees aside on it,
+     which is right for Space: it activates the focused row. j and k are not
+     Space. They are translated into the arrows T3 already handles rather than
+     reimplemented here, so collapsing a group, loading more and the scroll
+     into view stay T3's own behaviour, and a release that changes the list
+     changes these keys with it.
+
+     The settings page's navigation is the same pattern on
+     `[data-settings-section]`, with no Left or Right, so h and l do nothing
+     there. Those two are the only lists T3 drives this way; its pickers and
+     menus are listboxes behind a text field, where a letter has to stay a
+     letter. */
+  const LIST_SEL = "[data-sidebar-row], [data-settings-section]";
+  const LIST_ARROWS = {
+    j: "ArrowDown", k: "ArrowUp",
+    h: "ArrowLeft", l: "ArrowRight",   /* out of a group, into one */
+    G: "End",                          /* gg is below: it needs a pending g */
+  };
+  const LIST = { g: 0, sent: 0 };
+
+  /* The arrow T3's own list handler is waiting for. Dispatched at the row, so
+     the container's capture listener sees it with the row as its target; it
+     carries no modifier, which is what that handler requires. */
+  function listMove(row, key) {
+    LIST.sent++;
+    row.dispatchEvent(new KeyboardEvent("keydown", {
+      key, code: key, bubbles: true, cancelable: true,
+    }));
+  }
+
+  /* One key with a list row focused. True when the key was taken. */
+  function listKey(e, row) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return false;   /* T3's own chords */
+    const k = e.key;
+    if (k === "g" && !e.shiftKey) {
+      if (e.repeat) return true;                            /* a held g is not gg */
+      if (LIST.g && Date.now() - LIST.g < SEQ_TIMEOUT_MS) {
+        LIST.g = 0; listMove(row, "Home"); return true;
+      }
+      LIST.g = Date.now();
+      return true;
+    }
+    LIST.g = 0;
+    const arrow = LIST_ARROWS[k];
+    if (!arrow) return false;        /* Space, Enter, everything else: T3's */
+    listMove(row, arrow);
+    return true;
+  }
 
   /* ------------------------------------------------------------------- ui -- */
 
@@ -1482,14 +1546,22 @@
 
   const eat = (e) => { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); };
 
-  /* Keys with no composer focused: only the sequence engine runs, and only
-     where the focused thing does not want the keys itself. Space is taken as
-     the leader even inside a scrollable area, so it no longer pages one;
-     PageDown still does. */
+  /* Keys with no composer focused: the sequence engine and the list keys run,
+     and only where the focused thing does not want the keys itself. Space is
+     taken as the leader even inside a scrollable area, so it no longer pages
+     one; PageDown still does. */
   function onGlobalKey(e) {
     if (e.defaultPrevented) return;
     const t = e.target && e.target.nodeType === 1 ? e.target : document.activeElement;
     const f = document.activeElement;
+    /* A focused list row, with no sequence pending: j k h l gg G move in it.
+       A pending sequence keeps its keys and falls through to be cancelled, as
+       any other focus that wants its own keys does. */
+    const takesText = (t && t.closest && t.closest(TEXT_KEYS)) || (f && f.closest && f.closest(TEXT_KEYS));
+    if (!SEQ.node && !takesText) {
+      const row = (f && f.closest && f.closest(LIST_SEL)) || (t && t.closest && t.closest(LIST_SEL));
+      if (row && listKey(e, row)) { eat(e); return; }
+    }
     if ((t && t.closest && t.closest(NATIVE_KEYS)) || (f && f.closest && f.closest(NATIVE_KEYS))) {
       if (SEQ.node) { seqCancel(); refresh(); }
       return;
@@ -1627,6 +1699,7 @@
       return seqHint();
     },
     get sent() { return SEQ.sent; },
+    get listSent() { return LIST.sent; },
     seqTimeoutMs: SEQ_TIMEOUT_MS,
     debug() {
       const c = here();
