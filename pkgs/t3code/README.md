@@ -122,17 +122,22 @@ keys (`Composer::rests`, "where an escape would leave it", and page.rs's
 | `i` `a` `I` `A` `o` | write to the agent again |
 | `/` | search the conversation (`chat.find`) |
 
-gred has a cursor line to move and T3's conversation has none, so `j` and `k`
-move the view by a line, which is what `<C-e>` and `<C-y>` do. A line is
-measured from the conversation's own text rather than assumed, so the lines
-land where they stood.
+gred has a cursor line to move and T3's conversation has none. Read as a page
+instead, `j` and `k` take the step gred's own page keys take, `STEP` = 60
+(`page/src/keys.rs`), so `j` moves the same distance in the chat as it does
+in the preview. `<C-e>` and `<C-y>` stay the view a line, measured from the
+conversation's own text rather than assumed.
 
 The view glides rather than jumping: `ui::motion`'s GLIDE, a spring of
 response 90 ms, written as the exponential that settles in that time. The
 plugin writes `scrollTop` itself each frame instead of asking the app to
 scroll, because the app's own smooth scrolling starts again on every key and
-a held `j` then fights it. A key pressed while a glide runs adds to where the
-view is going, so holding one reads as a single movement. Anything else that
+a held `j` then fights it. A scroller set to `scroll-behavior: smooth`
+animates even a `scrollTop` written straight to it, which leaves the view
+somewhere the glide did not put it and makes it give itself up a frame later,
+so the glide holds the behaviour at `auto` for as long as it runs and hands
+it back after. A key pressed while a glide runs adds to where the view is
+going, so holding one reads as a single movement. Anything else that
 moves the view, the wheel or T3 holding the end of a turn, wins: the glide
 gives up rather than fighting it.
 
