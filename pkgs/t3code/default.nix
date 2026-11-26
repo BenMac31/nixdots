@@ -1,7 +1,16 @@
 { lib, stdenv, fetchurl, dpkg, autoPatchelfHook, makeShellWrapper, wrapGAppsHook3
+, python3
 , alsa-lib, at-spi2-atk, at-spi2-core, cairo, cups, dbus, expat, glib, gtk3
 , libdrm, libgbm, libnotify, libsecret, libuuid, libxkbcommon, mesa, nspr, nss
 , pango, systemd, libGL, vulkan-loader, xdg-utils, xorg
+
+# Inline ./vim-composer.js into the renderer, giving the chat composer vim
+# modes. T3's own keybinding layer cannot do this: a binding is one key plus
+# modifiers with no modal state, and its command registry holds no
+# text-editing command at all. Set this false to get a stock T3 back; the
+# build also fails loudly rather than shipping a half-patched bundle if a T3
+# release moves the renderer entry point.
+, vimComposer ? true
 }:
 
 stdenv.mkDerivation rec {
@@ -39,6 +48,18 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
+  # app.asar carries an app.asar.unpacked tree beside it, so extract-and-repack
+  # is out: packing drops the per-entry "unpacked" flags and would inline
+  # native modules that have to stay real files. inject-vim.py rewrites the one
+  # index.html entry in place instead and leaves the other 2787 byte-identical.
+  postInstall = lib.optionalString vimComposer ''
+    chmod u+w $out/lib/t3code/resources/app.asar
+    ${python3.interpreter} ${./inject-vim.py} \
+      $out/lib/t3code/resources/app.asar \
+      ${./vim-composer.js}
+    chmod a-w $out/lib/t3code/resources/app.asar
+  '';
+
   postFixup = ''
     makeShellWrapper $out/lib/t3code/t3code $out/bin/t3code \
       "''${gappsWrapperArgs[@]}" \
@@ -53,8 +74,11 @@ stdenv.mkDerivation rec {
       --add-flags $out/lib/t3code/resources/app.asar/apps/server/dist/bin.mjs
   '';
 
+  passthru = { inherit vimComposer; };
+
   meta = {
-    description = "Desktop app for coding agents";
+    description = "Desktop app for coding agents"
+      + lib.optionalString vimComposer " (composer patched for vim modes)";
     homepage = "https://t3.codes";
     license = lib.licenses.mit;
     sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];

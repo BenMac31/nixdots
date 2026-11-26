@@ -4,16 +4,35 @@ let
   claude = pkgs.writeShellScriptBin "t3code-claude" ''
     exec ${pool.command} claude "$@"
   '';
+  cfg = config.ai.t3code;
 in
 {
   options = {
     ai.t3code = {
       enable = lib.mkEnableOption "the T3 Code desktop app";
+      vimComposer = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Give the chat composer vim modes, by inlining
+          pkgs/t3code/vim-composer.js into T3's renderer.
+
+          T3's own keybindings cannot do this: a binding is one key plus
+          modifiers with no modal state, and the command registry holds no
+          text-editing command at all.
+
+          Turn this off to run a stock T3. There is also a runtime switch that
+          needs no rebuild: __t3vim.disable() in devtools, or
+          localStorage['t3code:vim-composer'] = 'off'.
+        '';
+      };
     };
   };
-  config = lib.mkIf config.ai.t3code.enable (lib.mkMerge [
+  config = lib.mkIf cfg.enable (lib.mkMerge [
     {
-      home.packages = [ (pkgs.callPackage ../../../../pkgs/t3code.nix { }) ];
+      home.packages = [
+        (pkgs.callPackage ../../../../pkgs/t3code { inherit (cfg) vimComposer; })
+      ];
       xdg.mimeApps.defaultApplications = {
         "x-scheme-handler/t3code" = "t3code.desktop";
       };
