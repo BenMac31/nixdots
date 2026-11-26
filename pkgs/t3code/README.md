@@ -27,6 +27,32 @@ Synthetic events carry `bubbles: false` and are dispatched straight at
 sees them. The handler ignores anything with `isTrusted === false`, so these
 never feed back into it.
 
+## Graphide's key sequences
+
+T3's keybindings take one chord per binding and no sequences, so the plugin
+owns Graphide's key trees (`gred-rs/.../presets/gred.toml`, leader `<Space>`):
+`<leader>...`, `<C-w>...`, `g...` and `]...` / `[...`. They run in the
+composer's Normal and Visual modes and, with nothing editable focused,
+anywhere in the app. Inputs, the terminal, menus, listboxes and dialogs keep
+their own keys.
+
+A completed sequence is dispatched as one synthetic `Ctrl+Alt+Shift+<key>`
+keydown at `window`, which `~/.t3/userdata/keybindings.json` binds to the T3
+command. At `window`, T3's `editableFocus` reads false. The key table is
+`SEQ_ROWS` in `vim-composer.js`; a row with no T3 counterpart is still
+consumed and shows a message instead. In the composer, `:` sends the command
+palette's chord too.
+
+`g` is shared with vim: `gt gT ga gd gD gr*` are the app's, any other key
+after `g` goes to vim's own `g` (`gg gu gU g~`). An unfinished sequence drops
+after `SEQ_TIMEOUT_MS` (1000 ms; a lone `g` that times out stays vim's `g`),
+`Escape` drops it at once, and a which-key panel lists the next keys while one
+is pending. `__t3vim.feedSeq("<leader>sf")` drives it from devtools.
+
+The keydown listener is on `window` in the capture phase. The plugin runs
+before T3's bundle, so it is registered ahead of T3's own handlers, and a key
+it takes mid-sequence never reaches them.
+
 ## What it covers
 
 Modes (normal, insert, visual, visual line), counts, operators `d c y > <
@@ -56,7 +82,8 @@ working T3 back in one rebuild, then fix the injector.
 ## Tests
 
 `./run-tests.sh` drives the plugin in headless Chromium against a DOM shaped
-like Tiptap's, with a stand-in for the HardBreak extension. 92 cases.
+like Tiptap's, with a stand-in for the HardBreak extension. 222 cases, 130
+of them for the key sequences.
 
 `CHROME=/path/to/chromium ./run-tests.sh` to skip the nixpkgs build.
 

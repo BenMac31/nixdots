@@ -14,7 +14,7 @@ rm -rf "$D"; mkdir -p "$D"
 trap 'rm -rf "$D"' EXIT
 
 TMPDIR="$D" "$CHROME" --headless=new --disable-gpu --no-sandbox --no-first-run \
-  --user-data-dir="$D/profile" --virtual-time-budget=4000 \
+  --user-data-dir="$D/profile" --virtual-time-budget=15000 \
   --dump-dom "file://$PWD/test-vim-composer.html" 2>/dev/null \
   | python3 -c '
 import sys, re, html

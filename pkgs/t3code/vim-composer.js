@@ -32,6 +32,13 @@
   const lsGet = (k) => { try { return window.localStorage.getItem(k); } catch { return null; } };
   const lsSet = (k, v) => { try { window.localStorage.setItem(k, v); } catch { /* ignore */ } };
 
+  /* An incomplete key sequence (<leader>a, <C-w>, g, ]) is dropped after this
+     long. Graphide's timeoutlen is 300 ms, but it has a which-key bar to
+     read; this gives the hint panel below time to be read too. */
+  const SEQ_TIMEOUT_MS = 1000;
+  /* How long a "no T3 equivalent" or "not mapped" message stays up. */
+  const FLASH_MS = 1600;
+
   const NORMAL = "NORMAL", INSERT = "INSERT", VISUAL = "VISUAL", VLINE = "V-LINE";
 
   const WORDCH = /[A-Za-z0-9_]/;
@@ -940,9 +947,326 @@
     refresh();
   }
 
+  /* ------------------------------------------------------------ sequences -- */
+
+  /* Graphide's key trees (gred-rs presets/gred.toml, the `gred` preset with
+     editing = "vim", leader <Space>), owned here in Normal and Visual mode
+     and, with nothing editable focused, everywhere in the app.
+
+     T3's keybinding layer takes one chord per binding and no sequences, so a
+     completed sequence is turned into one synthetic Ctrl+Alt+Shift chord
+     dispatched at `window`, which ~/.t3/userdata/keybindings.json binds to the
+     T3 command. Dispatched at window, T3's `editableFocus` context is false,
+     and the event never reaches this file's own listener on `document` (and
+     is untrusted besides), so it cannot feed back.
+
+     Each row: the sequence in gred.toml notation, the chord key to dispatch
+     (null where T3 has no counterpart: the sequence is still consumed, and a
+     message says so), and gred.toml's which-key description. Rows are in
+     gred.toml's order, which is the order the hint panel lists them in. */
+  const SEQ_ROWS = [
+    ["<leader><leader>", "c", "switch agent"],
+    ["<leader>/", "/", "fuzzy find here"],
+    ["<leader>sf", "f", "files"],
+    ["<leader>sg", "g", "grep"],
+    ["<leader>sw", null, "the word here"],
+    ["<leader>sa", null, "agents' transcripts"],
+    ["<leader>sh", null, "help"],
+    ["<leader>sk", null, "keymaps"],
+    ["<leader>sc", "c", "commands"],
+    ["<leader>sm", null, "marks"],
+    ["<leader>s.", null, "recent"],
+    ["<leader>sp", null, "recent projects"],
+    ["<leader>sr", null, "resume the last search"],
+    ["<leader>ss", null, "every search"],
+    ["<leader>so", null, "settings"],
+    ["<leader>an", "n", "new agent"],
+    ["<leader>aN", "o", "new agent, the other of Claude Code and Codex"],
+    ["<leader>ah", "m", "the new agent: Claude Code, Codex or a plugin's"],
+    ["<leader>ai", null, "where the new agent starts"],
+    ["<leader>ad", null, "the agent definition the new agent starts as"],
+    ["<leader>aL", null, "the launch script the new agent runs through"],
+    ["<leader>ay", "y", "Skip permissions on or off for the new agent"],
+    ["<leader>ar", null, "restart"],
+    ["<leader>af", null, "fork the conversation"],
+    ["<leader>aw", "w", "its worktree"],
+    ["<leader>al", "l", "land its work"],
+    ["<leader>am", "m", "its model and effort"],
+    ["<leader>ae", "e", "step its effort"],
+    ["<leader>aF", null, "fast mode on or off"],
+    ["<leader>ak", "k", "stop"],
+    ["<leader>ap", "p", "pause or resume"],
+    ["<leader>aR", null, "resume agents stopped by a usage limit"],
+    ["<leader>ab", null, "bump agents stopped by an API error"],
+    ["<leader>ac", "h", "your other computers"],
+    ["<leader>aT", "i", "pin to the top of the list, or unpin"],
+    ["<leader>a!", null, "mark important, or not"],
+    ["<leader>at", "t", "its terminal, or back to its page"],
+    ["<leader>av", "v", "the list over the agent, or alone"],
+    ["<leader>q", null, "requests for you"],
+    ["<leader>m", null, "Graph"],
+    ["<leader>T", null, "tests"],
+    ["<leader>hs", null, "accept the hunk"],
+    ["<leader>hr", null, "reject the hunk"],
+    ["<leader>hS", null, "accept the file"],
+    ["<leader>hR", null, "reject the file"],
+    ["<leader>hu", null, "undo the last accept"],
+    ["<leader>hp", "d", "preview the hunk"],
+    ["<leader>hb", null, "which agent wrote this"],
+    ["<leader>tt", "a", "dark or light theme"],
+    ["<leader>tc", null, "buttons and keys in words, or neither"],
+    ["<leader>tn", null, "Vim engine or Neovim"],
+    ["<leader>tp", null, "frame times"],
+    ["<leader>tm", null, "reduced motion"],
+    ["<leader>tb", null, "agent blame"],
+    ["<leader>tw", "r", "the next layout"],
+    ["<leader>rn", null, "rename"],
+    ["<leader>ds", null, "symbols here"],
+    ["<leader>ws", null, "symbols everywhere"],
+    ["<leader>D", null, "type definition"],
+    ["<leader>cd", null, "the line's diagnostics"],
+    ["<leader>ca", null, "code actions"],
+    ["<leader>cf", null, "format the file"],
+
+    ["<C-w>h", null, "focus left"],
+    ["<C-w>j", null, "focus down"],
+    ["<C-w>k", null, "focus up"],
+    ["<C-w>l", null, "focus right"],
+    ["<C-w>s", "s", "split"],
+    ["<C-w>v", "b", "split vertically"],
+    ["<C-w>q", "x", "quit the pane"],
+    ["<C-w>c", "x", "close the pane"],
+    ["<C-w>o", null, "close every other pane"],
+    ["<C-w>=", null, "equal sizes"],
+    ["<C-w>x", null, "exchange with the next pane"],
+    ["<C-w>H", null, "move to the far left"],
+    ["<C-w>J", null, "move to the bottom"],
+    ["<C-w>K", null, "move to the top"],
+    ["<C-w>L", null, "move to the far right"],
+    ["<C-w>>", null, "wider"],
+    ["<C-w><lt>", null, "narrower"],
+    ["<C-w>+", null, "taller"],
+    ["<C-w>-", null, "shorter"],
+    ["<C-w>T", "u", "into a new tab"],
+
+    /* g is shared with the vim layer: only these second keys are the app's.
+       Any other key after g (g u U ~ e E _) is replayed into vim's own g. */
+    ["gt", ".", "next tab"],
+    ["gT", ",", "previous tab"],
+    ["ga", "j", "add to the composer's context"],
+    ["gd", null, "definition"],
+    ["gD", null, "declaration"],
+    ["grr", null, "references"],
+    ["gri", null, "implementations"],
+    ["grt", null, "type definition"],
+    ["grn", null, "rename"],
+    ["gra", null, "code actions"],
+
+    ["]q", null, "next request for you"],
+    ["[q", null, "previous request for you"],
+    ["]a", ".", "next running agent"],
+    ["[a", ",", "previous running agent"],
+    ["]d", null, "next diagnostic"],
+    ["[d", null, "previous diagnostic"],
+  ];
+
+  /* gred.toml [groups], the which-key names of the prefixes. */
+  const SEQ_GROUPS = {
+    "<leader>": "Leader",
+    "<leader>s": "[S]earch",
+    "<leader>a": "[A]gents",
+    "<leader>h": "Git [H]unk",
+    "<leader>t": "[T]oggle",
+    "<leader>r": "[R]ename",
+    "<leader>d": "[D]ocument",
+    "<leader>w": "[W]orkspace",
+    "<leader>c": "[C]ode",
+    "<C-w>": "Windows",
+    "]": "Next",
+    "[": "Previous",
+    "g": "Go to",
+    "gr": "Code",
+  };
+
+  /* gred notation -> the e.key values pressed. <C-w> stays one token. */
+  function seqTokens(str) {
+    const out = [];
+    let s = String(str);
+    while (s.length) {
+      const m = /^<(leader|Space|C-w|lt|Esc)>/i.exec(s);
+      if (m) {
+        const w = m[1].toLowerCase();
+        out.push(w === "leader" || w === "space" ? " " : w === "c-w" ? "<C-w>" : w === "lt" ? "<" : "Escape");
+        s = s.slice(m[0].length);
+      } else { out.push(s[0]); s = s.slice(1); }
+    }
+    return out;
+  }
+  const seqName = (toks) => toks.map((k) => (k === " " ? "<leader>" : k === "<" ? "<lt>" : k)).join("");
+
+  /* The trie. A node is { kids: Map(key -> node), leaf: {chord, desc}|null,
+     name: the sequence so far, group: its which-key name }. */
+  const SEQ_ROOT = { kids: new Map(), leaf: null, name: "", group: "" };
+  for (const [seq, chord, desc] of SEQ_ROWS) {
+    const toks = seqTokens(seq);
+    let n = SEQ_ROOT;
+    for (let i = 0; i < toks.length; i++) {
+      let c = n.kids.get(toks[i]);
+      if (!c) {
+        const name = seqName(toks.slice(0, i + 1));
+        c = { kids: new Map(), leaf: null, name, group: SEQ_GROUPS[name] || "" };
+        n.kids.set(toks[i], c);
+      }
+      n = c;
+    }
+    n.leaf = { chord, desc };
+  }
+  /* Bare keys that start a tree. Nothing else bare is taken, so T3's own
+     bare keys (the usage page's c, t, l) keep working. */
+  const SEQ_STARTS = new Set([" ", "g", "]", "["]);
+
+  const MOD_KEYS = /^(Shift|Control|Alt|AltGraph|Meta|OS|CapsLock|NumLock|ScrollLock|Fn|Hyper|Super)$/;
+
+  const SEQ = {
+    node: null,      // the pending trie node, null when nothing is pending
+    local: false,    // started in the composer (so a bare g can go back to vim)
+    timer: 0,
+    flash: "",       // a short message for the hint panel
+    flashTimer: 0,
+    sent: 0,         // chords dispatched, for the tests
+  };
+
+  function seqCancel() {
+    SEQ.node = null; SEQ.local = false;
+    if (SEQ.timer) { clearTimeout(SEQ.timer); SEQ.timer = 0; }
+  }
+
+  function seqFlash(msg) {
+    SEQ.flash = msg;
+    if (SEQ.flashTimer) clearTimeout(SEQ.flashTimer);
+    SEQ.flashTimer = setTimeout(() => { SEQ.flash = ""; SEQ.flashTimer = 0; refresh(); }, FLASH_MS);
+  }
+
+  const composerVim = () => !!(S.el && S.el.isConnected && S.mode !== INSERT);
+
+  function seqArm() {
+    if (SEQ.timer) clearTimeout(SEQ.timer);
+    SEQ.timer = setTimeout(() => {
+      SEQ.timer = 0;
+      const n = SEQ.node, local = SEQ.local;
+      seqCancel();
+      /* A lone g that timed out is still vim's g: gg must not depend on
+         typing speed. */
+      if (n && n.name === "g" && local && composerVim()) S.pending = "g";
+      refresh();
+    }, SEQ_TIMEOUT_MS);
+  }
+
+  function seqStart(key, local) {
+    SEQ.node = SEQ_ROOT.kids.get(key) || null;
+    SEQ.local = !!local;
+    SEQ.flash = "";
+    if (SEQ.node) seqArm();
+    refresh();
+  }
+
+  const CHORD_CODES = { "/": "Slash", ".": "Period", ",": "Comma" };
+
+  /* The one way this file talks to T3's command layer: a synthetic chord at
+     window, which keybindings.json maps to a T3 command. */
+  function dispatchChord(key) {
+    SEQ.sent++;
+    window.dispatchEvent(new KeyboardEvent("keydown", {
+      key,
+      code: CHORD_CODES[key] || (/^[a-z]$/.test(key) ? "Key" + key.toUpperCase() : ""),
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+      altKey: true,
+      shiftKey: true,
+    }));
+  }
+
+  /* One key into the pending sequence. */
+  function seqStep(k) {
+    const at = SEQ.node, local = SEQ.local;
+    const next = at && at.kids.get(k);
+    if (!next) {
+      seqCancel();
+      if (at && at.name === "g" && local && composerVim()) {
+        /* gg gu gU g~ ge gE g_: vim's g, as if the app tree were not there. */
+        S.pending = "g";
+        handleKey(k);
+        return;
+      }
+      S.count = "";
+      seqFlash(seqName([...seqTokens(at ? at.name : ""), k]) + " is not mapped");
+      refresh();
+      return;
+    }
+    if (next.kids.size) { SEQ.node = next; seqArm(); refresh(); return; }
+    seqCancel();
+    S.count = "";
+    if (next.leaf && next.leaf.chord) dispatchChord(next.leaf.chord);
+    else seqFlash(next.name + " (" + (next.leaf ? next.leaf.desc : "") + "): no T3 equivalent");
+    refresh();
+  }
+
+  /* A key while a sequence is pending. Returns "eat" when the key was taken,
+     "skip" for a bare modifier (the sequence stays pending), or "pass" when
+     the sequence was dropped and the key should be handled as usual. */
+  function seqPendingKey(e) {
+    let k = e.key;
+    if (k === "Escape" || (e.ctrlKey && !e.altKey && !e.metaKey && k === "[")) {
+      seqCancel(); refresh(); return "eat";
+    }
+    if (MOD_KEYS.test(k)) return "skip";
+    /* A held key's auto-repeat must not walk the tree (a held Space would
+       otherwise be <leader><leader>). */
+    if (e.repeat) return "eat";
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      /* <C-w><C-s> is <C-w>s, as in vim. */
+      const inWin = SEQ.node && SEQ.node.name.startsWith("<C-w>");
+      if (!(inWin && e.ctrlKey && !e.altKey && !e.metaKey && k.length === 1)) {
+        seqCancel(); refresh(); return "pass";
+      }
+    }
+    if (k.length !== 1) { seqCancel(); refresh(); return "pass"; }
+    seqStep(k);
+    return "eat";
+  }
+
+  /* What the hint panel shows: the pending prefix's next keys, or a message. */
+  function seqHint() {
+    if (SEQ.node) {
+      const items = [];
+      for (const [k, n] of SEQ.node.kids) {
+        items.push({
+          key: k === " " ? "SPC" : k,
+          desc: n.kids.size ? "+" + (n.group || "more") : n.leaf ? n.leaf.desc : "",
+          none: !n.kids.size && !(n.leaf && n.leaf.chord),
+        });
+      }
+      return { title: SEQ.node.name + (SEQ.node.group ? "  " + SEQ.node.group : ""), items, message: "" };
+    }
+    if (SEQ.flash) return { title: "", items: [], message: SEQ.flash };
+    return null;
+  }
+
+  /* Where keys belong to the focused thing, not to the trees: anything that
+     takes text, and widgets with their own key handling (menus with
+     typeahead, listboxes, dialogs, the terminal). The composer is handled
+     before this. */
+  const NATIVE_KEYS = [
+    "input", "textarea", "select", "[contenteditable]:not([contenteditable='false'])",
+    "[role='textbox']", "[role='combobox']", "[role='searchbox']", "[role='spinbutton']",
+    "[role='slider']", "[role='menu']", "[role='menubar']", "[role='listbox']",
+    "[role='dialog']", "[role='alertdialog']", ".xterm",
+  ].join(",");
+
   /* ------------------------------------------------------------------- ui -- */
 
-  let badge = null, blockEl = null, styled = false;
+  let badge = null, blockEl = null, keysEl = null, keysShown = "", styled = false;
 
   function ui() {
     if (styled) return;
@@ -958,14 +1282,29 @@
       ".t3vim-block{position:fixed;z-index:2147482999;pointer-events:none;border-radius:1px;",
       "background:var(--primary,#4fa396);opacity:.3}",
       ".t3vim-normal{caret-color:transparent !important}",
+      /* The which-key panel: fixed, bottom-anchored, so it never needs its own
+         height measured. */
+      ".t3vim-keys{position:fixed;z-index:2147483001;pointer-events:none;display:none;",
+      "max-width:min(620px,calc(100vw - 16px));box-sizing:border-box;padding:6px 8px;border-radius:6px;",
+      "font:500 11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;",
+      "background:var(--popover,#10181c);color:var(--popover-foreground,#d5dde1);",
+      "box-shadow:0 0 0 1px var(--border,#2a363c),0 6px 18px rgba(0,0,0,.35)}",
+      ".t3vim-keys-title{font-weight:700;color:var(--primary,#4fa396);margin-bottom:3px}",
+      ".t3vim-keys-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));column-gap:14px}",
+      ".t3vim-keys-row{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".t3vim-keys-row b{display:inline-block;min-width:3ch;color:var(--primary,#4fa396)}",
+      ".t3vim-keys-row.none{opacity:.45}",
     ].join("");
     document.head.appendChild(css);
     badge = document.createElement("div");
     badge.className = "t3vim-badge";
     blockEl = document.createElement("div");
     blockEl.className = "t3vim-block";
+    keysEl = document.createElement("div");
+    keysEl.className = "t3vim-keys";
     document.body.appendChild(badge);
     document.body.appendChild(blockEl);
+    document.body.appendChild(keysEl);
   }
 
   function hideUI() {
@@ -980,8 +1319,53 @@
     pending = true;
     requestAnimationFrame(() => {
       pending = false;
+      try { paintKeys(); } catch { /* never let the UI break editing */ }
       try { paint(); } catch { /* never let the UI break editing */ }
     });
+  }
+
+  /* The which-key panel. Its content is rebuilt only when what it shows
+     changes; each paint just places it. Shown with or without a composer,
+     since the trees work app-wide. */
+  function paintKeys() {
+    const h = S.on ? seqHint() : null;
+    if (!h) { if (keysEl) keysEl.style.display = "none"; keysShown = ""; return; }
+    ui();
+    const sig = h.message || h.title;
+    if (sig !== keysShown) {
+      keysShown = sig;
+      keysEl.textContent = "";
+      if (h.message) {
+        keysEl.textContent = h.message;
+      } else {
+        const title = document.createElement("div");
+        title.className = "t3vim-keys-title";
+        title.textContent = h.title;
+        const grid = document.createElement("div");
+        grid.className = "t3vim-keys-grid";
+        for (const it of h.items) {
+          const row = document.createElement("div");
+          row.className = "t3vim-keys-row" + (it.none ? " none" : "");
+          const b = document.createElement("b");
+          b.textContent = it.key;
+          row.appendChild(b);
+          row.appendChild(document.createTextNode(" " + it.desc + (it.none ? " (no T3 equivalent)" : "")));
+          grid.appendChild(row);
+        }
+        keysEl.appendChild(title);
+        keysEl.appendChild(grid);
+      }
+    }
+    const anchor = S.el && S.el.isConnected ? (S.el.closest(FORM_SEL) || S.el) : null;
+    if (anchor) {
+      const fr = anchor.getBoundingClientRect();
+      keysEl.style.left = Math.max(8, fr.left + 8) + "px";
+      keysEl.style.bottom = Math.max(8, window.innerHeight - fr.top + 14) + "px";
+    } else {
+      keysEl.style.left = "16px";
+      keysEl.style.bottom = "16px";
+    }
+    keysEl.style.display = "block";
   }
 
   function paint() {
@@ -993,7 +1377,8 @@
     const label = S.mode
       + (S.operator ? " " + S.operator : "")
       + (S.useClip ? ' "+' : "")
-      + ((S.opCount + S.count) ? " " + (S.opCount + S.count) : "");
+      + ((S.opCount + S.count) ? " " + (S.opCount + S.count) : "")
+      + (SEQ.node ? " " + SEQ.node.name : "");
     badge.style.display = "block";
     badge.dataset.mode = S.mode;
     badge.textContent = label;
@@ -1048,14 +1433,48 @@
 
   const eat = (e) => { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); };
 
+  /* Keys with no composer focused: only the sequence engine runs, and only
+     where the focused thing does not want the keys itself. Space is taken as
+     the leader even inside a scrollable area, so it no longer pages one;
+     PageDown still does. */
+  function onGlobalKey(e) {
+    if (e.defaultPrevented) return;
+    const t = e.target && e.target.nodeType === 1 ? e.target : document.activeElement;
+    const f = document.activeElement;
+    if ((t && t.closest && t.closest(NATIVE_KEYS)) || (f && f.closest && f.closest(NATIVE_KEYS))) {
+      if (SEQ.node) { seqCancel(); refresh(); }
+      return;
+    }
+    const k = e.key;
+    if (SEQ.node) {
+      const r = seqPendingKey(e);
+      if (r === "eat") eat(e);
+      return;
+    }
+    if (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey && k === "w") { eat(e); seqStart("<C-w>", false); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (SEQ_STARTS.has(k)) { eat(e); seqStart(k, false); }
+  }
+
   function onKeyDown(e) {
     if (!S.on || !e.isTrusted) return;
     const el = activeEditable();
-    if (!el) { if (S.el) { S.el = null; hideUI(); } return; }
-    if (S.el !== el) { S.el = el; S.mode = INSERT; }
+    if (!el) {
+      if (S.el) { S.el = null; hideUI(); }
+      onGlobalKey(e);
+      return;
+    }
+    if (S.el !== el) { S.el = el; S.mode = INSERT; seqCancel(); }
 
     const k = e.key;
     const ctrlOnly = e.ctrlKey && !e.altKey && !e.metaKey;
+
+    /* A pending sequence sees the key before anything else, Escape included. */
+    if (SEQ.node && S.mode !== INSERT) {
+      const r = seqPendingKey(e);
+      if (r === "eat") { eat(e); return; }
+      if (r === "skip") return;
+    }
 
     if (k === "Escape" || (ctrlOnly && k === "[")) {
       if (S.mode === INSERT) {
@@ -1084,6 +1503,8 @@
       for (let i = 0; i < n; i++) redo();
       setMode(NORMAL); refresh(); eat(e); return;
     }
+    const free = !S.operator && !S.pending;  /* not mid-command: f<Space>, r], di[ stay vim's */
+    if (ctrlOnly && !e.shiftKey && k === "w" && free) { eat(e); seqStart("<C-w>", true); return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;   /* T3's own keybindings */
     if (k === "Enter") { setMode(INSERT); return; }   /* let T3 send */
     if (k === "Tab") return;
@@ -1094,13 +1515,23 @@
     }
 
     eat(e);
+    if (free && SEQ_STARTS.has(k)) { seqStart(k, true); return; }
+    /* Graphide's `:` command line. T3's own `:` binding is guarded
+       !editableFocus, which the focused composer fails, so send the command
+       palette's chord from here, where editableFocus reads false. */
+    if (free && k === ":") { S.count = ""; dispatchChord("c"); refresh(); return; }
     try { handleKey(k); } catch { reset(); refresh(); }
   }
 
-  document.addEventListener("keydown", onKeyDown, true);
+  /* On window, capture phase: this script runs before T3's module bundle, so
+     it is registered ahead of T3's own window-capture key handlers and a key
+     it eats mid-sequence (the t of <leader>tt) never reaches them. The
+     synthetic chords it dispatches at window come back through here
+     untrusted, and the isTrusted check drops them. */
+  window.addEventListener("keydown", onKeyDown, true);
   document.addEventListener("focusin", () => {
     const el = activeEditable();
-    if (el) { if (S.el !== el) { S.el = el; S.mode = INSERT; reset(); } refresh(); }
+    if (el) { if (S.el !== el) { S.el = el; S.mode = INSERT; reset(); seqCancel(); } refresh(); }
     else { S.el = null; hideUI(); }
   }, true);
   document.addEventListener("selectionchange", () => { if (S.el && S.mode !== INSERT) refresh(); });
@@ -1108,7 +1539,7 @@
   window.addEventListener("scroll", refresh, { passive: true, capture: true });
 
   window.__t3vim = {
-    get state() { return { on: S.on, mode: S.mode, count: S.count, operator: S.operator, pending: S.pending }; },
+    get state() { return { on: S.on, mode: S.mode, count: S.count, operator: S.operator, pending: S.pending, seq: SEQ.node ? SEQ.node.name : "" }; },
 
     /* Drive the handler without a real keypress. Used by the test page in
        this directory, and handy in devtools. */
@@ -1116,8 +1547,11 @@
       const m = mods || {};
       onKeyDown({
         isTrusted: true,
+        target: document.activeElement,
+        defaultPrevented: false,
         key,
         ctrlKey: !!m.ctrl, shiftKey: !!m.shift, altKey: !!m.alt, metaKey: !!m.meta,
+        repeat: !!m.repeat,
         preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {},
       });
       return this.debug();
@@ -1126,20 +1560,33 @@
       for (const ch of String(str)) this.feed(ch);
       return this.debug();
     },
+    /* Feed a sequence in gred.toml notation: "<leader>sf", "<C-w>s", "gt". */
+    feedSeq(str) {
+      for (const k of seqTokens(str)) {
+        if (k === "<C-w>") this.feed("w", { ctrl: true });
+        else this.feed(k, k.length === 1 && k !== k.toLowerCase() ? { shift: true } : undefined);
+      }
+      return this.debug();
+    },
+    hint() { return seqHint(); },
+    paintNow() { paintKeys(); paint(); },
+    get sent() { return SEQ.sent; },
+    seqTimeoutMs: SEQ_TIMEOUT_MS,
     debug() {
       const c = here();
-      if (!c) return null;
+      if (!c) return { mode: S.mode, seq: SEQ.node ? SEQ.node.name : "", count: S.count, pending: S.pending };
       return {
         text: c.map.text,
         pos: S.mode === NORMAL ? clampNormal(c.map, c.pos) : c.pos,
         mode: S.mode, vpos: S.vpos, anchor: S.anchor,
         reg: S.reg, count: S.count, operator: S.operator, pending: S.pending,
+        seq: SEQ.node ? SEQ.node.name : "",
       };
     },
     setCaret(p) { const m = scan(S.el); caretTo(m, p); S.mode = NORMAL; refresh(); return this.debug(); },
-    attach(el) { S.el = el; S.mode = NORMAL; reset(); return this.debug(); },
+    attach(el) { S.el = el; S.mode = NORMAL; reset(); seqCancel(); return this.debug(); },
     enable() { S.on = true; lsSet(SWITCH, "on"); refresh(); return "vim mode on"; },
     disable() { S.on = false; lsSet(SWITCH, "off"); S.mode = INSERT; hideUI(); return "vim mode off, composer is a plain text box again"; },
-    version: 1,
+    version: 2,
   };
 })();

@@ -167,6 +167,237 @@
   t("x on empty line",       "a\n\nb", 2, "x", { text: "a\n\nb" });
   t("$ on empty line",       "a\n\nb", 2, "$", { pos: 2 });
 
-  out.textContent = lines.join("\n") + "\n\nPASS " + pass + "  FAIL " + fail + "\n";
-  document.title = fail === 0 ? "ALLPASS" : "FAILURES:" + fail;
+  /* ------------------------------------------------------ key sequences -- */
+  /* Every chord the plugin sends lands on this spy: window, bubble phase. */
+  const sent = [];
+  window.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.altKey && e.shiftKey) {
+      sent.push({ key: e.key, meta: e.metaKey, trusted: e.isTrusted, atWindow: e.target === window,
+                  bubbles: e.bubbles, cancelable: e.cancelable });
+    }
+  });
+
+  const V = window.__t3vim;
+  const keysOf = (spec) => {
+    /* a step is a gred-notation string fed whole, or [key, mods] */
+    for (const k of spec) {
+      if (Array.isArray(k)) V.feed(k[0], k[1]);
+      else if (k.length > 1 && k !== "Escape" && k !== "Enter" && k !== "Shift") V.feedSeq(k);
+      else V.feed(k);
+    }
+  };
+
+  /* name, setup fn, steps, check(got, sent) -> problem string or "" */
+  function ts(name, prep, steps, check) {
+    let got, prob;
+    sent.length = 0;
+    try { prep(); keysOf(steps); got = V.debug(); prob = check(got, sent.slice()); }
+    catch (err) { prob = "threw: " + err.message; }
+    if (prob) { lines.push("FAIL " + name + "  " + prob); fail++; }
+    else { lines.push("ok   " + name); pass++; }
+  }
+  const composer = (text, caret) => () => setup(text, caret);
+  const global = () => () => { setup("abc", 0); el.blur(); document.body.focus(); };
+  const oneChord = (key) => (got, s) => {
+    if (s.length !== 1) return "sent " + JSON.stringify(s.map((x) => x.key)) + " want [" + key + "]";
+    const c = s[0];
+    if (c.key !== key) return "sent " + c.key + " want " + key;
+    if (c.meta || c.trusted || !c.atWindow || !c.bubbles || !c.cancelable) return "chord shape " + JSON.stringify(c);
+    if (got.seq) return "seq left pending: " + got.seq;
+    return "";
+  };
+  const none = (extra) => (got, s) => {
+    if (s.length) return "sent " + JSON.stringify(s.map((x) => x.key)) + " want nothing";
+    if (got.seq) return "seq left pending: " + got.seq;
+    return extra ? extra(got) : "";
+  };
+  const want = (field, v) => (got) => (got[field] === v ? "" : field + " " + JSON.stringify(got[field]) + " want " + JSON.stringify(v));
+
+  /* The dispatch contract, written out independently of the plugin's table. */
+  const CONTRACT = [
+    ["<leader>sf", "f"], ["<leader>sg", "g"], ["<leader>sc", "c"], ["<leader><leader>", "c"],
+    ["<leader>/", "/"], ["<leader>an", "n"], ["<leader>aN", "o"], ["<leader>ak", "k"],
+    ["<leader>am", "m"], ["<leader>ah", "m"], ["<leader>ae", "e"], ["<leader>at", "t"],
+    ["<leader>av", "v"], ["<leader>aw", "w"], ["<leader>al", "l"], ["<leader>ay", "y"],
+    ["<leader>ap", "p"], ["<leader>aT", "i"], ["<leader>ac", "h"], ["<leader>tt", "a"],
+    ["<leader>tw", "r"], ["<leader>hp", "d"], ["<C-w>s", "s"], ["<C-w>v", "b"],
+    ["<C-w>c", "x"], ["<C-w>q", "x"], ["<C-w>T", "u"], ["gt", "."], ["]a", "."],
+    ["gT", ","], ["[a", ","], ["ga", "j"],
+  ];
+  for (const [seq, key] of CONTRACT) {
+    ts("normal " + seq + " sends " + key, composer("hello world", 3), [seq],
+       (g, s) => oneChord(key)(g, s) || want("text", "hello world")(g) || want("mode", "NORMAL")(g) || want("pos", 3)(g));
+  }
+  for (const [seq, key] of CONTRACT) {
+    ts("global " + seq + " sends " + key, global(), [seq], oneChord(key));
+  }
+  ts("visual <leader>an sends n, stays visual", composer("hello", 0), ["v", "l", "<leader>an"],
+     (g, s) => oneChord("n")(g, s) || want("mode", "VISUAL")(g));
+  ts("<C-w><C-s> is <C-w>s", composer("abc", 0), [["w", { ctrl: true }], ["s", { ctrl: true }]], oneChord("s"));
+  ts("held Space does not walk the tree", composer("abc", 0), [],
+     (g) => { V.feed(" "); V.feed(" ", { repeat: true }); return want("seq", "<leader>")(V.debug()); });
+  ts("shift keydown keeps <leader>a pending", composer("abc", 0), ["<leader>a", "Shift", ["N", { shift: true }]], oneChord("o"));
+  ts(": sends the palette chord in normal", composer("abc", 1), [":"],
+     (g, s) => oneChord("c")(g, s) || want("text", "abc")(g));
+  ts(": sends the palette chord in visual", composer("abc", 1), ["v", ":"], oneChord("c"));
+  ts(": is left to T3 with nothing focused", global(), [":"], none());
+
+  /* g is shared: vim keeps gg gu gU g~ ge, the app gets gt gT ga. */
+  ts("g merge: guw is vim",  composer("ABC def", 0), ["g", "u", "w"], none(want("text", "abc def")));
+  ts("g merge: gUw is vim",  composer("abc def", 0), ["g", "U", "w"], none(want("text", "ABC def")));
+  ts("g merge: gg is vim",   composer("abc\ndef", 5), ["g", "g"], none(want("pos", 0)));
+  ts("g merge: 2gg is vim",  composer("abc\ndef\nghi", 0), ["2", "g", "g"], none(want("pos", 4)));
+  /* ge itself is approximate in the vim layer (it lands on the word start);
+     this only checks that g e reaches vim and nothing is sent. */
+  ts("g merge: ge is vim",   composer("abc def", 5), ["g", "e"], none((g) => (g.pos < 5 ? "" : "pos " + g.pos)));
+  ts("g merge: dgg is vim",  composer("one\ntwo\nthree", 4), ["d", "g", "g"], none(want("text", "three")));
+  ts("g merge: v l gU",      composer("abc", 0), ["v", "l", "g", "U"], none(want("text", "ABc")));
+  ts("g merge: gt is the app", composer("abc", 0), ["g", "t"], (g, s) => oneChord(".")(g, s) || want("text", "abc")(g));
+
+  /* No T3 counterpart: consumed, nothing sent, a message says so. */
+  for (const seq of ["<leader>q", "<leader>m", "<leader>T", "<leader>so", "<leader>ds", "<leader>rn",
+                     "<leader>hs", "<leader>aF", "]q", "[q", "]d", "[d", "gd", "gD", "grr", "gra",
+                     "<C-w>o", "<C-w>=", "<C-w>H", "<C-w><lt>"]) {
+    ts("no counterpart " + seq, composer("hello world", 3), [seq],
+       none((g) => want("text", "hello world")(g) || want("pos", 3)(g) || want("mode", "NORMAL")(g)
+         || (/no T3 equivalent/.test((V.hint() || {}).message || "") ? "" : "message " + JSON.stringify(V.hint()))));
+  }
+  ts("unmapped key after prefix is eaten", composer("hello", 0), ["<leader>", "x"],
+     none((g) => want("text", "hello")(g) || (/not mapped/.test((V.hint() || {}).message || "") ? "" : "message " + JSON.stringify(V.hint()))));
+
+  /* Escape */
+  ts("Escape cancels <leader>", composer("hello", 0), ["<leader>", "Escape", "l"],
+     none((g) => want("pos", 1)(g) || want("mode", "NORMAL")(g)));
+  ts("Escape cancels <leader>s", composer("hello", 0), ["<leader>s", "Escape", "f", "l"],
+     none((g) => want("pos", 2)(g)));
+  ts("Escape cancels <C-w>", composer("hello", 0), ["<C-w>", "Escape", "s"],
+     none((g) => want("text", "ello")(g) || want("mode", "INSERT")(g)));
+  ts("Escape cancels globally", global(), ["<leader>a", "Escape", "n"], none());
+  ts("Enter drops a pending sequence and sends", composer("abc", 0), ["<leader>", "Enter"],
+     none(want("mode", "INSERT")));
+
+  /* Counts and vim's own pending keys are untouched. */
+  ts("3dd after a sequence", composer("a\nb\nc\nd", 0), ["<leader>sf", "3", "d", "d"],
+     (g, s) => (s.length === 1 ? "" : "sent " + s.length) || want("text", "d")(g));
+  ts("3l after a sequence", composer("hello world", 0), ["]a", "3", "l"], (g, s) => want("pos", 3)(g));
+  ts("count cleared by a sequence", composer("hello world", 0), ["3", "<leader>sf", "l"], (g) => want("pos", 1)(g));
+  ts("digit is not a tree key", composer("hello", 0), ["<leader>", "3", "l"], none(want("pos", 1)));
+  ts("f<Space> is vim's find",   composer("ab cd", 0), ["f", " "], none(want("pos", 2)));
+  ts("r] is vim's replace",      composer("abc", 0), ["r", "]"], none(want("text", "]bc")));
+  ts("di[ is vim's text object", composer("x[ab]y", 2), ["d", "i", "["], none(want("text", "x[]y")));
+  ts("d<Space> is vim's motion", composer("abc", 0), ["d", " "], none(want("text", "bc")));
+  ts("fg is vim's find",         composer("abg", 0), ["f", "g"], none(want("pos", 2)));
+
+  /* Insert mode: every key is the composer's. */
+  ts("insert: Space g ] : not taken", composer("abc", 0), ["i", " ", "g", "]", "[", ":", ["w", { ctrl: true }]],
+     none(want("mode", "INSERT")));
+
+  /* Focus that wants its own keys. */
+  ts("global: input keeps its keys", () => {
+       setup("abc", 0);
+       const i = document.createElement("input"); i.id = "tmp-input"; document.body.appendChild(i); i.focus();
+     }, [" ", "s", "f"], (g, s) => { document.getElementById("tmp-input").remove(); return none()(g, s); });
+  ts("global: menu keeps its keys", () => {
+       setup("abc", 0);
+       const m = document.createElement("div"); m.id = "tmp-menu"; m.setAttribute("role", "menu"); m.tabIndex = 0;
+       document.body.appendChild(m); m.focus();
+     }, ["g", "t"], (g, s) => { document.getElementById("tmp-menu").remove(); return none()(g, s); });
+  ts("global: plain keys pass", global(), ["x", "c", "l"], none());
+
+  /* Hint panel content */
+  ts("hint after <leader>", composer("abc", 0), ["<leader>"], (g) => {
+    const h = V.hint();
+    if (!h || g.seq !== "<leader>") return "no hint, seq " + g.seq;
+    const s = h.items.find((x) => x.key === "s"), sp = h.items.find((x) => x.key === "SPC");
+    if (!s || s.desc !== "+[S]earch") return "s item " + JSON.stringify(s);
+    if (!sp || sp.desc !== "switch agent") return "SPC item " + JSON.stringify(sp);
+    return "";
+  });
+  ts("hint after <leader>a", composer("abc", 0), ["<leader>a"], (g) => {
+    const h = V.hint();
+    const n = h && h.items.find((x) => x.key === "n"), r = h && h.items.find((x) => x.key === "r");
+    if (!n || n.desc !== "new agent" || n.none) return "n item " + JSON.stringify(n);
+    if (!r || !r.none) return "r item " + JSON.stringify(r);
+    return /\[A\]gents/.test(h.title) ? "" : "title " + h.title;
+  });
+
+  /* The synthetic chord never re-enters the plugin. */
+  ts("no recursion: one chord per sequence", composer("abc", 0), ["<leader>sf"],
+     (g, s) => (s.length === 1 && V.sent >= 1 ? "" : "sent " + s.length) || want("seq", "")(g) || want("mode", "NORMAL")(g));
+  ts("no recursion: untrusted Space at the composer is ignored", composer("abc", 0), [],
+     (g) => {
+       el.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true, cancelable: true }));
+       el.dispatchEvent(new KeyboardEvent("keydown", { key: "w", ctrlKey: true, bubbles: true, cancelable: true }));
+       return want("seq", "")(V.debug()) || want("text", "abc")(V.debug());
+     });
+  ts("no recursion: untrusted g with nothing focused is ignored", global(), [],
+     () => {
+       document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "g", bubbles: true, cancelable: true }));
+       return want("seq", "")(V.debug());
+     });
+  ts("no recursion: a chord at window does not reach the plugin", composer("abc", 0), ["<leader>"],
+     (g) => {
+       /* if the plugin saw this it would complete <leader>/ */
+       window.dispatchEvent(new KeyboardEvent("keydown", { key: "/", bubbles: true, cancelable: true }));
+       return want("seq", "<leader>")(V.debug());
+     });
+
+  /* ---------------------------------------------------- timed (async) ---- */
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  /* Headless Chromium stops serving requestAnimationFrame after the first
+     frame, so paint synchronously rather than waiting on one. */
+  const frames = async () => { V.paintNow(); };
+  async function ta(name, fn) {
+    sent.length = 0;
+    let prob;
+    try { prob = await fn(); } catch (err) { prob = "threw: " + err.message; }
+    if (prob) { lines.push("FAIL " + name + "  " + prob); fail++; }
+    else { lines.push("ok   " + name); pass++; }
+    out.textContent = lines.join("\n") + "\n\n(still running)\n";
+  }
+
+  (async () => {
+    const T = V.seqTimeoutMs;
+    await ta("timeout is 1000 ms", async () => (T === 1000 ? "" : "seqTimeoutMs " + T));
+    await ta("timeout resets <leader>", async () => {
+      setup("hello", 0); V.feedSeq("<leader>s");
+      await wait(T + 150);
+      if (V.debug().seq) return "seq still " + V.debug().seq;
+      V.feed("f"); V.feed("l");
+      return none(want("pos", 2))(V.debug(), sent);
+    });
+    await ta("each key re-arms the timeout", async () => {
+      setup("hello", 0); V.feedSeq("<leader>");
+      await wait(T * 0.6); V.feed("s");
+      await wait(T * 0.6); V.feed("f");
+      return oneChord("f")(V.debug(), sent);
+    });
+    await ta("a timed-out g is still vim's g (gg)", async () => {
+      setup("abc\ndef", 5); V.feed("g");
+      await wait(T + 150);
+      V.feed("g");
+      return none(want("pos", 0))(V.debug(), sent);
+    });
+    await ta("hint panel shows the leader tree", async () => {
+      setup("abc", 0); V.feedSeq("<leader>");
+      await frames();
+      const p = document.querySelector(".t3vim-keys");
+      if (!p || p.style.display !== "block") return "panel hidden";
+      if (!/\[S\]earch/.test(p.textContent) || !/switch agent/.test(p.textContent)) return "panel text " + p.textContent.slice(0, 120);
+      V.feed("Escape");
+      await frames();
+      return p.style.display === "none" ? "" : "panel still shown after Escape";
+    });
+    await ta("hint panel works with nothing focused", async () => {
+      setup("abc", 0); el.blur(); document.body.focus(); V.feed("w", { ctrl: true });
+      await frames();
+      const p = document.querySelector(".t3vim-keys");
+      const ok = p && p.style.display === "block" && /Windows/.test(p.textContent);
+      V.feed("Escape");
+      return ok ? "" : "panel " + (p ? p.style.display + " " + p.textContent.slice(0, 80) : "missing");
+    });
+
+    out.textContent = lines.join("\n") + "\n\nPASS " + pass + "  FAIL " + fail + "\n";
+    document.title = fail === 0 ? "ALLPASS" : "FAILURES:" + fail;
+  })();
 })();
