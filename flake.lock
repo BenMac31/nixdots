@@ -251,14 +251,15 @@
         "monolith-fullgr": "monolith-fullgr",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-aiproxy": "nixpkgs-aiproxy",
-        "nixpkgs-matrix": "nixpkgs-matrix"
+        "nixpkgs-matrix": "nixpkgs-matrix",
+        "nixpkgs-matrixserv": "nixpkgs-matrixserv"
       },
       "locked": {
-        "lastModified": 1795674347,
-        "narHash": "sha256-wG3wNuoYtXxRblLFu4RoNgz5oEcT6qRJhr460oUEOxg=",
+        "lastModified": 1795734725,
+        "narHash": "sha256-SPCNAGfYw4mJ2wxhg8mYaMfd0q19NlP/JE8uf4hYvPw=",
         "ref": "refs/heads/master",
-        "rev": "9f9b0b87958fd8e35c903254d3e1fbd8d8884951",
-        "revCount": 3793,
+        "rev": "3b167e473fc965c2c9496d2076cb13f3ede650b7",
+        "revCount": 3805,
         "type": "git",
         "url": "ssh://git@github.com/GraphideHQ/graphide-tools"
       },
@@ -489,6 +490,22 @@
         "owner": "NixOS",
         "repo": "nixpkgs",
         "rev": "0d9e9b832d03ac387417e16ce1febf73b2e631e1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-26.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-matrixserv": {
+      "locked": {
+        "lastModified": 1795370043,
+        "narHash": "sha256-s/0jq8usZtLVOolYBwmyUmd3JsfAu7w3FU+a0dgMqSY=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0dc498bfe49baeb18b0f9891e800b53bb2603193",
         "type": "github"
       },
       "original": {
