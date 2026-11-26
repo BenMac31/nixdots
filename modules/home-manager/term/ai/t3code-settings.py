@@ -11,11 +11,12 @@ try:
 except FileNotFoundError:
     settings = {}
 
-providers = settings.setdefault("providers", {})
-claude_agent = providers.setdefault("claudeAgent", {})
-if claude_agent.get("binaryPath") == claude:
+instances = settings.setdefault("providerInstances", {})
+claude_agent = instances.setdefault("claudeAgent", {"driver": "claudeAgent"})
+config = claude_agent.setdefault("config", {})
+if config.get("binaryPath") == claude:
     sys.exit(0)
-claude_agent["binaryPath"] = claude
+config["binaryPath"] = claude
 
 os.makedirs(os.path.dirname(path), exist_ok=True)
 fd, temporary = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".settings-")
