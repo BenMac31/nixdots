@@ -1,4 +1,4 @@
-{ lib, stdenvNoCC, fetchurl, patchelf, makeWrapper, glibc }:
+{ lib, stdenvNoCC, fetchurl, patchelf, makeWrapper, glibc, bash, bubblewrap, socat }:
 
 stdenvNoCC.mkDerivation rec {
   pname = "reason-cli";
@@ -22,7 +22,20 @@ stdenvNoCC.mkDerivation rec {
     patchelf --set-interpreter ${glibc}/lib/ld-linux-x86-64.so.2 \
       --set-rpath ${lib.makeLibraryPath [ glibc ]} $out/libexec/reason/reason
     makeWrapper $out/libexec/reason/reason $out/bin/reason \
+      --prefix PATH : ${lib.makeBinPath [ bubblewrap socat ]} \
+      --set-default REASON_CLI_LAUNCHER_PATH $out/libexec/reason-worker \
       --set-default REASON_NO_UPDATE_NOTICE 1
+    # The worker probes /bin/bash even when Bash is already on PATH.
+    cat > $out/libexec/reason-worker <<EOF
+    #!${lib.getExe bash}
+    if [ -x /bin/bash ]; then
+      exec $out/bin/reason "\$@"
+    fi
+    exec ${lib.getExe bubblewrap} --die-with-parent --dev-bind / / --tmpfs /bin \\
+      --ro-bind /bin/sh /bin/sh --ro-bind ${lib.getExe bash} /bin/bash \\
+      -- $out/bin/reason "\$@"
+    EOF
+    chmod +x $out/libexec/reason-worker
     runHook postInstall
   '';
 

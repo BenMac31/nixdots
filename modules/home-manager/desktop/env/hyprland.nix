@@ -61,7 +61,7 @@ in
     programs.waybar.enable = lib.mkDefault (!graphideShell);
     programs.hyprlock.enable = lib.mkDefault false;
     services.hypridle.enable = lib.mkDefault false;
-    services.hyprpolkitagent.enable = true;
+    services.polkit-gnome.enable = !graphideShell;
     xdg = {
       desktopEntries."org.gnome.Settings" = {
         name = "Settings";
@@ -337,6 +337,8 @@ in
           (lib.mkIf graphideShell
             "$mainMod,Y,exec,graphide-shell ipc call desktop artifacts")
           (lib.mkIf graphideShell
+            "$mainMod,T,exec,graphide-shell ipc call desktop pomodoro")
+          (lib.mkIf graphideShell
             "$mainMod SHIFT,P,exec,graphide-shell ipc call plates pick")
           "$mainMod,H,movefocus,l"
           "$mainMod,L,movefocus,r"
@@ -348,7 +350,6 @@ in
           "$mainMod SHIFT,J,movewindoworgroup,d"
           "$mainMod,S,togglespecialworkspace,magic"
           "$mainMod SHIFT,S,movetoworkspace,special:magic"
-          "$mainMod,T,togglespecialworkspace,todo"
           "SHIFT$mainMod,t,exec,todo"
           "$mainMod,mouse_down,workspace,e+1"
           "$mainMod,mouse_up,workspace,e-1"

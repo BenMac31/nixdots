@@ -5,6 +5,8 @@
     ./aiclip.nix
     ./claude-code.nix
     ./claude-fast.nix
+    ./codex.nix
+    ./codex-api.nix
     ./localrun.nix
     ./reason.nix
     ./t3code.nix
@@ -19,6 +21,8 @@
       aichat.enable = lib.mkDefault true;
       aiclip.enable = lib.mkDefault true;
       claude.enable = lib.mkDefault true;
+      codex.enable = lib.mkDefault true;
+      codex-api.enable = lib.mkDefault true;
       reason.enable = lib.mkDefault true;
       t3code.enable = lib.mkDefault true;
     };

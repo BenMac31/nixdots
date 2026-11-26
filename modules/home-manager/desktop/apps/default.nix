@@ -1,17 +1,23 @@
 { config, lib, pkgs, inputs, osConfig, ... }:
 {
   imports = [
+    ./brave.nix
+    ./browser.nix
+    ./composal.nix
     ./firefox.nix
     ./foot.nix
     ./grail.nix
     ./kitty.nix
     ./mpv.nix
+    ./ridge.nix
     ./startpage.nix
     ./zathura.nix
   ];
   config = lib.mkIf config.desktop.enable {
+    brave.enable = lib.mkDefault true;
+    browser.enable = lib.mkDefault true;
+    ridge.enable = lib.mkIf osConfig.services.fprintd.enable (lib.mkDefault true);
     home.packages = with pkgs; [
-      brave
       bitwarden-desktop
       (lib.mkIf osConfig.services.pipewire.enable crosspipe)
       (lib.mkIf osConfig.services.pipewire.pulse.enable pavucontrol)

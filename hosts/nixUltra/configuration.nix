@@ -140,6 +140,8 @@
   systemd.services.hibernate-unload-wifi = {
     description = "Unload mt7925e across hibernation";
     wantedBy = [ "hibernate.target" "hybrid-sleep.target" "suspend-then-hibernate.target" ];
+    # Ordering alone still allows hibernation after a failed module unload.
+    requiredBy = [ "systemd-hibernate.service" "systemd-hybrid-sleep.service" "systemd-suspend-then-hibernate.service" ];
     before = [ "systemd-hibernate.service" "systemd-hybrid-sleep.service" "systemd-suspend-then-hibernate.service" ];
     unitConfig.StopWhenUnneeded = true;
     serviceConfig = {

@@ -8,10 +8,7 @@
         "${config.home.homeDirectory}/nixos/confs/startpage";
     };
 
-    programs.librewolf.profiles.default.settings = {
-      "browser.startup.homepage" =
-        "file:///home/${config.home.username}/.config/startpage/index.html";
-    };
+    browser.homepage = lib.mkDefault "file://${config.xdg.configHome}/startpage/index.html";
 
     # HTTP bridge: proxies waybar-module-pomodoro over localhost:9421
     # so the startpage can toggle/poll it without native messaging.

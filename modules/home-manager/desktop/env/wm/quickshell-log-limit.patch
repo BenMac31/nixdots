@@ -1,0 +1,34 @@
+--- a/src/core/logging.cpp
++++ b/src/core/logging.cpp
+@@ -546,10 +546,27 @@
+ }
+ 
+ void ThreadLogging::onMessage(const LogMessage& msg, bool showInSparse) {
+-	if (showInSparse) {
+-		if (this->fileStream.device() == nullptr) return;
+-		LogMessage::formatMessage(this->fileStream, msg, false, true);
+-		this->fileStream << Qt::endl;
++	// Runtime storage is shared with the session bus and systemd user manager.
++	// Stop each file independently; console logging and the shell keep running.
++	constexpr qint64 maxLogBytes = 64 * 1024 * 1024;
++	if (showInSparse && this->fileStream.device() != nullptr) {
++		if (this->file->pos() >= maxLogBytes) {
++			this->fileStream.setDevice(nullptr);
++			this->file->close();
++		} else {
++			LogMessage::formatMessage(this->fileStream, msg, false, true);
++			this->fileStream << Qt::endl;
++		}
++	}
++
++	if (this->detailedFile == nullptr) return;
++	if (this->detailedFile->pos() >= maxLogBytes) {
++		this->detailedWriter.setDevice(nullptr);
++		crash::CrashInfo::INSTANCE.logFd = -1;
++		delete this->detailedFile;
++		this->detailedFile = nullptr;
++		qCWarning(logLogging) << "Detailed log reached 64 MiB. Ending detailed logs.";
++		return;
+ 	}
+ 
+ 	if (!this->detailedWriter.write(msg) || (this->detailedFile && !this->detailedFile->flush())) {

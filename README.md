@@ -22,6 +22,11 @@ nixtest       # nixos-rebuild test, nothing made permanent
 The aliases come from `modules/home-manager/term/zsh.nix` and pick the
 machine from `custom.flakeAttr`.
 
+`nixtest` still changes running services. For foundational changes, build and
+use `nixos-rebuild boot`, then reboot when work is saved. The
+[switch blackout investigation](docs/nixswitch-blackout-2026-11-18.md) explains
+the temporary-storage restart bug, its fix, and the preview/boot workflow.
+
 ## Layout
 
 - `flake.nix`: inputs and the host list. Every machine gets the same package
@@ -36,6 +41,9 @@ machine from `custom.flakeAttr`.
   `themes/`. `graphide.nix` is the Graphide setup, imported by the laptops.
 - `confs/`: config that is not Nix (Neovim, the browser start page).
 - `pkgs/`, `scripts/`: one local package and a few one-off machine scripts.
+
+The [browser settings guide](docs/browsers.md) covers the shared LibreWolf and
+Brave configuration, Flatpak launcher, and profile backups.
 
 ## Graphide
 
@@ -56,3 +64,7 @@ Codex goes through the shared account pool on XiaServer
 (`modules/nixos/codex-pool.nix`), and `ai-pool claude` runs Claude through it.
 Local sign-ins stay with the account wrappers in
 `modules/home-manager/term/ai/accounts.nix`.
+
+Claude Code agent teams are enabled by default with `ai.claude.enable`.
+The [agent teams field guide](docs/claude-agent-teams.html) covers setup,
+starter prompts, file ownership, controls, and recovery. Open it in a browser.

@@ -1,65 +1,47 @@
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
-  # Agents make a worktree per task under ~/Projects/wt/<owner> (before
-  # 2026-11-08, ~/Projects/<owner>-wt) and park idle ones in <owner>-parked
-  # (<owner>-parked-wt); the worktrees skill forbids them to
-  # delete any. On 2026-11-07 that was 2,300 trees and 25M files in a week,
-  # and their small files filled btrfs metadata until the laptop hung.
-  # A tree goes only when removing it loses nothing: clean, HEAD on an
-  # origin branch, not locked, no process inside, idle a day (parked) or
-  # three (active). `git worktree remove` keeps the branch and refuses
-  # untracked files itself.
-  # The workspace root (~/Projects/graphide/*) is swept too: trees made there
-  # before the skill moved them out sat in the snapshotted /home subvolume,
-  # and on 2026-11-09 about 1,100 of them held 350 GiB the glob never reached.
-  # The main checkouts there have a .git directory, not a file, so they stay.
-  prune = pkgs.writeShellApplication {
-    name = "worktree-prune";
-    runtimeInputs = [ pkgs.git pkgs.git-lfs pkgs.coreutils pkgs.gnugrep ];
-    text = ''
-      now=$(date +%s)
-      cwds=$(for p in /proc/[0-9]*; do readlink "$p/cwd" 2>/dev/null || true; done)
-      inside() { grep -qxF -e "$1" <<<"$cwds" || grep -qF -e "$1/" <<<"$cwds"; }
-      removed=0
-      for d in "$HOME"/Projects/*-wt/* "$HOME"/Projects/wt/*/* "$HOME"/Projects/graphide/*; do
-        case $d in
-          */*-parked-wt/* | */wt/*-parked/*) idle=$((24 * 3600)) ;;
-          *) idle=$((72 * 3600)) ;;
-        esac
-        if [ ! -f "$d/.git" ] || [ -L "$d" ]; then continue; fi
-        gd=$(git -C "$d" rev-parse --absolute-git-dir 2>/dev/null) || continue
-        [ ! -e "$gd/locked" ] || continue
-        last=$({ stat -c %Y "$d" "$gd/HEAD" "$gd/index" "$gd/logs/HEAD" 2>/dev/null || true; } | sort -n | tail -1)
-        [ $((now - last)) -ge "$idle" ] || continue
-        ! inside "$d" || continue
-        [ -z "$(GIT_OPTIONAL_LOCKS=0 git -C "$d" status --porcelain 2>/dev/null || echo error)" ] || continue
-        [ -n "$(git -C "$d" for-each-ref --contains HEAD --count=1 refs/remotes)" ] || continue
-        common=$(git -C "$d" rev-parse --path-format=absolute --git-common-dir) || continue
-        if git --git-dir="$common" worktree remove "$d"; then
-          echo "removed $d"
-          removed=$((removed + 1))
-        fi
-      done
-      echo "removed $removed worktrees"
-    '';
-  };
+  cfg = config.services.worktreePrune;
+  prune = pkgs.writeShellScript "worktree-prune" ''
+    export PATH=${lib.makeBinPath [ pkgs.git pkgs.git-lfs pkgs.gnutar pkgs.zstd ]}
+    exec ${pkgs.python3}/bin/python3 ${./worktree-prune.py} \
+      --idle-hours ${toString cfg.idleHours} \
+      --archive-dir "$HOME/.local/state/disk-watch/worktree-archives" "$@"
+  '';
 in
 {
-  systemd.user.services.worktree-prune = {
-    Unit.Description = "Remove agent worktrees that hold nothing unpushed";
-    Service = {
-      Type = "oneshot";
-      ExecStart = "${prune}/bin/worktree-prune";
-      Nice = 19;
-      IOSchedulingClass = "idle";
+  options.services.worktreePrune = {
+    enable = lib.mkEnableOption "retirement of idle, fully published agent worktrees";
+    idleHours = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 6;
+      description = "Minimum idle time before a clean published worktree can be retired.";
     };
   };
-  systemd.user.timers.worktree-prune = {
-    Unit.Description = "Prune idle agent worktrees daily";
-    Timer = {
-      OnCalendar = "daily";
-      Persistent = true;
+
+  config = lib.mkIf cfg.enable {
+    xdg.configFile = lib.genAttrs [
+      "systemd/user/worktree-prune.service"
+      "systemd/user/worktree-prune.timer"
+    ] (_: { force = true; });
+
+    systemd.user.services.worktree-prune = {
+      Unit.Description = "Retire idle worktrees without losing unpublished work or evidence";
+      Service = {
+        Type = "oneshot";
+        ExecStart = prune;
+        Slice = "background.slice";
+        Nice = 15;
+        IOSchedulingClass = "idle";
+        TimeoutStartSec = "2h";
+      };
     };
-    Install.WantedBy = [ "timers.target" ];
+    systemd.user.timers.worktree-prune = {
+      Unit.Description = "Retire completed worktrees every fifteen minutes";
+      Timer = {
+        OnBootSec = "5min";
+        OnUnitInactiveSec = "15min";
+      };
+      Install.WantedBy = [ "timers.target" ];
+    };
   };
 }

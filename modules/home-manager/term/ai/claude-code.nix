@@ -3,6 +3,7 @@
   options = {
     ai.claude = {
       enable = lib.mkEnableOption "Enable Claude Code";
+      agentTeams.enable = lib.mkEnableOption "Claude Code experimental agent teams";
       package = lib.mkOption {
         type = lib.types.package;
         default = inputs.claude-code.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -33,6 +34,8 @@
   };
 
   config = lib.mkIf config.ai.claude.enable {
+    ai.claude.agentTeams.enable = lib.mkDefault true;
+
     programs.claude-code = {
       enable = true;
       inherit (config.ai.claude) package;
@@ -40,21 +43,23 @@
 
     # Merged into the file rather than managed: Claude, grug and Orca all
     # rewrite settings.json, so a store link would break them.
-    home.activation.claudeAutoCompactWindow = lib.mkIf (config.ai.claude.autoCompactWindow != null)
-      (lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        PATH=${lib.makeBinPath [ pkgs.coreutils pkgs.diffutils pkgs.jq ]}:$PATH
-        settings="$HOME/.claude/settings.json"
-        if [ -z "''${DRY_RUN:-}" ]; then
-          mkdir -p "$HOME/.claude"
-          [ -s "$settings" ] || echo '{}' >"$settings"
-          tmp=$(mktemp "$settings.XXXXXX")
-          if jq --argjson w ${toString config.ai.claude.autoCompactWindow} '.autoCompactWindow = $w' "$settings" >"$tmp"; then
-            if cmp -s "$tmp" "$settings"; then rm -f "$tmp"; else mv "$tmp" "$settings"; fi
-          else
-            rm -f "$tmp"
-            warnEcho "could not set autoCompactWindow in $settings"
-          fi
+    home.activation.claudeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      PATH=${lib.makeBinPath [ pkgs.coreutils pkgs.diffutils pkgs.jq ]}:$PATH
+      settings="$HOME/.claude/settings.json"
+      if [ -z "''${DRY_RUN:-}" ]; then
+        mkdir -p "$HOME/.claude"
+        [ -s "$settings" ] || echo '{}' >"$settings"
+        tmp=$(mktemp "$settings.XXXXXX")
+        if jq --arg teams ${if config.ai.claude.agentTeams.enable then "1" else "0"} \
+          --argjson w ${builtins.toJSON config.ai.claude.autoCompactWindow} \
+          '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = $teams | if $w == null then . else .autoCompactWindow = $w end' \
+          "$settings" >"$tmp"; then
+          if cmp -s "$tmp" "$settings"; then rm -f "$tmp"; else mv "$tmp" "$settings"; fi
+        else
+          rm -f "$tmp"
+          warnEcho "could not update Claude Code settings in $settings"
         fi
-      '');
+      fi
+    '';
   };
 }

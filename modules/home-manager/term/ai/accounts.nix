@@ -1,6 +1,9 @@
-{ config, lib, inputs, pkgs, ... }:
+{ config, lib, inputs, pkgs, osConfig, ... }:
 let
   cfg = config.services.graphide-accounts;
+  storage = osConfig.services.agentStorage or { enable = false; };
+  storageCommand = "${config.services.agentScratch.runtimePackage}/bin/agent-storage";
+  sessionPrefix = lib.optionalString storage.enable "${storageCommand} session -- ";
   # Every agent session runs in agents.slice (hosts/nixBlade/agent-throttle.nix),
   # and these wrappers are the one launch path every terminal and GUI uses.
   # Ask the user manager first: inside a bwrap pid namespace the bus socket
@@ -12,11 +15,26 @@ let
       exec systemd-run --user --scope --slice=agents.slice --quiet --collect -- "$0" "$@"
     fi
   '';
-  # Agent temp files go on the capped /scratch image where a host has one
-  # (hosts/nixUltra/scratch.nix); /tmp is RAM there.
-  intoScratchTmp = ''
-    if [[ -d /scratch/tmp/$USER && -w /scratch/tmp/$USER ]]; then
+  # Keep temp files in the bounded workspace once its image is provisioned.
+  intoScratchTmp = if storage.enable then ''
+    export TMPDIR=${lib.escapeShellArg "${storage.outputPath}/tmp"}
+    export BASH_ENV=${config.services.agentScratch.bashInit}
+  '' else ''
+    if [[ -f "$HOME/.local/share/agent-scratch/store/scratch.img" ]]; then
+      if [[ ! -d "$HOME/.local/share/agent-scratch/mount/tmp/$UID" ]]; then
+        systemctl --user start agent-scratch.service || exit 1
+      fi
+      if [[ ! -w "$HOME/.local/share/agent-scratch/mount/tmp/$UID" ]]; then
+        echo "Bounded workspace unavailable; restart agent-scratch.service." >&2
+        exit 1
+      fi
+      export TMPDIR="$HOME/.local/share/agent-scratch/mount/tmp/$UID"
+    elif [[ -d /scratch/tmp/$USER && -w /scratch/tmp/$USER ]]; then
       export TMPDIR=/scratch/tmp/$USER
+    else
+      # Scratch is optional; agent outputs must not fall back to the small RAM /tmp.
+      export TMPDIR="$HOME/.cache/tmp-overflow/tmp"
+      ${pkgs.coreutils}/bin/install -d -m 0700 "$TMPDIR" || exit 1
     fi
   '';
   claudeSettings = lib.optionalAttrs config.ai.claude.bypassPermissions {
@@ -35,15 +53,18 @@ let
   selectedClaude = pkgs.writeShellScriptBin "claude" ''
     ${intoAgentsSlice}
     ${intoScratchTmp}
+    # Keep Claude's deferred MCP tool loading enabled when an account or proxy
+    # wrapper supplies a non-Anthropic API base URL.
+    export ENABLE_TOOL_SEARCH="''${ENABLE_TOOL_SEARCH:-true}"
     ${subagentLimit}
     export GRAPHIDE_CLAUDE_BIN=${lib.escapeShellArg (lib.getExe config.ai.claude.package)}
-    exec ${cfg.finalPackage}/bin/graphide-claude ${sessionSettings} ${sessionEffort config.ai.claude.effort} "$@"
+    exec ${sessionPrefix}${cfg.finalPackage}/bin/graphide-claude ${sessionSettings} ${sessionEffort config.ai.claude.effort} "$@"
   '';
   selectedCodex = pkgs.writeShellScriptBin "codex" ''
     ${intoAgentsSlice}
     ${intoScratchTmp}
     export GRAPHIDE_CODEX_BIN=${lib.escapeShellArg (lib.getExe pkgs.master.unfree.codex)}
-    exec ${cfg.finalPackage}/bin/graphide-codex "$@"
+    exec ${sessionPrefix}${cfg.finalPackage}/bin/graphide-codex "$@"
   '';
   # Graphide drives Codex through this adapter: point it at the account-aware
   # codex unless the caller set CODEX_PATH.
@@ -73,4 +94,29 @@ in {
     pkgs.master.unfree.codex
     (lib.hiPrio selectedAccountCommands)
   ];
+  # GUI services may launch agents without going through the shell wrappers.
+  home.sessionVariables = lib.mkIf cfg.enable {
+    TMPDIR = if storage.enable then "${storage.bulkPath}/tmp"
+      else "${config.home.homeDirectory}/.cache/tmp-overflow/tmp";
+  };
+  # Existing desktop sessions have already sourced Home Manager's guarded environment.
+  programs.zsh.envExtra = lib.mkIf cfg.enable ''
+    ${lib.optionalString storage.enable ''
+      if [[ -n "''${ZSH_EXECUTION_STRING:-}" && -z "''${AGENT_STORAGE_COMMAND:-}" ]] \
+          && { [[ -n "''${AGENT_STORAGE_SESSION:-}" ]] || ${storageCommand} is-agent; }; then
+        _agent_storage_argv=("''${(@0)$(</proc/$$/cmdline)}")
+        _agent_storage_argv[-1]=()
+        exec ${storageCommand} command -- ${pkgs.zsh}/bin/zsh \
+          "''${_agent_storage_argv[@]:1}"
+      fi
+    ''}
+    export TMPDIR="''${TMPDIR:-${if storage.enable then "${storage.bulkPath}/tmp" else "${config.home.homeDirectory}/.cache/tmp-overflow/tmp"}}"
+  '';
+  xdg.configFile."environment.d/30-agent-tmp.conf" = lib.mkIf cfg.enable {
+    text = "TMPDIR=${if storage.enable then "${storage.bulkPath}/tmp" else "${config.home.homeDirectory}/.cache/tmp-overflow/tmp"}\n";
+  };
+  home.activation.agentTemporaryDirectory = lib.mkIf cfg.enable
+    (lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run ${pkgs.coreutils}/bin/install -d -m 0700 "$HOME/.cache/tmp-overflow/tmp"
+    '');
 }

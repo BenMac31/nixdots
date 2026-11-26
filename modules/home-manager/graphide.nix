@@ -14,7 +14,10 @@
   ] ++ lib.optionals osConfig.programs.hyprland.enable [
     ./desktop/env/wm/graphide-shell.nix
   ];
-  config = lib.mkIf osConfig.programs.hyprland.enable {
-    programs.graphide-shell.enable = lib.mkDefault true;
-  };
+  config = lib.mkMerge [
+    { services.worktreePrune.enable = lib.mkDefault true; }
+    (lib.mkIf osConfig.programs.hyprland.enable {
+      programs.graphide-shell.enable = lib.mkDefault true;
+    })
+  ];
 }

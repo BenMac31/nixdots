@@ -46,14 +46,12 @@
           (final: prev: {
             unfree = unfree nixpkgs;
             unstable.unfree = unfree inputs.nixpkgs-unstable;
-            master.unfree = let master = unfree inputs.nixpkgs-master; in master // {
-              # nixpkgs' cargo hook now forces system AWS-LC and zstd, which codex lacks.
-              codex = master.codex.overrideAttrs { dontCargoUseSystemLibs = true; };
-            };
+            master.unfree = unfree inputs.nixpkgs-master;
             quickshell = prev.quickshell.overrideAttrs (old: {
               patches = (old.patches or [ ]) ++ prev.lib.optional (old.version == "0.3.0") ./pkgs/quickshell-fileview-watcher.patch;
             });
             waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
+            ridge = prev.callPackage ./pkgs/ridge.nix { };
             ubuntu-vm = prev.callPackage ./pkgs/ubuntu-vm.nix { };
           })
         ];

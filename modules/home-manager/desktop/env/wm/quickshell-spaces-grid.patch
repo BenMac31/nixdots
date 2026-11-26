@@ -1,0 +1,336 @@
+--- a/Launcher.qml
++++ b/Launcher.qml
+@@ -65,7 +65,7 @@
+         ReminderState.look(remindTo);
+     }
+     // The view the arrow keys move through in two dimensions, if any.
+-    readonly property var gridView: desktopsMode ? desktopGrid : platesMode ? plateGrid : null
++    readonly property var gridView: desktopsMode ? desktopGrid : artifactsMode ? spacesGrid : platesMode ? plateGrid : null
+     function roman(n) {
+         let v = Number(n) || 0, out = "";
+         for (const [value, numeral] of [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]])
+@@ -94,10 +94,6 @@
+     // falls back to the old XiaServer store (monolith nix/modules/artifacts)
+     // when the machine is not signed in.
+     property int artifactRequest: 0
+-    // The artifact the preview beside the launcher shows: the row under the
+-    // pointer, else the selected one. -1 is "nothing hovered yet".
+-    property int hoveredArtifact: -1
+-    readonly property var previewItem: artifactsMode ? (filtered[hoveredArtifact >= 0 ? hoveredArtifact : results.currentIndex] || null) : null
+     function previewSource(item) { const path = item ? Desktop.artifactPreviews[item.slug] : ""; return path ? "file://" + path : ""; }
+     function age(iso) {
+         const t = Date.parse(iso || "");
+@@ -185,7 +181,7 @@
+     }
+     function loadArtifacts() {
+         ++artifactRequest;
+-        message = "Loading artifacts…";
++        message = "Loading spaces…";
+         if (!artifactIndexer.running) artifactIndexer.running = true;
+     }
+     function showArtifacts(result) {
+@@ -205,7 +201,7 @@
+             keywords: [artifact.name, artifact.slug, artifact.repo, artifact.author, artifact.source, artifact.description]
+         }));
+         artifactIndex = result.index || (base + "/");
+-        message = entries.length ? "" : "No pages yet.";
++        message = entries.length ? "" : "No spaces yet.";
+         Desktop.refreshArtifactPreviews();
+     }
+     function activate() {
+@@ -289,7 +285,7 @@
+         }
+     }
+     onFilteredChanged: {
+-        results.currentIndex = 0; desktopGrid.currentIndex = 0; hoveredArtifact = -1;
++        results.currentIndex = 0; desktopGrid.currentIndex = 0; spacesGrid.currentIndex = 0;
+         plateGrid.currentIndex = platesMode && search.text === "" ? Math.max(0, filtered.findIndex(cell => cell.current)) : 0;
+     }
+     Process {
+@@ -425,7 +421,7 @@
+                 Layout.fillWidth: true
+                 Layout.preferredHeight: 40
+                 Layout.maximumHeight: 40
+-                placeholderText: launcher.lockPrompt ? "Enter your vault password" : launcher.vaultMode ? "Search names, usernames and folders" : launcher.desktopsMode ? "Find a test desktop" : launcher.artifactsMode ? "Search titles, authors, repos and descriptions" : launcher.platesMode ? "Find a plate by its title or number" : launcher.dmenuMode ? "Type or choose, then ↵" : "Search applications, or type a command to run"
++                placeholderText: launcher.lockPrompt ? "Enter your vault password" : launcher.vaultMode ? "Search names, usernames and folders" : launcher.desktopsMode ? "Find a test desktop" : launcher.artifactsMode ? "Search spaces…" : launcher.platesMode ? "Find a plate by its title or number" : launcher.dmenuMode ? "Type or choose, then ↵" : "Search applications, or type a command to run"
+                 echoMode: launcher.lockPrompt ? TextInput.Password : TextInput.Normal
+                 inputMethodHints: launcher.lockPrompt ? Qt.ImhHiddenText | Qt.ImhSensitiveData | Qt.ImhNoPredictiveText : Qt.ImhNone
+                 readOnly: launcher.lockPrompt && vaultProcess.running
+@@ -469,15 +465,15 @@
+                 Layout.fillHeight: true
+                 Caption { anchors.centerIn: parent; text: "The vault is locked."; wrapMode: Text.NoWrap }
+             }
+-            // Whole rows only, here and in the two grids: each view is cut to a
++            // Whole rows only, here and in the grids: each view is cut to a
+             // multiple of its row so nothing shows as a sliver under the edge.
+             Item {
+-                visible: !launcher.desktopsMode && !launcher.platesMode && !launcher.lockPrompt
++                visible: !launcher.desktopsMode && !launcher.artifactsMode && !launcher.platesMode && !launcher.lockPrompt
+                 Layout.fillWidth: true
+                 Layout.fillHeight: true
+                 ListView {
+                     id: results
+-                    readonly property int rowHeight: launcher.artifactsMode ? 96 : launcher.dmenuMode ? 36 : 50
++                    readonly property int rowHeight: launcher.dmenuMode ? 36 : 50
+                     width: parent.width
+                     height: Math.max(rowHeight, Math.floor(parent.height / rowHeight) * rowHeight)
+                     clip: true
+@@ -497,7 +493,6 @@
+                         required property int index
+                         readonly property bool chosen: ListView.isCurrentItem
+                         width: results.width
+-                        // Artifacts get a thumbnail and their description, so a taller row.
+                         height: results.rowHeight
+                         color: chosen || mouse.containsMouse ? Theme.secondary : "transparent"
+                         Rectangle { visible: row.chosen; width: 2; height: parent.height; color: Theme.accent }
+@@ -523,45 +518,13 @@
+                                     Figure { anchors.centerIn: parent; text: (row.modelData.name || "?").charAt(0); size: 14; color: Theme.muted }
+                                 }
+                             }
+-                            Rectangle {
+-                                visible: launcher.artifactsMode
+-                                Layout.preferredWidth: 128
+-                                Layout.preferredHeight: 80
+-                                color: Theme.sunken
+-                                border { width: 1; color: Theme.rule }
+-                                clip: true
+-                                Image {
+-                                    id: thumbnail
+-                                    anchors { fill: parent; margins: 1 }
+-                                    source: parent.visible ? launcher.previewSource(row.modelData) : ""
+-                                    sourceSize.width: 256
+-                                    fillMode: Image.PreserveAspectCrop
+-                                    verticalAlignment: Image.AlignTop
+-                                    asynchronous: true
+-                                }
+-                                Caption {
+-                                    anchors.centerIn: parent
+-                                    visible: thumbnail.status !== Image.Ready
+-                                    text: row.modelData.icon || "no preview"
+-                                    size: 11
+-                                    wrapMode: Text.NoWrap
+-                                }
+-                            }
+                             ColumnLayout {
+                                 spacing: 2
+                                 Layout.fillWidth: true
+                                 Label { text: row.modelData.name || row.modelData.title; Layout.fillWidth: true; font.pixelSize: 14 }
+                                 Label {
+-                                    visible: launcher.artifactsMode && !!row.modelData.description
+-                                    text: row.modelData.description || ""
+-                                    Layout.fillWidth: true
+-                                    wrapMode: Text.WordWrap
+-                                    maximumLineCount: 2
+-                                    font.pixelSize: 11
+-                                }
+-                                Label {
+                                     visible: text !== ""
+-                                    text: launcher.vaultMode ? [row.modelData.user, row.modelData.folder].filter(Boolean).join(", ") : launcher.artifactsMode ? row.modelData.detail : launcher.dmenuMode ? "" : row.modelData.genericName || row.modelData.comment || "Application"
++                                    text: launcher.vaultMode ? [row.modelData.user, row.modelData.folder].filter(Boolean).join(", ") : launcher.dmenuMode ? "" : row.modelData.genericName || row.modelData.comment || "Application"
+                                     Layout.fillWidth: true
+                                     font.pixelSize: 11
+                                     color: Theme.muted
+@@ -569,14 +532,127 @@
+                             }
+                             Label { visible: row.chosen; text: "↵"; color: Theme.muted }
+                         }
+-                        MouseArea { id: mouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onEntered: { if (launcher.artifactsMode) launcher.hoveredArtifact = row.index; } onClicked: { results.currentIndex = row.index; launcher.activate(); } }
++                        MouseArea { id: mouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { results.currentIndex = row.index; launcher.activate(); } }
+                     }
+                     Caption {
+                         anchors.centerIn: parent
+                         width: Math.min(implicitWidth, parent.width)
+                         horizontalAlignment: Text.AlignHCenter
+                         visible: results.count === 0
+-                        text: launcher.vaultMode && launcher.locked ? "The vault is locked." : launcher.appsMode ? "No application matches. ↵ runs it as a shell command." : launcher.dmenuMode || (launcher.artifactsMode && launcher.message) ? "" : "Nothing matches."
++                        text: launcher.vaultMode && launcher.locked ? "The vault is locked." : launcher.appsMode ? "No application matches. ↵ runs it as a shell command." : launcher.dmenuMode ? "" : "Nothing matches."
++                    }
++                }
++            }
++            Item {
++                visible: launcher.artifactsMode
++                Layout.fillWidth: true
++                Layout.fillHeight: true
++                GridView {
++                    id: spacesGrid
++                    anchors.fill: parent
++                    clip: true
++                    readonly property int columns: Math.max(1, Math.min(3, Math.floor(width / 230)))
++                    cellWidth: width / columns
++                    cellHeight: Math.max(196, Math.min(Math.round((cellWidth - 16) * 9 / 16) + 110, Math.floor(height / 2)))
++                    model: launcher.artifactsMode ? launcher.filtered : []
++                    currentIndex: 0
++                    boundsBehavior: Flickable.StopAtBounds
++                    Controls.ScrollBar.vertical: Controls.ScrollBar {
++                        implicitWidth: 3
++                        padding: 0
++                        background: Item {}
++                        contentItem: Rectangle { implicitWidth: 3; color: Theme.secondary; opacity: parent.size < 1 ? 1 : 0 }
++                    }
++                    delegate: Item {
++                        id: space
++                        required property var modelData
++                        required property int index
++                        readonly property bool chosen: GridView.isCurrentItem
++                        width: spacesGrid.cellWidth
++                        height: spacesGrid.cellHeight
++                        Rectangle {
++                            anchors { fill: parent; leftMargin: 4; rightMargin: 12; bottomMargin: 16 }
++                            color: space.chosen || spaceMouse.containsMouse ? Theme.secondary : Theme.sunken
++                            Rectangle {
++                                id: preview
++                                anchors { top: parent.top; left: parent.left; right: parent.right; margins: 1 }
++                                height: space.height - 118
++                                color: Theme.sunken
++                                clip: true
++                                Image {
++                                    id: spaceImage
++                                    anchors.fill: parent
++                                    source: launcher.previewSource(space.modelData)
++                                    sourceSize.width: 800
++                                    fillMode: Image.PreserveAspectCrop
++                                    verticalAlignment: Image.AlignTop
++                                    asynchronous: true
++                                }
++                                Image {
++                                    anchors { right: parent.right; bottom: parent.bottom; margins: 6 }
++                                    width: 22
++                                    height: 22
++                                    source: "spacesheep-mark.svg"
++                                    sourceSize { width: 44; height: 44 }
++                                }
++                                Label {
++                                    anchors.centerIn: parent
++                                    visible: spaceImage.status !== Image.Ready
++                                    text: space.modelData.icon || "Space"
++                                    font.pixelSize: 20
++                                    color: Theme.muted
++                                }
++                            }
++                            ColumnLayout {
++                                anchors { top: preview.bottom; left: parent.left; right: parent.right; margins: 12 }
++                                spacing: 5
++                                Label {
++                                    text: space.modelData.title
++                                    Layout.fillWidth: true
++                                    Layout.preferredHeight: 34
++                                    wrapMode: Text.WordWrap
++                                    maximumLineCount: 2
++                                    font { pixelSize: 14; weight: Font.DemiBold }
++                                }
++                                Label {
++                                    text: space.modelData.description || ""
++                                    Layout.fillWidth: true
++                                    Layout.preferredHeight: 30
++                                    font.pixelSize: 11
++                                    wrapMode: Text.WordWrap
++                                    maximumLineCount: 2
++                                    color: Theme.text
++                                }
++                                Label {
++                                    text: space.modelData.detail
++                                    Layout.fillWidth: true
++                                    font.pixelSize: 10
++                                    color: Theme.muted
++                                }
++                            }
++                            // Keep the preview from covering the outline at fractional display scales.
++                            Rectangle {
++                                anchors.fill: parent
++                                color: "transparent"
++                                border { width: 1; color: space.chosen ? Theme.accent : Theme.rule }
++                            }
++                        }
++                        MouseArea {
++                            id: spaceMouse
++                            anchors.fill: parent
++                            hoverEnabled: true
++                            cursorShape: Qt.PointingHandCursor
++                            onClicked: { spacesGrid.currentIndex = space.index; launcher.activate(); }
++                        }
++                        Accessible.role: Accessible.Button
++                        Accessible.name: modelData.title
++                        Accessible.onPressAction: { spacesGrid.currentIndex = space.index; launcher.activate(); }
++                    }
++                    Label {
++                        anchors.centerIn: parent
++                        visible: spacesGrid.count === 0 && launcher.message === ""
++                        text: "No spaces match your search."
++                        color: Theme.muted
+                     }
+                 }
+             }
+@@ -947,8 +1023,7 @@
+             Caption { text: "The password never goes into command arguments or notifications."; size: 12; Layout.fillWidth: true }
+         }
+     }
+-    // The board beside the launcher where the screen has room: growth left, the rest right (the
+-    // artifact preview takes the right in that tab). Not beside the growth and commits views.
++    // The board beside the launcher where the screen has room.
+     readonly property bool sideCards: Desktop.launcherSideCards && !growthMode && !workMode && !setupMode && !platesMode
+     // Over the desktop's two columns a side card takes an inset's whole place,
+     // so it covers one cleanly instead of cutting across its lines.
+@@ -987,52 +1062,4 @@
+             anchors { left: parent.left; right: parent.right; top: parent.top; margins: 16 }
+         }
+     }
+-    // The artifact under the pointer (or selected), large, beside the
+-    // launcher frame; only where the screen has room for it.
+-    NeatLine {
+-        id: artifactPreview
+-        readonly property real room: launcher.width - (frame.x + frame.width) - 40
+-        visible: launcher.artifactsMode && launcher.previewItem !== null && (launcher.besideColumns || room >= 360)
+-        x: launcher.besideColumns ? PlateState.layout.todo.inset.x : frame.x + frame.width + 12
+-        y: launcher.besideColumns ? launcher.columnTop : frame.y
+-        width: launcher.besideColumns ? PlateState.layout.todo.inset.w : Math.min(640, room)
+-        height: launcher.besideColumns ? launcher.columnHeight : previewColumn.implicitHeight + 32
+-        MouseArea {
+-            anchors.fill: parent
+-            cursorShape: Qt.PointingHandCursor
+-            onClicked: { Desktop.run(["xdg-open", launcher.previewItem.url]); Desktop.setLauncherMode(""); }
+-        }
+-        ColumnLayout {
+-            id: previewColumn
+-            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 16 }
+-            spacing: 10
+-            Rectangle {
+-                Layout.fillWidth: true
+-                Layout.preferredHeight: width * 10 / 16
+-                color: Theme.sunken
+-                border { width: 1; color: Theme.rule }
+-                clip: true
+-                Image {
+-                    id: largePreview
+-                    anchors { fill: parent; margins: 1 }
+-                    source: launcher.previewSource(launcher.previewItem)
+-                    sourceSize.width: 1280
+-                    fillMode: Image.PreserveAspectFit
+-                    asynchronous: true
+-                }
+-                Caption {
+-                    anchors.centerIn: parent
+-                    visible: largePreview.status !== Image.Ready
+-                    text: "Making a preview…"
+-                    wrapMode: Text.NoWrap
+-                }
+-            }
+-            Figure { text: launcher.previewItem ? launcher.previewItem.title : ""; Layout.fillWidth: true; wrapMode: Text.WordWrap; elide: Text.ElideNone; size: 18 }
+-            Label { visible: text !== ""; text: launcher.previewItem ? launcher.previewItem.description : ""; Layout.fillWidth: true; wrapMode: Text.WordWrap; elide: Text.ElideNone }
+-            Label { text: launcher.previewItem ? launcher.previewItem.detail : ""; Layout.fillWidth: true; wrapMode: Text.WordWrap; elide: Text.ElideNone; font.pixelSize: 11; color: Theme.muted }
+-            Label { text: launcher.previewItem ? launcher.previewItem.url : ""; Layout.fillWidth: true; font.family: Theme.mono; font.pixelSize: 10; color: Theme.muted }
+-            Rule {}
+-            KeyHint { keys: ["↵"]; text: "opens it, or click" }
+-        }
+-    }
+ }
+--- a/Masthead.qml
++++ b/Masthead.qml
+@@ -15,7 +15,7 @@
+         {mode: "apps", name: "Applications"},
+         {mode: "vault", name: "Vault"},
+         {mode: "desktops", name: "Desktops"},
+-        {mode: "artifacts", name: "Artifacts"},
++        {mode: "artifacts", name: "Spaces"},
+         {mode: "plates", name: "Plates"},
+         {mode: "accounts", name: "Accounts"}
+     ].concat(ReminderState.addTo.length > 0 ? [{mode: "remind", name: "Remind"}] : [])

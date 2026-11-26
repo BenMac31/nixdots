@@ -14,3 +14,4 @@ THEME_VIOLATIONS.md
 **/hackerboard/*.db-wal
 secrets/plaintext/
 **/secrets.env
+__pycache__/

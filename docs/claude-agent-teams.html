@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:,">
+  <title>Claude Code agent teams — setup &amp; field guide</title>
+  <style>
+    :root { color-scheme: light; --paper: #f7f5f0; --card: #fffefa; --ink: #242b2c; --muted: #626a69; --line: #deded5; --accent: #a44729; --soft: #eee7dc; --green: #38614b; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.65 system-ui, sans-serif; }
+    a { color: var(--accent); text-underline-offset: 3px; }
+    a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+    .shell { max-width: 1240px; margin: auto; padding: 36px 46px 70px; }
+    .masthead { display: flex; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+    .brand, .eyebrow, .number, .badge { font: 600 11px/1.5 ui-monospace, monospace; letter-spacing: .12em; text-transform: uppercase; }
+    .brand { color: var(--muted); }
+    .badge { display: inline-block; border: 1px solid #c7d7ca; background: #e9f0e8; color: var(--green); padding: 5px 10px; border-radius: 4px; white-space: nowrap; }
+    .hero { display: grid; grid-template-columns: 1.3fr 1fr; align-items: center; gap: 56px; padding: 48px 0 38px; }
+    .eyebrow { color: var(--accent); margin-bottom: 12px; }
+    h1 { font: 500 clamp(36px, 4.8vw, 58px)/1.07 Georgia, serif; letter-spacing: -.035em; margin: 0 0 20px; }
+    .lede { color: var(--muted); font-size: 17px; max-width: 550px; margin: 0; }
+    .config { border: 1px solid var(--line); background: var(--card); border-radius: 8px; overflow: hidden; }
+    .config-top, .code-top { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); color: var(--muted); font: 12px ui-monospace, monospace; }
+    .config pre { margin: 0; padding: 20px 16px; font-size: 12px; }
+    .config-note { border-top: 1px solid var(--line); padding: 12px 16px; font-size: 12px; color: var(--muted); }
+    .facts { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 8px; background: var(--card); margin-bottom: 42px; }
+    .fact { padding: 18px 22px; }
+    .fact + .fact { border-left: 1px solid var(--line); }
+    .fact strong { display: block; font: 500 25px/1.3 Georgia, serif; }
+    .fact span { color: var(--muted); font-size: 12px; }
+    .layout { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 54px; }
+    aside { align-self: start; position: sticky; top: 24px; }
+    nav a { display: block; color: var(--muted); text-decoration: none; font-size: 13px; padding: 6px 0; }
+    nav a:hover { color: var(--accent); }
+    .aside-note { border-top: 1px solid var(--line); margin-top: 20px; padding-top: 16px; font-size: 12px; color: var(--muted); }
+    section { margin-bottom: 38px; }
+    .number { color: var(--accent); display: block; margin-bottom: 6px; }
+    h2 { font: 500 30px/1.2 Georgia, serif; letter-spacing: -.02em; margin: 0 0 14px; }
+    h3 { font-size: 16px; margin: 22px 0 8px; }
+    p { margin: 0 0 14px; }
+    ul, ol { padding-left: 22px; margin: 10px 0 18px; }
+    li { margin-bottom: 8px; }
+    li::marker { color: var(--accent); }
+    code, pre, kbd { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    code { font-size: .84em; overflow-wrap: anywhere; }
+    :not(pre) > code { background: var(--soft); padding: 2px 4px; border-radius: 3px; }
+    pre { overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; padding: 18px; font-size: 12px; line-height: 1.7; }
+    pre code { font-size: inherit; }
+    .codebox { margin: 16px 0; border: 1px solid var(--line); background: var(--card); border-radius: 6px; overflow: hidden; }
+    button { cursor: pointer; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: var(--paper); padding: 4px 9px; font: 11px system-ui, sans-serif; }
+    button:hover { border-color: var(--accent); }
+    .callout { background: var(--soft); border-left: 3px solid var(--accent); padding: 16px 18px; margin: 18px 0; font-size: 14px; }
+    .callout p:last-child { margin-bottom: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+    th { text-align: left; color: var(--muted); font: 600 11px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; }
+    th, td { padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th:first-child, td:first-child { padding-left: 0; }
+    kbd { border: 1px solid var(--line); background: var(--card); border-radius: 4px; padding: 2px 5px; font-size: 12px; white-space: nowrap; }
+    .checklist { display: grid; gap: 10px; border: 1px solid var(--line); background: var(--card); padding: 18px; border-radius: 6px; font-size: 14px; }
+    .checklist label { display: flex; gap: 10px; align-items: baseline; cursor: pointer; }
+    .checklist input { accent-color: var(--accent); }
+    .checklist label:has(input:checked) { color: var(--muted); text-decoration: line-through; }
+    .small { font-size: 12px; color: var(--muted); }
+    footer { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+    @media (max-width: 860px) { .shell { padding: 24px; } .hero { grid-template-columns: 1fr; gap: 26px; padding-top: 32px; } .layout { grid-template-columns: 1fr; gap: 20px; } aside { position: static; } nav { display: flex; flex-wrap: wrap; gap: 4px 18px; } .aside-note { display: none; } .facts { margin-bottom: 28px; } }
+    @media (max-width: 500px) { .shell { padding: 20px 16px; } .masthead { align-items: start; } .brand { max-width: 150px; } .badge { font-size: 9px; } .fact { padding: 14px 10px; } .fact strong { font-size: 20px; } .fact span { font-size: 11px; } h2 { font-size: 26px; } table { font-size: 12px; } }
+    @media print { body { background: white; font-size: 11pt; } .shell { max-width: none; padding: 0; } aside, button { display: none; } .layout { display: block; } .hero { gap: 24px; padding-top: 24px; } h1 { font-size: 34pt; } section, .codebox, .callout { break-inside: avoid; } a { color: inherit; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="masthead">
+      <div class="brand">Claude Code / field notes 01</div>
+      <span class="badge">Agent teams enabled</span>
+    </header>
+    <div class="hero">
+      <div>
+        <div class="eyebrow">Setup &amp; working practices</div>
+        <h1>A small team.<br>A clear brief.<br>Useful parallel work.</h1>
+        <p class="lede">A practical guide to running Claude Code teammates on your NixOS setup: start with a bounded review, give each worker an owner’s brief, and have the lead integrate the results.</p>
+      </div>
+      <div class="config">
+        <div class="config-top"><span>~/.claude/settings.json</span><span>USER SCOPE</span></div>
+        <pre><code>{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}</code></pre>
+        <div class="config-note">Merged into your existing settings. Home Manager keeps the flag enabled. Agent teams remain experimental. <a href="https://code.claude.com/docs/en/agent-teams#enable-agent-teams">Feature docs ↗</a></div>
+      </div>
+    </div>
+    <div class="facts">
+      <div class="fact"><strong>3 teammates</strong><span>Suggested first experiment</span></div>
+      <div class="fact"><strong>In-process</strong><span>Default display; no tmux needed</span></div>
+      <div class="fact"><strong>One owner</strong><span>For each file being edited</span></div>
+    </div>
+    <div class="layout">
+      <aside>
+        <div class="eyebrow">In this guide</div>
+        <nav aria-label="Guide sections">
+          <a href="#setup">01 / Your setup</a>
+          <a href="#first-run">02 / First run</a>
+          <a href="#brief">03 / Better briefs</a>
+          <a href="#implementation">04 / Parallel edits</a>
+          <a href="#controls">05 / Controls &amp; costs</a>
+          <a href="#recovery">06 / Recovery</a>
+          <a href="#checklist">07 / Launch checklist</a>
+          <a href="#sources">Sources &amp; version</a>
+        </nav>
+        <div class="aside-note">Your existing concurrency setting is 40. Treat it as capacity, not a recommended team size.</div>
+      </aside>
+      <main>
+        <section id="setup">
+          <span class="number">01 / Configure once</span>
+          <h2>Your setup</h2>
+          <p>The feature flag lives in your writable user settings. This repo manages it through <code>ai.claude.agentTeams.enable</code>, enabled by default when <code>ai.claude.enable</code> is on. Activation merges the flag without replacing other settings or environment entries.</p>
+          <p>Your account launcher uses per-account Claude profiles that copy the user settings at launch. Open a fresh interactive <code>claude</code> session to pick up the change. Keep the shared flag in user settings; don’t hand-edit every account profile.</p>
+          <div class="codebox">
+            <div class="code-top"><span>Inspect the flag · terminal</span><button type="button" data-copy="verify">Copy</button></div>
+            <pre id="verify"><code>jq -r '.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS' ~/.claude/settings.json
+# Expected: 1
+claude</code></pre>
+          </div>
+          <p>Use the default in-process display first. For optional panes, install tmux through Nix, open a tmux session, then run <code>claude --teammate-mode auto</code>. This configuration does not install tmux or change your display preference. <a href="https://code.claude.com/docs/en/agent-teams#choose-a-display-mode">Display modes ↗</a></p>
+          <div class="callout"><p><strong>Your permission setting matters.</strong> The account wrapper currently starts Claude in <code>bypassPermissions</code> mode. New teammates inherit the lead’s permission mode. For a session that asks before actions, launch <code>claude --permission-mode default</code>. To change the wrapper’s default, set <code>ai.claude.bypassPermissions = false;</code> and run <code>homeswitch</code>. <a href="https://code.claude.com/docs/en/agent-teams#permissions">Permission behavior ↗</a></p></div>
+        </section>
+        <section id="first-run">
+          <span class="number">02 / Begin with observation</span>
+          <h2>A useful first run</h2>
+          <p>Start with three reviewers and a concrete change. Different review lenses give you independent work without edit collisions. This is a suggested workflow, not a Claude requirement.</p>
+          <div class="codebox">
+            <div class="code-top"><span>Starter prompt · paste into Claude</span><button type="button" data-copy="review-prompt">Copy</button></div>
+            <pre id="review-prompt"><code>Create an agent team with exactly three teammates to review the
+current uncommitted diff in this repository. Do not edit files.
+
+Name them:
+- module-reviewer: check option defaults, imports, and module composition.
+- runtime-reviewer: check activation scripts, permissions, and runtime files.
+- skeptic: challenge assumptions and look for regressions the others miss.
+
+Give each teammate the relevant repository instructions and task context.
+Have them send concrete findings to each other when their work overlaps.
+Each finding needs a file and line, consequence, evidence, and confidence.
+Use messages to coordinate; use shared tasks if those tools are available.
+As lead, wait for all three reports, reconcile disagreements, and return
+one prioritized list with suggested verification. Then shut down the team.</code></pre>
+          </div>
+          <p>For a named change, replace “current uncommitted diff” with a commit range or specific files. This workspace can contain unrelated work, so a narrower scope often produces a better review.</p>
+          <table>
+            <thead><tr><th>Work shape</th><th>Suggested approach</th></tr></thead>
+            <tbody>
+              <tr><td>Small fix or a strict sequence</td><td>Keep it in one session.</td></tr>
+              <tr><td>One isolated question</td><td>Delegate to a subagent.</td></tr>
+              <tr><td>Independent investigations that should compare findings</td><td>Use a small agent team.</td></tr>
+              <tr><td>Several workers need the same files</td><td>Agree on a design together; assign implementation to one owner.</td></tr>
+            </tbody>
+          </table>
+        </section>
+        <section id="brief">
+          <span class="number">03 / Write the handoff</span>
+          <h2>Give every teammate a complete brief</h2>
+          <p>Teammates receive project context and their launch instructions, but do not inherit the lead’s chat history. Include the decisions you already made. <a href="https://code.claude.com/docs/en/agent-teams#context-and-communication">Context model ↗</a></p>
+          <ul>
+            <li><strong>Outcome:</strong> a checkable deliverable, with an explicit stopping point.</li>
+            <li><strong>Ownership:</strong> files they may edit, files they may only inspect, and who owns shared interfaces.</li>
+            <li><strong>Constraints:</strong> relevant repo rules, compatibility targets, and decisions already settled.</li>
+            <li><strong>Evidence:</strong> commands to run and the result to report; distinguish measured facts from hypotheses.</li>
+            <li><strong>Escalation:</strong> message the lead before changing scope or editing another owner’s file.</li>
+          </ul>
+          <p>Keep tasks large enough to produce a useful result, but small enough for a review checkpoint. Ask blocked workers to state the dependency rather than start overlapping work. Make the lead responsible for final integration and validation.</p>
+        </section>
+        <section id="implementation">
+          <span class="number">04 / Divide by ownership</span>
+          <h2>Parallel edits that remain reviewable</h2>
+          <p>Settle shared interfaces before splitting implementation. Give each teammate a distinct file set; reserve common files such as <code>flake.nix</code> and lockfiles for the lead. Separate Git worktrees help when branches need isolation, but a team does not automatically give each worker one.</p>
+          <div class="codebox">
+            <div class="code-top"><span>Implementation brief · adapt paths first</span><button type="button" data-copy="build-prompt">Copy</button></div>
+            <pre id="build-prompt"><code>Create an agent team for [goal] with two implementers and one reviewer.
+First propose file ownership and the interface contract; wait for my
+approval of that design before assigning edits.
+
+Implementer A owns [file set A]. Implementer B owns [file set B].
+The reviewer inspects both changes and reports issues without editing.
+Only the lead edits shared integration files or lockfiles.
+Include the exact constraints and acceptance checks in each launch brief.
+If ownership must change, message the lead before touching the file.
+
+Ask workers for a concise change summary and validation evidence.
+As lead, wait for their work, inspect the combined diff, resolve review
+findings, and run the final relevant checks. Do not commit or deploy.</code></pre>
+          </div>
+          <h3>Rules to include for this NixOS repo</h3>
+          <ul>
+            <li>Use one feature enable option, conditional configuration, and parent <code>lib.mkDefault true</code> defaults. Put code beside its closest existing example.</li>
+            <li>Keep secrets in runtime files, outside the world-readable Nix store.</li>
+            <li>Evaluate one output at a time. Don’t evaluate all configurations and don’t run <code>nix fmt</code>.</li>
+            <li>Have the lead coordinate Nix checks and activation. Use <code>nixtest</code> for a requested temporary system trial.</li>
+          </ul>
+          <div class="codebox"><div class="code-top"><span>One Home Manager output · terminal</span><button type="button" data-copy="nix-check">Copy</button></div><pre id="nix-check"><code>nix eval --raw .#homeConfigurations.nixUltra.activationPackage.drvPath</code></pre></div>
+        </section>
+        <section id="controls">
+          <span class="number">05 / Steer deliberately</span>
+          <h2>Controls, scope, and cost</h2>
+          <p>Three teammates are a sensible starting point. Each has its own context and consumes tokens; add a worker when you have another independent deliverable. Specify a model in the launch brief when you want to control it, for example, “Use Sonnet for the reviewers.”</p>
+          <table>
+            <thead><tr><th>In-process control</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td><kbd>↑</kbd> / <kbd>↓</kbd>, then <kbd>Enter</kbd></td><td>Select a teammate in the agent panel and open its conversation.</td></tr>
+              <tr><td>Type in that conversation</td><td>Give that teammate a narrower task or ask for evidence.</td></tr>
+              <tr><td><kbd>Esc</kbd></td><td>Clear panel selection; while viewing a teammate, interrupt its current turn.</td></tr>
+              <tr><td><kbd>Ctrl</kbd> + <kbd>T</kbd></td><td>Toggle the task list where available.</td></tr>
+              <tr><td>Ask the lead to shut down named teammates</td><td>Finish the team after its reports are integrated.</td></tr>
+            </tbody>
+          </table>
+          <p>Request a checkpoint after the first finding or design proposal. Stop duplicate investigations early. An idle teammate is not proof that its task passed validation: require the evidence in its handoff. <a href="https://code.claude.com/docs/en/agent-teams#talk-to-teammates-directly">Current controls ↗</a></p>
+          <p>For recurring workflows, consider narrowly scoped <code>TaskCompleted</code> or <code>TeammateIdle</code> hooks. A hook exiting with code 2 can return feedback and block completion or idling. Start with manual review before adding automation. <a href="https://code.claude.com/docs/en/agent-teams#enforce-quality-gates-with-hooks">Hook behavior ↗</a></p>
+        </section>
+        <section id="recovery">
+          <span class="number">06 / Know the edges</span>
+          <h2>Recovery and disabling</h2>
+          <ul>
+            <li><strong>No teammates:</strong> use an interactive session, explicitly request an agent team, and check for a higher-precedence flag override. Headless <code>claude -p</code> does not spawn teammates.</li>
+            <li><strong>A teammate disappeared:</strong> inspect the agent panel or message it by name. Idle rows can hide without the teammate shutting down.</li>
+            <li><strong>After resume:</strong> recreate in-process teammates; session resumption does not restore them. Keep findings and remaining work in a durable file.</li>
+            <li><strong>A dependent task is stuck:</strong> inspect the deliverable, then ask the lead to correct stale task status.</li>
+          </ul>
+          <p>Only the lead can spawn teammates, and each session has one team. Shutdown may wait for the current call to finish. These are experimental behaviors; check the <a href="https://code.claude.com/docs/en/agent-teams#limitations">current limitations</a> when upgrading.</p>
+          <h3>Turn teams off persistently</h3>
+          <p>Set the following in your Home Manager configuration, then run <code>homeswitch</code>. Activation writes the flag as <code>"0"</code>.</p>
+          <div class="codebox"><div class="code-top"><span>Home Manager option</span><button type="button" data-copy="disable">Copy</button></div><pre id="disable"><code>ai.claude.agentTeams.enable = false;</code></pre></div>
+          <p>For an immediate settings-only change, set the flag to <code>"0"</code> in user settings; the next activation restores the Nix choice. With teams enabled, Claude can also turn named subagent delegations into teammates, even without an explicit team request. <a href="https://code.claude.com/docs/en/agent-teams#claude-spawns-teammates-instead-of-subagents">Delegation behavior ↗</a></p>
+          <p>User settings can be overridden by project, project-local, command-line, and managed settings. Check those sources when the saved user flag and actual behavior disagree. <a href="https://code.claude.com/docs/en/settings#settings-precedence">Settings precedence ↗</a></p>
+        </section>
+        <section id="checklist">
+          <span class="number">07 / Before you launch</span>
+          <h2>A brief worth delegating</h2>
+          <div class="checklist" role="group" aria-label="Team launch checklist">
+            <label><input type="checkbox">The goal benefits from independent work.</label>
+            <label><input type="checkbox">Each teammate has a scope, deliverable, and file owner.</label>
+            <label><input type="checkbox">The brief includes decisions from the lead’s conversation.</label>
+            <label><input type="checkbox">Permission mode and team size fit this task.</label>
+            <label><input type="checkbox">The lead owns integration, final checks, and shutdown.</label>
+          </div>
+          <p class="small" style="margin-top: 10px">A scratch checklist for this page; selections are not saved.</p>
+        </section>
+        <footer id="sources">
+          <strong>Sources &amp; version.</strong> Prepared 11 November 2026 for Claude Code 2.1.321. Product behavior checked against Anthropic’s <a href="https://code.claude.com/docs/en/agent-teams">agent teams documentation</a> and <a href="https://code.claude.com/docs/en/settings">settings documentation</a>. Team sizes, prompts, ownership rules, and checkpoints above are practical recommendations for this repository. Configuration source: <a href="../modules/home-manager/term/ai/claude-code.nix">claude-code.nix</a> and <a href="../modules/home-manager/term/ai/accounts.nix">accounts.nix</a>.
+        </footer>
+      </main>
+    </div>
+  </div>
+  <script>
+    document.querySelectorAll('[data-copy]').forEach(button => {
+      button.addEventListener('click', async () => {
+        const value = document.getElementById(button.dataset.copy).textContent;
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(value);
+          } else {
+            const field = document.createElement('textarea');
+            field.value = value;
+            field.style.position = 'fixed';
+            field.style.opacity = '0';
+            document.body.appendChild(field);
+            field.select();
+            const copied = document.execCommand('copy');
+            field.remove();
+            if (!copied) throw new Error('copy unavailable');
+          }
+          button.textContent = 'Copied';
+          setTimeout(() => { button.textContent = 'Copy'; }, 1800);
+        } catch {
+          button.textContent = 'Select text to copy';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -2,6 +2,11 @@
 # Snapshots, scrub and swap for the LUKS + btrfs disk install-nixUltra lays
 # out. NixOS generations already roll the system back; these cover the data.
 {
+  imports = [ ./rust-targets.nix ../../modules/nixos/agent-storage.nix ];
+  services.rustTargetSubvolumes.enable = lib.mkDefault true;
+  services.agentStorage.enable = lib.mkDefault true;
+  services.agentStorage.sizeGiB = 256;
+
   # Hourly snapshots of /home; browse them under /home/.snapshots or roll
   # back with `snapper -c home undochange`. Nested subvolumes are not
   # snapshotted, so a churny directory can be kept out by making it one.
@@ -23,19 +28,15 @@
   # The NixOS default is daily, too slow to free space under agent churn.
   services.snapper.cleanupInterval = "1h";
 
-  # Agent and build churn, capped at the image size (scratch.nix).
+  # Home Manager mounts the user-owned image; the older root bind mounts
+  # must stay off so they cannot cover the migrated workspace links.
   services.scratchImage = {
-    enable = lib.mkDefault true;
+    enable = lib.mkDefault false;
     binds = [ "Projects/wt" ".cache/go-build" ".cache/gred-rs" ".local/share/containers" ];
   };
-  # Agents write to /scratch/tmp instead, so /tmp in RAM stays small.
-  boot.tmp = {
-    useTmpfs = true;
-    tmpfsSize = "25%";
-  };
+  # agentStorage binds /tmp and /var/tmp into the existing capped image.
   # Snapper expects the .snapshots subvolume to exist; `v` makes one.
-  # An agent started outside the wrappers still writes /tmp/claude-1000,
-  # now RAM; anything untouched for a day goes.
+  # Output from agents started outside the wrappers still needs age-based cleanup.
   systemd.tmpfiles.rules = [
     "v /home/.snapshots 0750 root users -"
     "e /tmp/claude-1000 - - - 1d"
@@ -78,13 +79,14 @@
   # guard keeps unallocated space and escalates long before that.
   services.diskGuard = {
     enable = lib.mkDefault true;
-    # The 128 GiB /scratch image leaves about 85 GiB truly free, which is fine:
-    # the metadata risk is unallocated space, not data free.
+    # Keep agent sessions usable while the guard reclaims disk headroom.
+    freezeAgents = false;
+    # Btrfs needs unallocated space to extend metadata independently of df.
     trueFreeTightGiB = 48;
     trueFreeOkPercent = 4;
     ballast.sizeGiB = 16;
-    # Agents started outside the wrappers still write here, in RAM.
-    purge.dirs = [ "/scratch/tmp" "/tmp/claude-1000" ];
+    # The scratch cleaner checks open files; blanket age-based deletion cannot.
+    purge.dirs = [ ];
   };
 
   # Fills before the swapfile; hibernation skips zram and uses the swapfile.

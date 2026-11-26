@@ -23,6 +23,9 @@
   boot.extraModulePackages = [ ];
   # Early KMS, so the LUKS prompt and plymouth come up at native resolution.
   hardware.amdgpu.initrd.enable = true;
+  # DMUB/SMU timeouts start in dmub_psr_get_state; avoid panel self-refresh
+  # so sleep does not have to freeze or restore an already wedged GPU.
+  boot.kernelParams = [ "amdgpu.dcdebugmask=0x10" ];
 
   boot.initrd.luks.devices."root" = {
     device = "/dev/disk/by-partlabel/nixultra-luks";

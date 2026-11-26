@@ -1,0 +1,317 @@
+--- a/Launcher.qml
++++ b/Launcher.qml
+@@ -44,26 +44,8 @@
+     readonly property bool dmenuMode: Desktop.launcherMode === "dmenu"
+     readonly property bool artifactsMode: Desktop.launcherMode === "artifacts"
+     readonly property bool platesMode: Desktop.launcherMode === "plates"
+-    readonly property bool remindMode: Desktop.launcherMode === "remind"
+-    // The Remind place: who the reminder is for, of `serverReminders.addTo`,
+-    // and how many snoozes it gets before only Done takes it away.
+-    property string remindTo: ""
+-    property int remindSnoozes: 5
+-    readonly property string remindPerson: ReminderState.addTo.indexOf(remindTo) >= 0 ? remindTo : ReminderState.addTo[0] || ""
+-    readonly property string remindName: remindPerson.charAt(0).toUpperCase() + remindPerson.slice(1)
+-    function openRemind() {
+-        ReminderState.addMessage = "";
+-        if (remindPerson !== "") { remindText.forceActiveFocus(); ReminderState.look(remindPerson); }
+-        else remindEmpty.forceActiveFocus();
+-    }
+-    function addReminder() { if (remindText.text.trim() !== "") ReminderState.add(remindPerson, remindText.text, remindSnoozes); }
+-    function remindStep(step) {
+-        const people = ReminderState.addTo;
+-        if (people.length < 2) return;
+-        remindTo = people[(people.indexOf(remindPerson) + step + people.length) % people.length];
+-        ReminderState.addMessage = "";
+-        ReminderState.look(remindTo);
+-    }
++    readonly property bool pomodoroMode: Desktop.launcherMode === "pomodoro"
++    function openPomodoro() { pomodoroPanel.takeFocus(); }
+     // The view the arrow keys move through in two dimensions, if any.
+     readonly property var gridView: desktopsMode ? desktopGrid : artifactsMode ? spacesGrid : platesMode ? plateGrid : null
+     function roman(n) {
+@@ -265,7 +247,7 @@
+         search.forceActiveFocus();
+     }
+     onVisibleChanged: {
+-        if (visible && remindMode) openRemind();
++        if (visible && pomodoroMode) openPomodoro();
+         else if (visible && !workMode) search.forceActiveFocus();
+     }
+     Connections {
+@@ -280,7 +262,7 @@
+             if (Desktop.launcherMode === "") {
+                 launcher.entries = []; search.text = ""; launcher.message = "";
+                 launcher.setupDesktop = ({id: ""}); launcher.setupMessage = "";
+-            } else if (launcher.remindMode) Qt.callLater(launcher.openRemind);
++            } else if (launcher.pomodoroMode) Qt.callLater(launcher.openPomodoro);
+             else if (!launcher.accountsMode && !launcher.growthMode && !launcher.workMode) Qt.callLater(launcher.refresh);
+         }
+     }
+@@ -414,7 +396,7 @@
+         ColumnLayout {
+             anchors { fill: parent; margins: 16 }
+             spacing: 12
+-            visible: !launcher.accountsMode && !launcher.growthMode && !launcher.workMode && !launcher.setupMode && !launcher.remindMode
++            visible: !launcher.accountsMode && !launcher.growthMode && !launcher.workMode && !launcher.setupMode && !launcher.pomodoroMode
+             Masthead { title: launcher.dmenuMode ? "Choose" : "" }
+             Well {
+                 id: search
+@@ -838,132 +820,10 @@
+                 Action { visible: launcher.artifactsMode && launcher.artifactIndex !== ""; text: "Index"; onClicked: { Desktop.run(["xdg-open", launcher.artifactIndex]); Desktop.setLauncherMode(""); } }
+             }
+         }
+-        ColumnLayout {
+-            anchors { fill: parent; margins: 16 }
+-            spacing: 12
+-            visible: launcher.remindMode
+-            Masthead {}
+-            Caption {
+-                id: remindEmpty
+-                visible: launcher.remindPerson === ""
+-                Layout.fillWidth: true
+-                Layout.fillHeight: true
+-                horizontalAlignment: Text.AlignHCenter
+-                verticalAlignment: Text.AlignVCenter
+-                text: "No one to remind: list teammates in serverReminders.addTo."
+-                Keys.onEscapePressed: Desktop.closeLauncher()
+-            }
+-            ColumnLayout {
+-                visible: launcher.remindPerson !== ""
+-                Layout.fillWidth: true
+-                Layout.fillHeight: true
+-                spacing: 12
+-                RowLayout {
+-                    visible: ReminderState.addTo.length > 1
+-                    Layout.fillWidth: true
+-                    spacing: 2
+-                    Heading { text: "For"; Layout.rightMargin: 8 }
+-                    Repeater {
+-                        model: ReminderState.addTo
+-                        Choice {
+-                            required property string modelData
+-                            text: modelData.charAt(0).toUpperCase() + modelData.slice(1)
+-                            active: modelData === launcher.remindPerson
+-                            onClicked: { launcher.remindStep(ReminderState.addTo.indexOf(modelData) - ReminderState.addTo.indexOf(launcher.remindPerson)); remindText.forceActiveFocus(); }
+-                        }
+-                    }
+-                    Item { Layout.fillWidth: true }
+-                }
+-                Well {
+-                    id: remindText
+-                    Layout.fillWidth: true
+-                    Layout.preferredHeight: 40
+-                    maximumLength: 200
+-                    placeholderText: "What " + launcher.remindName + " has to do"
+-                    readOnly: ReminderState.adding
+-                    onAccepted: launcher.addReminder()
+-                    Keys.onEscapePressed: Desktop.closeLauncher()
+-                    Keys.onUpPressed: launcher.remindStep(-1)
+-                    Keys.onDownPressed: launcher.remindStep(1)
+-                }
+-                RowLayout {
+-                    Layout.fillWidth: true
+-                    spacing: 2
+-                    Heading { text: "Snoozes"; Layout.rightMargin: 8 }
+-                    Repeater {
+-                        model: [0, 1, 3, 5, 10]
+-                        Choice {
+-                            required property int modelData
+-                            text: modelData === 0 ? "None" : String(modelData)
+-                            active: modelData === launcher.remindSnoozes
+-                            onClicked: { launcher.remindSnoozes = modelData; remindText.forceActiveFocus(); }
+-                        }
+-                    }
+-                    Item { Layout.fillWidth: true }
+-                    Caption { visible: remindText.length > 150; text: remindText.length + " of 200"; size: 12; wrapMode: Text.NoWrap }
+-                }
+-                Caption {
+-                    Layout.fillWidth: true
+-                    size: 12
+-                    text: "It stays in " + launcher.remindName + "’s reminders column until " + launcher.remindName + " clicks it done. Once its snoozes are spent, nothing else puts it away."
+-                }
+-                Caption {
+-                    visible: ReminderState.addMessage !== ""
+-                    Layout.fillWidth: true
+-                    text: ReminderState.addMessage
+-                    color: ReminderState.addFailed ? Theme.warning : ReminderState.adding ? Theme.muted : Theme.good
+-                }
+-                Rule { Layout.topMargin: 4 }
+-                Heading { text: "On " + launcher.remindName + "’s list" }
+-                ListView {
+-                    id: remindList
+-                    readonly property var items: ReminderState.lists[launcher.remindPerson]
+-                    Layout.fillWidth: true
+-                    Layout.fillHeight: true
+-                    clip: true
+-                    spacing: 14
+-                    model: Array.isArray(items) ? items.slice().reverse() : []
+-                    boundsBehavior: Flickable.StopAtBounds
+-                    delegate: ColumnLayout {
+-                        required property var modelData
+-                        width: remindList.width
+-                        spacing: 0
+-                        Figure { Layout.fillWidth: true; text: modelData.text; size: 18; wrapMode: Text.Wrap; elide: Text.ElideNone }
+-                        Caption {
+-                            Layout.fillWidth: true
+-                            size: 12
+-                            text: [modelData.by && modelData.by !== launcher.remindPerson ? "from " + modelData.by.charAt(0).toUpperCase() + modelData.by.slice(1) : "", launcher.age(modelData.added)].filter(Boolean).join(", ")
+-                        }
+-                    }
+-                    Caption {
+-                        anchors.centerIn: parent
+-                        visible: remindList.count === 0
+-                        text: Array.isArray(remindList.items) ? "Nothing is on it." : "Reading the list…"
+-                        wrapMode: Text.NoWrap
+-                    }
+-                }
+-            }
+-            Rule {}
+-            RowLayout {
+-                Layout.fillWidth: true
+-                Layout.maximumHeight: implicitHeight
+-                spacing: 16
+-                KeyHint { visible: ReminderState.addTo.length > 1; keys: ["↑", "↓"]; text: "who" }
+-                KeyHint { visible: launcher.remindPerson !== ""; keys: ["↵"]; text: "adds it" }
+-                KeyHint { keys: ["Shift", "Tab"]; text: "next place" }
+-                Item { Layout.fillWidth: true }
+-                Action {
+-                    visible: launcher.remindPerson !== ""
+-                    text: ReminderState.adding ? "Adding…" : "Add for " + launcher.remindName
+-                    active: true
+-                    enabled: remindText.text.trim() !== "" && !ReminderState.adding
+-                    onClicked: launcher.addReminder()
+-                }
+-            }
+-        }
+-        Connections {
+-            target: ReminderState
+-            function onAdded() { remindText.text = ""; if (launcher.remindMode) remindText.forceActiveFocus(); }
++        PomodoroPanel {
++            id: pomodoroPanel
++            anchors.fill: parent
++            visible: launcher.pomodoroMode
+         }
+         ColumnLayout {
+             anchors { fill: parent; margins: 16 }
+--- a/Desktop.qml
++++ b/Desktop.qml
+@@ -112,7 +112,7 @@
+     function refreshArtifactPreviews() { if (!artifactPreviewer.running) artifactPreviewer.running = true; }
+     function refreshCommits() { if (commitsRepo !== "" && !commitActivity.running) commitActivity.running = true; }
+     function refreshPoints() { if (pointsUrl !== "" && !pointsActivity.running) pointsActivity.running = true; }
+-    property string pomodoro: "Focus"
++    readonly property string pomodoro: PomodoroState.summary
+     readonly property bool fresh: connected && (clock.date.getTime() - receivedAt < 20000)
+     readonly property var now: clock.date
+     property double notifiedSlot: 0
+@@ -169,7 +169,7 @@
+     }
+     function toggleLauncher(mode) { setLauncherMode(launcherMode === mode ? "" : mode); }
+     function cycleLauncherTab() {
+-        const tabs = ["apps", "vault", "desktops", "artifacts", "plates", "accounts"].concat(ReminderState.addTo.length > 0 ? ["remind"] : []);
++        const tabs = ["apps", "vault", "desktops", "artifacts", "plates", "accounts"].concat(["pomodoro"]);
+         setLauncherMode(tabs[(tabs.indexOf(launcherMode) + 1) % tabs.length]);
+     }
+     function mutation(path, body, method) {
+@@ -215,7 +215,7 @@
+         function growth(): void { desktop.toggleLauncher("growth"); }
+         function commits(): void { desktop.toggleLauncher("commits"); }
+         function points(): void { desktop.toggleLauncher("points"); }
+-        function remind(): void { desktop.toggleLauncher("remind"); }
++        function pomodoro(): void { desktop.toggleLauncher("pomodoro"); }
+         function dmenu(input: string, resultPath: string): void { desktop.dmenu(input, resultPath); }
+     }
+     // The same surfaces as Hyprland global shortcuts (`bind = SUPER, R, global,
+@@ -359,13 +359,4 @@
+     Timer { interval: 1800000; running: true; repeat: true; onTriggered: desktop.refreshArtifactPreviews() }
+     // Hourly: a run fetches the branch and walks four weeks of history.
+     Timer { interval: 3600000; running: desktop.commitsRepo !== ""; repeat: true; onTriggered: { if (!commitActivity.running) commitActivity.running = true; } }
+-    Process {
+-        id: focusProcess
+-        command: ["waybar-module-pomodoro"]
+-        running: desktop.pomodoroEnabled
+-        stdout: SplitParser {
+-            onRead: data => { try { desktop.pomodoro = JSON.parse(data).text.replace(/<[^>]*>/g, ""); } catch (e) {} }
+-        }
+-    }
+-    Timer { interval: 5000; running: desktop.pomodoroEnabled; repeat: true; onTriggered: { if (!focusProcess.running) focusProcess.running = true; } }
+ }
+--- a/Masthead.qml
++++ b/Masthead.qml
+@@ -18,7 +18,7 @@
+         {mode: "artifacts", name: "Spaces"},
+         {mode: "plates", name: "Plates"},
+         {mode: "accounts", name: "Accounts"}
+-    ].concat(ReminderState.addTo.length > 0 ? [{mode: "remind", name: "Remind"}] : [])
++    ].concat([{mode: "pomodoro", name: "Pomodoro"}])
+     readonly property var work: [{mode: "growth", name: "Growth"}]
+         .concat(Desktop.pointsUrl !== "" ? [{mode: "points", name: "Points"}] : [])
+         .concat(Desktop.commitsRepo !== "" ? [{mode: "commits", name: "Commits"}] : [])
+--- a/Bar.qml
++++ b/Bar.qml
+@@ -233,13 +233,5 @@
+-        Stat {
+-            visible: Desktop.pomodoroEnabled
+-            icon: "󰔟"
+-            value: Desktop.pomodoro
+-            tip: "Focus timer. Click to start or pause, right-click to reset."
+-            onClicked: Desktop.run(["waybar-module-pomodoro", "toggle"])
+-            onRightClicked: Desktop.run(["waybar-module-pomodoro", "reset"])
+-        }
+         Action {
+             bordered: false
+             implicitWidth: usageRow.implicitWidth + 12
+             implicitHeight: 24
+             tip: "Claude and Codex usage. Click for accounts."
+--- a/QuickSettings.qml
++++ b/QuickSettings.qml
+@@ -155,8 +155,8 @@
+         visible: Desktop.pomodoroEnabled
+         name: "Focus"
+         title: Desktop.pomodoro
+-        Action { text: "Start or pause"; onClicked: Desktop.run(["waybar-module-pomodoro", "toggle"]) }
+-        Action { text: "Reset"; onClicked: Desktop.run(["waybar-module-pomodoro", "reset"]) }
++        Action { text: "Start or pause"; onClicked: PomodoroState.send({action: "toggle"}) }
++        Action { text: "Reset"; onClicked: PomodoroState.send({action: "reset"}) }
+     }
+     Line {
+         name: "Agents"
+--- a/qmldir
++++ b/qmldir
+@@ -51,3 +51,6 @@
+ singleton Seismograph 1.0 Seismograph.qml
+ singleton TodoState 1.0 TodoState.qml
+ singleton TodoTheme 1.0 TodoTheme.qml
++singleton PomodoroState 1.0 PomodoroState.qml
++PomodoroPanel 1.0 PomodoroPanel.qml
++PomodoroOverlay 1.0 PomodoroOverlay.qml
+--- /dev/null
++++ b/PomodoroOverlay.qml
+@@ -0,0 +1,27 @@
++import QtQuick
++import Quickshell
++import Quickshell.Wayland
++
++PanelWindow {
++    visible: Desktop.pomodoroEnabled
++    anchors { right: true; bottom: true }
++    margins { right: PlateState.layout.gutter; bottom: PlateState.layout.gutter }
++    exclusionMode: ExclusionMode.Ignore
++    WlrLayershell.layer: WlrLayer.Overlay
++    WlrLayershell.namespace: "graphide-pomodoro"
++    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
++    implicitWidth: Math.max(152, timerButton.implicitWidth)
++    implicitHeight: 34
++    color: Theme.raised
++
++    Action {
++        id: timerButton
++        anchors.fill: parent
++        text: Desktop.pomodoro
++        size: 13
++        active: PomodoroState.state.running
++        tip: "Pomodoro. Click to manage, right-click to start or pause."
++        onClicked: Desktop.toggleLauncher("pomodoro")
++        onRightClicked: PomodoroState.send({action: "toggle"})
++    }
++}

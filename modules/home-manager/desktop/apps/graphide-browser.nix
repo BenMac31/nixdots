@@ -6,7 +6,9 @@
     programs.graphide-browser = {
       enable = true;
       browser = "librewolf";
+      colours = lib.mkIf config.browser.enable config.browser.colours;
       darkSites = false;
+      tridactyl.enable = lib.mkDefault config.browser.vimKeys;
       tridactyl.extraConfig = /*vim*/ ''
         " Comment toggler for Reddit, Hacker News and Lobste.rs
         bind ;c hint -Jc [class*="expand"],[class*="togg"],[class="comment_folder"]

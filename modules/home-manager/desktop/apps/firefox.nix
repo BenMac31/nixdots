@@ -1,6 +1,7 @@
 { config, lib, pkgs, inputs, ... }:
 
 let
+  cfg = config.browser;
   lock-false = {
     Value = false;
     Status = "locked";
@@ -15,7 +16,7 @@ let
   };
 in
 {
-  config = lib.mkIf config.programs.librewolf.enable {
+  config = lib.mkIf (config.programs.librewolf.enable && cfg.enable) {
     home.packages = [
       (pkgs.writeShellScriptBin "nixffext" ''
         wl-copy "(extension \"$(printf "$1" | awk -F '/' '{printf $7 }')\" \"$(curl -s "$1" | tr ',' '\n' | grep byGUID | tail -n 1 | awk -F '"' '{printf $4}')\")" && notify-send "ext copied"
@@ -43,23 +44,12 @@ in
         DisableFirefoxStudies = true;
         DontCheckDefaultBrowser = true;
         DisablePocket = true;
+        PasswordManagerEnabled = cfg.savePasswords;
         SearchBar = "unified";
         # Librewolf clears cookies on shutdown; sites with an explicit "allow"
         # cookie permission are skipped by the shutdown sanitizer.
         Cookies = {
-          Allow = [
-            "https://claude.ai"
-            "https://anthropic.com"
-            "https://chatgpt.com"
-            "https://openai.com"
-            "https://discord.com"
-            "https://github.com"
-            "https://proton.me"
-            "https://protonmail.com"
-            "https://ycombinator.com"
-            "https://linkedin.com"
-            "https://x.com"
-          ];
+          Allow = map (site: "https://${site}") cfg.persistentSites;
         };
         Preferences = {
           "extensions.pocket.enabled" = lock-false;
@@ -69,33 +59,18 @@ in
           "browser.newtabpage.activity-stream.showSponsoredTopSites" = lock-false;
 
           browser.search.separatePrivateDefault = lock-false;
-          "browser.search.defaultenginename" = "brave";
-          "browser.search.order.1" = "brave";
+          "browser.search.defaultenginename" = cfg.search.default;
+          "browser.search.order.1" = cfg.search.default;
 
-          "browser.startup.page" = 3;
+          "browser.startup.page" = if cfg.restoreSession then 3 else 1;
           "privacy.resistFingerprinting.block_mozAddonManager" = lock-true;
           "extensions.webextensions.restrictedDomains" = lock-empty-string;
         };
-        ExtensionSettings = with builtins;
-          let extension = shortId: uuid: {
-            name = uuid;
-            value = {
-              install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/${shortId}/latest.xpi";
-              installation_mode = "force_installed";
-            };
-          };
-          in
-          listToAttrs [
-            (extension "multi-account-containers" "@testpilot-containers")
-            (extension "ublock-origin" "uBlock0@raymondhill.net")
-            (extension "bitwarden-password-manager" "{446900e4-71c2-419f-a6a7-df9c091e268b}")
-            (extension "libredirect" "7esoorv3@alefvanoon.anonaddy.me")
-            (extension "darkreader" "addon@darkreader.org")
-            (extension "deep-fake-detector" "{ddd3c206-589e-431d-93d0-897378f9200a}")
-            (extension "furiganaize" "{a2503cd4-4083-4c2f-bef2-37767a569867}")
-            (extension "yomitan" "{6b733b82-9261-47ee-a595-2dda294a4d08}")
-            (extension "sponsorblock" "sponsorBlocker@ajay.app")
-          ];
+        ExtensionSettings = lib.listToAttrs (lib.mapAttrsToList (_: extension:
+          lib.nameValuePair extension.firefox.id {
+            install_url = "https://addons.mozilla.org/en-US/firefox/downloads/latest/${extension.firefox.slug}/latest.xpi";
+            installation_mode = "force_installed";
+          }) (lib.filterAttrs (_: extension: extension.firefox != null) cfg.extensions));
       };
 
       profiles = {
@@ -103,54 +78,29 @@ in
           name = "default";
           isDefault = true;
           search = {
-            default = "brave";
+            default = cfg.search.default;
             force = true;
-            engines = {
-              "brave" = {
-                urls = [{
-                  template = "https://search.brave.com/search";
-                  params = [
-                    { name = "q"; value = "{searchTerms}"; }
-                  ];
-                }];
-                definedAliases = [ "!br" ];
-                iconUpdateURL = "https://brave.com/favicon.ico";
-                updateInterval = 7 * 24 * 60 * 60 * 1000;
-              };
-              "nyaa" = {
-                urls = [{
-                  template = "https://nyaa.si/";
-                  params = [
-                    { name = "f"; value = "0"; }
-                    { name = "c"; value = "0_0"; }
-                    { name = "q"; value = "{searchTerms}"; }
-                  ];
-                  iconUpdateURL = "https://nyaa.si/static/favicon.png";
-                  updateInterval = 7 * 24 * 60 * 60 * 1000;
-                }];
-                definedAliases = [ "!ny" ];
-              };
-              "PirateBay" = {
-                urls = [{
-                  template = "https://thepiratebay.org/search.php";
-                  params = [
-                    { name = "q"; value = "{searchTerms}"; }
-                  ];
-                }];
-                iconUpdateURL = "https://thepiratebay.org/favicon.ico";
-                definedAliases = [ "!tpb" ];
-                updateInterval = 7 * 24 * 60 * 60 * 1000;
-              };
-            };
+            engines = lib.mapAttrs (_: engine: {
+              urls = [{ template = engine.url; }];
+              definedAliases = engine.aliases;
+              icon = engine.icon;
+              updateInterval = 7 * 24 * 60 * 60 * 1000;
+            }) cfg.search.engines;
           };
           settings = {
-            "browser.search.defaultenginename" = "brave";
-            "browser.search.order.1" = "brave";
+            "browser.search.defaultenginename" = cfg.search.default;
+            "browser.search.order.1" = cfg.search.default;
+            "browser.startup.homepage" = lib.mkIf (cfg.homepage != null) cfg.homepage;
+            "privacy.clearOnShutdown.cookies" = cfg.clearCookiesOnExit;
+            "privacy.clearOnShutdown_v2.cookiesAndStorage" = cfg.clearCookiesOnExit;
+            "signon.rememberSignons" = cfg.savePasswords;
+            "font.name.sans-serif.x-western" = cfg.fonts.sans;
+            "font.name.monospace.x-western" = cfg.fonts.monospace;
             "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
             "sidebar.revamp" = true;
-            "sidebar.verticalTabs" = true;
+            "sidebar.verticalTabs" = cfg.verticalTabs;
             "sidebar.main.tools" = "";
-            "sidebar.expandOnHover" = true;
+            "sidebar.expandOnHover" = cfg.expandTabsOnHover;
             "browser.tabs.groups.enabled" = true;
             # user.js reapplies these at every start: customize here, not in the UI.
             "browser.uiCustomization.state" = builtins.toJSON {
@@ -185,10 +135,8 @@ in
                 toolbar-menubar = [
                   "menubar-items"
                 ];
-                TabsToolbar = [ ];
-                vertical-tabs = [
-                  "tabbrowser-tabs"
-                ];
+                TabsToolbar = lib.optionals (!cfg.verticalTabs) [ "tabbrowser-tabs" ];
+                vertical-tabs = lib.optionals cfg.verticalTabs [ "tabbrowser-tabs" ];
                 PersonalToolbar = [
                   "import-button"
                   "personal-bookmarks"
@@ -240,7 +188,7 @@ in
             "browser.uiCustomization.horizontalTabstrip" = builtins.toJSON [
               "tabbrowser-tabs"
             ];
-            "browser.toolbars.bookmarks.visibility" = "never";
+            "browser.toolbars.bookmarks.visibility" = if cfg.showBookmarksBar then "always" else "never";
             "browser.theme.toolbar-theme" = 0;
             "media.eme.enabled" = true;
             "browser.ml.enable" = true;

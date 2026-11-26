@@ -214,7 +214,7 @@ let
       }
 
       critical_actions() {
-        freeze
+        ${lib.optionalString cfg.freezeAgents "freeze"}
         drop_ballast
         if ! busy; then btrfs balance start -dusage=0 "$mount" || true; fi
         read_metrics
@@ -253,8 +253,15 @@ let
                  "Unallocated $(gibs "$unalloc"). Balancing to hand data chunks back." ;;
             2) notify critical "Disk space tight" \
                  "Unallocated $(gibs "$unalloc"), true free $(gibs "$free"). Pruned timeline snapshots, collected Nix garbage, purged scratch tmp." ;;
-            3) notify critical "Disk nearly full: agents frozen" \
-                 "Unallocated $(gibs "$unalloc"), metadata $metapct%. $slice is frozen and the ballast is gone. Free space, then run: disk-guard thaw" ;;
+            3)
+              if frozen; then
+                notify critical "Disk nearly full: agents frozen" \
+                  "Unallocated $(gibs "$unalloc"), metadata $metapct%. $slice is frozen. Free space, then run: disk-guard thaw"
+              else
+                notify critical "Disk nearly full" \
+                  "Unallocated $(gibs "$unalloc"), metadata $metapct%. Agents are running; reduce disk writes and free space."
+              fi
+              ;;
             4) notify critical "Disk is READ-ONLY" \
                  "btrfs forced $mount read-only. From a root shell: swapfile-release, then btrfs-ram-rescue." ;;
           esac
@@ -363,6 +370,11 @@ in
       type = lib.types.str;
       default = "agents.slice";
     };
+    freezeAgents = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Freeze the agent slice under critical disk pressure; requires a manual thaw after recovery.";
+    };
     interval = lib.mkOption {
       type = lib.types.str;
       default = "2min";
@@ -380,7 +392,7 @@ in
     criticalGiB = lib.mkOption {
       type = lib.types.ints.unsigned;
       default = 16;
-      description = "Below this: CRITICAL, freeze the slice and drop the ballast.";
+      description = "Below this: CRITICAL, optionally freeze the slice and drop the ballast.";
     };
     metadataCriticalPercent = lib.mkOption {
       type = lib.types.ints.between 1 100;
