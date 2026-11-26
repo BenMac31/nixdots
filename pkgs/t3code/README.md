@@ -123,11 +123,24 @@ keys (`Composer::rests`, "where an escape would leave it", and page.rs's
 | `/` | search the conversation (`chat.find`) |
 
 gred has a cursor line to move and T3's conversation has none, so `j` and `k`
-move the view by a line, which is what `<C-e>` and `<C-y>` do. The rest of
-gred's conversation keys are surfaces T3 has not: folds, `yy`, `K`, and the
-labels `f` puts on links. `<C-c>` is left to the platform; gred's Vim keys
-interrupt the turn with it, but here that would take copying a selection out
-of the chat, and `<leader>ak` stops the agent.
+move the view by a line, which is what `<C-e>` and `<C-y>` do. A line is
+measured from the conversation's own text rather than assumed, so the lines
+land where they stood.
+
+The view glides rather than jumping: `ui::motion`'s GLIDE, a spring of
+response 90 ms, written as the exponential that settles in that time. The
+plugin writes `scrollTop` itself each frame instead of asking the app to
+scroll, because the app's own smooth scrolling starts again on every key and
+a held `j` then fights it. A key pressed while a glide runs adds to where the
+view is going, so holding one reads as a single movement. Anything else that
+moves the view, the wheel or T3 holding the end of a turn, wins: the glide
+gives up rather than fighting it.
+
+The rest of gred's conversation keys are surfaces T3 has not: the folds that
+`h` and `l` open and close, `yy`, `K`, and the labels `f` puts on links.
+`<C-c>` is left to the platform; gred's Vim keys interrupt the turn with it,
+but here that would take copying a selection out of the chat, and
+`<leader>ak` stops the agent.
 
 ## j and k in T3's lists
 

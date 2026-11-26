@@ -1419,33 +1419,92 @@
      out of the chat, and <leader>ak stops the agent. */
   const SCROLL_SEL = ".messages-timeline-scroll";
   const CONVERSATION_SEL = '[data-workspace-area="conversation"]';
-  /* gred scrolls a page by a line at a time (`node-page`'s scroll step 20). */
+  /* The fallback step, where the conversation's own line cannot be measured:
+     gred's node page scrolls a line by 20. */
   const PAGE_LINE = 20;
+  /* gred glides its view rather than jumping it: ui::motion's GLIDE, a spring
+     of response 90 ms and damping 1. Written here as the exponential that
+     settles in that time, so a held j reads as one movement rather than a
+     stutter of jumps, and the view lands softly. */
+  const GLIDE_MS = 90;
+
+  const scrolls = (n) => !!n && n.scrollHeight > n.clientHeight + 4;
 
   let scrollCache = null;
   function scroller() {
-    if (scrollCache && scrollCache.isConnected) return scrollCache;
-    scrollCache = document.querySelector(SCROLL_SEL);
-    if (scrollCache) return scrollCache;
-    /* A release that renames the scroller: take the tallest thing in the
-       conversation that scrolls. */
+    if (scrolls(scrollCache) && scrollCache.isConnected) return scrollCache;
+    scrollCache = null;
+    const start = document.querySelector(SCROLL_SEL);
+    if (scrolls(start)) { scrollCache = start; return start; }
+    /* The class T3 documents names the timeline, which is not always the box
+       that scrolls: the overflow can sit on a parent, and a release can move
+       it. Walk out to the first ancestor that does scroll, then look inside
+       the conversation. */
+    for (let n = start && start.parentElement; n && n !== document.body; n = n.parentElement) {
+      if (scrolls(n) && /auto|scroll/.test(getComputedStyle(n).overflowY)) { scrollCache = n; return n; }
+    }
     const area = document.querySelector(CONVERSATION_SEL);
     if (!area) return null;
     for (const n of area.querySelectorAll("div")) {
-      if (n.scrollHeight > n.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(n).overflowY)) {
-        scrollCache = n;
-        return n;
-      }
+      if (scrolls(n) && /auto|scroll/.test(getComputedStyle(n).overflowY)) { scrollCache = n; return n; }
     }
     return null;
   }
 
-  const pageBy = (by) => { const sc = scroller(); if (!sc) return false; sc.scrollBy({ top: by }); return true; };
+  /* A line of the conversation, measured: j and k move by what a line of it
+     actually is, so the text lands where it stood a line ago. */
+  function lineStep(sc) {
+    const row = sc.querySelector(".chat-markdown, [data-timeline-row-kind]") || sc;
+    const cs = getComputedStyle(row);
+    const line = parseFloat(cs.lineHeight);
+    if (line > 6 && line < 96) return Math.round(line);
+    const size = parseFloat(cs.fontSize);
+    return size > 6 ? Math.round(size * 1.45) : PAGE_LINE;
+  }
+
+  const SCROLL = { el: null, to: 0, at: 0, raf: 0, last: 0 };
+
+  /* Writes scrollTop itself rather than asking for a scroll: the app's own
+     smooth scrolling would start again on every key, which is what a held
+     key fought with. */
+  function glide(sc, top) {
+    const most = Math.max(0, sc.scrollHeight - sc.clientHeight);
+    const going = SCROLL.raf && SCROLL.el === sc;
+    SCROLL.el = sc;
+    SCROLL.to = clamp(top, 0, most);
+    if (going) return true;
+    SCROLL.at = sc.scrollTop;
+    SCROLL.last = performance.now();
+    const tick = (now) => {
+      const el = SCROLL.el;
+      if (!el || !el.isConnected) { SCROLL.raf = 0; return; }
+      /* The wheel, or T3 keeping the view at the end of a turn: whoever else
+         moved it wins, and the glide gives up rather than fighting it. */
+      if (Math.abs(el.scrollTop - SCROLL.at) > 3) { SCROLL.raf = 0; return; }
+      const dt = Math.min(64, Math.max(1, now - SCROLL.last));
+      SCROLL.last = now;
+      SCROLL.at += (SCROLL.to - SCROLL.at) * (1 - Math.exp(-dt / (GLIDE_MS / 3)));
+      if (Math.abs(SCROLL.to - SCROLL.at) < 0.5) {
+        el.scrollTop = SCROLL.to;
+        SCROLL.raf = 0;
+        return;
+      }
+      el.scrollTop = SCROLL.at;
+      SCROLL.raf = requestAnimationFrame(tick);
+    };
+    SCROLL.raf = requestAnimationFrame(tick);
+    return true;
+  }
+
+  /* Where the view is going: the glide's target while one runs, so a held
+     key adds to it instead of starting again from where the view has got to. */
+  const going = (sc) => (SCROLL.raf && SCROLL.el === sc ? SCROLL.to : sc.scrollTop);
+
+  const pageBy = (by) => { const sc = scroller(); return !!sc && glide(sc, going(sc) + by); };
+  const pageLines = (n) => { const sc = scroller(); return !!sc && glide(sc, going(sc) + n * lineStep(sc)); };
   const pageEnd = (last) => {
     const sc = scroller();
-    if (!sc) return false;
-    sc.scrollTo({ top: last ? sc.scrollHeight : 0 });
-    return true;
+    return !!sc && glide(sc, last ? sc.scrollHeight : 0);
   };
 
   /* The next row of its kind past the top of the view, or the one before it. */
@@ -1466,8 +1525,7 @@
       }
     }
     if (!to) return pageEnd(!back);
-    sc.scrollBy({ top: to.getBoundingClientRect().top - top - 8 });
-    return true;
+    return glide(sc, sc.scrollTop + to.getBoundingClientRect().top - top - 8);
   }
 
   /* Back into the composer, as gred's i a I A o write to the agent. */
@@ -1506,19 +1564,21 @@
     if (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
       const sc = scroller();
       if (!sc) return false;
-      const half = Math.max(PAGE_LINE, Math.round(sc.clientHeight / 2));
-      const screen = Math.max(PAGE_LINE, sc.clientHeight - 2 * PAGE_LINE);
+      const line = lineStep(sc);
+      const half = Math.max(line, Math.round(sc.clientHeight / 2));
+      /* Vim keeps two lines of what you were reading when it turns a page. */
+      const screen = Math.max(line, sc.clientHeight - 2 * line);
       if (k === "d") return pageBy(half);
       if (k === "u") return pageBy(-half);
       if (k === "f") return pageBy(screen);
       if (k === "b") return pageBy(-screen);
-      if (k === "e") return pageBy(PAGE_LINE);
-      if (k === "y") return pageBy(-PAGE_LINE);
+      if (k === "e") return pageLines(1);
+      if (k === "y") return pageLines(-1);
       return false;
     }
     if (e.ctrlKey || e.metaKey || e.altKey) return false;
-    if (k === "j") return pageBy(PAGE_LINE);
-    if (k === "k") return pageBy(-PAGE_LINE);
+    if (k === "j") return pageLines(1);
+    if (k === "k") return pageLines(-1);
     if (k === "G") return pageEnd(true);
     if (k === "i" || k === "a") return intoComposer("");
     if (k === "I") return intoComposer("start");
@@ -2029,6 +2089,13 @@
     },
     get sent() { return SEQ.sent; },
     get listSent() { return LIST.sent; },
+    /* Land the view where the glide is taking it, at once: a test should not
+       have to wait for frames, and headless Chromium serves few of them. */
+    scrollNow() {
+      if (SCROLL.raf) { cancelAnimationFrame(SCROLL.raf); SCROLL.raf = 0; }
+      if (SCROLL.el) SCROLL.el.scrollTop = SCROLL.to;
+      return SCROLL.el ? SCROLL.el.scrollTop : 0;
+    },
     timeoutlenMs: TIMEOUTLEN_MS,
     debug() {
       const c = here();

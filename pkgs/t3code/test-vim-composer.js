@@ -444,25 +444,35 @@
   tp("Escape in normal mode leaves the composer", left(), [],
      (g, s) => (document.activeElement === el ? "still in the composer" : "")
        || (V.state.mode === "INSERT" ? "" : "mode " + V.state.mode));
-  tp("j and k scroll the conversation", left(), ["jjj"], () => {
-    const at = chat().scrollTop;
-    if (at <= 0) return "j did not scroll: " + at;
+  /* The view glides to where a key sends it (ui::motion GLIDE), so these
+     land it at once rather than waiting for frames headless does not serve. */
+  tp("j and k scroll the conversation by a line", left(), ["j"], () => {
+    const line = Math.round(parseFloat(getComputedStyle(chat().querySelector("[data-timeline-row-kind]")).lineHeight));
+    const at = V.scrollNow();
+    if (Math.abs(at - line) > 1) return "j scrolled " + at + " want a line, " + line;
+    V.feed("j"); V.feed("j");
+    if (Math.abs(V.scrollNow() - 3 * line) > 1) return "three js left it at " + chat().scrollTop;
     V.feed("k");
-    return chat().scrollTop < at ? "" : "k did not scroll back: " + chat().scrollTop;
+    return Math.abs(V.scrollNow() - 2 * line) > 1 ? "k left it at " + chat().scrollTop : "";
+  });
+  tp("a held j adds to where the view is going", left(), [], () => {
+    const line = Math.round(parseFloat(getComputedStyle(chat().querySelector("[data-timeline-row-kind]")).lineHeight));
+    for (let i = 0; i < 5; i++) V.feed("j", { repeat: i > 0 });
+    return Math.abs(V.scrollNow() - 5 * line) > 1 ? "five js left it at " + chat().scrollTop : "";
   });
   tp("G goes to the end, gg to the start", left(), ["G"], () => {
     const chatEl = chat();
-    if (chatEl.scrollTop < chatEl.scrollHeight - chatEl.clientHeight - 2) return "G stopped at " + chatEl.scrollTop;
+    if (V.scrollNow() < chatEl.scrollHeight - chatEl.clientHeight - 2) return "G stopped at " + chatEl.scrollTop;
     V.feedSeq("gg");
-    return chatEl.scrollTop === 0 ? "" : "gg stopped at " + chatEl.scrollTop;
+    return V.scrollNow() === 0 ? "" : "gg stopped at " + chatEl.scrollTop;
   });
   tp("<C-d> and <C-u> move half a screen", left(), [["d", { ctrl: true }]], () => {
     const half = Math.round(chat().clientHeight / 2);
-    if (Math.abs(chat().scrollTop - half) > 2) return "scrolled " + chat().scrollTop + " want " + half;
+    if (Math.abs(V.scrollNow() - half) > 2) return "scrolled " + chat().scrollTop + " want " + half;
     V.feed("u", { ctrl: true });
-    return chat().scrollTop === 0 ? "" : "<C-u> left it at " + chat().scrollTop;
+    return V.scrollNow() === 0 ? "" : "<C-u> left it at " + chat().scrollTop;
   });
-  tp("]] walks the messages", left(), ["]]"], () => (chat().scrollTop > 0 ? "" : "did not move"));
+  tp("]] walks the messages", left(), ["]]"], () => (V.scrollNow() > 0 ? "" : "did not move"));
   tp("i writes to the agent again", left(), ["i"],
      (g) => (document.activeElement === el ? "" : "not in the composer")
        || want("mode", "INSERT")(V.debug()));
