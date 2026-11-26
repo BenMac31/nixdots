@@ -96,7 +96,7 @@
     return document.scrollingElement || document.documentElement;
   }
 
-  const GLIDE = { el: null, to: 0, at: 0, raf: 0, last: 0, side: false };
+  const GLIDE = { el: null, to: 0, at: 0, raf: 0, last: 0, side: false, was: "" };
 
   function glide(el, to, side) {
     const most = side
@@ -109,19 +109,28 @@
     if (going) return true;
     GLIDE.at = side ? el.scrollLeft : el.scrollTop;
     GLIDE.last = now();
+    /* A page with `scroll-behavior: smooth`, which many set, animates even a
+       scrollTop written straight to it: the view would never be where this
+       put it and the glide would give itself up every frame. */
+    GLIDE.was = el.style.scrollBehavior;
+    el.style.scrollBehavior = "auto";
+    const done = () => {
+      GLIDE.raf = 0;
+      if (GLIDE.el) GLIDE.el.style.scrollBehavior = GLIDE.was || "";
+    };
     const tick = (stamp) => {
       const el2 = GLIDE.el;
-      if (!el2 || !el2.isConnected) { GLIDE.raf = 0; return; }
+      if (!el2 || !el2.isConnected) { done(); return; }
       const is = GLIDE.side ? el2.scrollLeft : el2.scrollTop;
       /* Whoever else moved it wins: the wheel, or the page itself. */
-      if (Math.abs(is - GLIDE.at) > 3) { GLIDE.raf = 0; return; }
+      if (Math.abs(is - GLIDE.at) > 3) { done(); return; }
       const dt = Math.min(64, Math.max(1, stamp - GLIDE.last));
       GLIDE.last = stamp;
       GLIDE.at += (GLIDE.to - GLIDE.at) * (1 - Math.exp(-dt / (GLIDE_MS / 3)));
       const land = Math.abs(GLIDE.to - GLIDE.at) < 0.5;
       const put = land ? GLIDE.to : GLIDE.at;
       if (GLIDE.side) el2.scrollLeft = put; else el2.scrollTop = put;
-      if (land) { GLIDE.raf = 0; return; }
+      if (land) { done(); return; }
       GLIDE.raf = requestAnimationFrame(tick);
     };
     GLIDE.raf = requestAnimationFrame(tick);
@@ -560,7 +569,10 @@
     /* Land the glide at once, as the composer's scrollNow does. */
     scrollNow() {
       if (GLIDE.raf) { cancelAnimationFrame(GLIDE.raf); GLIDE.raf = 0; }
-      if (GLIDE.el) { if (GLIDE.side) GLIDE.el.scrollLeft = GLIDE.to; else GLIDE.el.scrollTop = GLIDE.to; }
+      if (GLIDE.el) {
+        if (GLIDE.side) GLIDE.el.scrollLeft = GLIDE.to; else GLIDE.el.scrollTop = GLIDE.to;
+        GLIDE.el.style.scrollBehavior = GLIDE.was || "";
+      }
       return GLIDE.el ? (GLIDE.side ? GLIDE.el.scrollLeft : GLIDE.el.scrollTop) : 0;
     },
     /* Where the pointer last was, which is the area gred scrolls. Only a

@@ -1419,8 +1419,13 @@
      out of the chat, and <leader>ak stops the agent. */
   const SCROLL_SEL = ".messages-timeline-scroll";
   const CONVERSATION_SEL = '[data-workspace-area="conversation"]';
-  /* The fallback step, where the conversation's own line cannot be measured:
-     gred's node page scrolls a line by 20. */
+  /* What j and k move. gred's agent page walks a cursor line and lets the
+     view follow, which T3's conversation has nothing to carry; read as a
+     page instead, it takes the step gred's own page keys take, STEP = 60
+     (page/src/keys.rs), so j in the chat and j in the preview move the same
+     distance. <C-e> and <C-y> stay a line, measured from the conversation's
+     own text, with this as the fallback where it cannot be. */
+  const STEP = 60;
   const PAGE_LINE = 20;
   /* gred glides its view rather than jumping it: ui::motion's GLIDE, a spring
      of response 90 ms and damping 1. Written here as the exponential that
@@ -1475,18 +1480,28 @@
     if (going) return true;
     SCROLL.at = sc.scrollTop;
     SCROLL.last = performance.now();
+    /* A scroller with `scroll-behavior: smooth` animates even a scrollTop
+       written straight to it, so the view would never be where this put it
+       and the glide would give itself up every frame. It drives the scroll
+       itself for as long as it runs, and hands the behaviour back after. */
+    SCROLL.was = sc.style.scrollBehavior;
+    sc.style.scrollBehavior = "auto";
+    const done = () => {
+      SCROLL.raf = 0;
+      if (SCROLL.el) SCROLL.el.style.scrollBehavior = SCROLL.was || "";
+    };
     const tick = (now) => {
       const el = SCROLL.el;
-      if (!el || !el.isConnected) { SCROLL.raf = 0; return; }
+      if (!el || !el.isConnected) { done(); return; }
       /* The wheel, or T3 keeping the view at the end of a turn: whoever else
          moved it wins, and the glide gives up rather than fighting it. */
-      if (Math.abs(el.scrollTop - SCROLL.at) > 3) { SCROLL.raf = 0; return; }
+      if (Math.abs(el.scrollTop - SCROLL.at) > 3) { done(); return; }
       const dt = Math.min(64, Math.max(1, now - SCROLL.last));
       SCROLL.last = now;
       SCROLL.at += (SCROLL.to - SCROLL.at) * (1 - Math.exp(-dt / (GLIDE_MS / 3)));
       if (Math.abs(SCROLL.to - SCROLL.at) < 0.5) {
         el.scrollTop = SCROLL.to;
-        SCROLL.raf = 0;
+        done();
         return;
       }
       el.scrollTop = SCROLL.at;
@@ -1577,8 +1592,8 @@
       return false;
     }
     if (e.ctrlKey || e.metaKey || e.altKey) return false;
-    if (k === "j") return pageLines(1);
-    if (k === "k") return pageLines(-1);
+    if (k === "j") return pageBy(STEP);
+    if (k === "k") return pageBy(-STEP);
     if (k === "G") return pageEnd(true);
     if (k === "i" || k === "a") return intoComposer("");
     if (k === "I") return intoComposer("start");
@@ -2093,10 +2108,14 @@
        have to wait for frames, and headless Chromium serves few of them. */
     scrollNow() {
       if (SCROLL.raf) { cancelAnimationFrame(SCROLL.raf); SCROLL.raf = 0; }
-      if (SCROLL.el) SCROLL.el.scrollTop = SCROLL.to;
+      if (SCROLL.el) {
+        SCROLL.el.scrollTop = SCROLL.to;
+        SCROLL.el.style.scrollBehavior = SCROLL.was || "";
+      }
       return SCROLL.el ? SCROLL.el.scrollTop : 0;
     },
     timeoutlenMs: TIMEOUTLEN_MS,
+    step: STEP,
     debug() {
       const c = here();
       if (!c) return { mode: S.mode, seq: SEQ.node ? SEQ.node.name : "", count: S.count, pending: S.pending };

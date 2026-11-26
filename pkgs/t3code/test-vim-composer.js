@@ -446,19 +446,35 @@
        || (V.state.mode === "INSERT" ? "" : "mode " + V.state.mode));
   /* The view glides to where a key sends it (ui::motion GLIDE), so these
      land it at once rather than waiting for frames headless does not serve. */
-  tp("j and k scroll the conversation by a line", left(), ["j"], () => {
+  /* j and k take gred's page step, so the chat and the preview move the
+     same distance; <C-e> and <C-y> are the view a line. */
+  tp("j and k scroll the conversation by a step", left(), ["j"], () => {
+    const at = V.scrollNow();
+    if (Math.abs(at - V.step) > 1) return "j scrolled " + at + " want a step, " + V.step;
+    V.feed("j"); V.feed("j");
+    if (Math.abs(V.scrollNow() - 3 * V.step) > 1) return "three js left it at " + chat().scrollTop;
+    V.feed("k");
+    return Math.abs(V.scrollNow() - 2 * V.step) > 1 ? "k left it at " + chat().scrollTop : "";
+  });
+  tp("<C-e> is the view a line", left(), [["e", { ctrl: true }]], () => {
     const line = Math.round(parseFloat(getComputedStyle(chat().querySelector("[data-timeline-row-kind]")).lineHeight));
     const at = V.scrollNow();
-    if (Math.abs(at - line) > 1) return "j scrolled " + at + " want a line, " + line;
-    V.feed("j"); V.feed("j");
-    if (Math.abs(V.scrollNow() - 3 * line) > 1) return "three js left it at " + chat().scrollTop;
-    V.feed("k");
-    return Math.abs(V.scrollNow() - 2 * line) > 1 ? "k left it at " + chat().scrollTop : "";
+    return Math.abs(at - line) > 1 ? "<C-e> scrolled " + at + " want a line, " + line : "";
+  });
+  /* A scroller set to scroll smoothly would animate even a scrollTop written
+     straight to it, and the glide would give itself up on the next frame
+     seeing the view somewhere else. It drives the scroll itself instead. */
+  tp("a smooth scroller does not slow it down", left(), [], () => {
+    const box = chat();
+    box.style.scrollBehavior = "smooth";
+    V.feed("j");
+    const at = V.scrollNow();
+    box.style.scrollBehavior = "";
+    return Math.abs(at - V.step) > 1 ? "j scrolled " + at + " want " + V.step : "";
   });
   tp("a held j adds to where the view is going", left(), [], () => {
-    const line = Math.round(parseFloat(getComputedStyle(chat().querySelector("[data-timeline-row-kind]")).lineHeight));
     for (let i = 0; i < 5; i++) V.feed("j", { repeat: i > 0 });
-    return Math.abs(V.scrollNow() - 5 * line) > 1 ? "five js left it at " + chat().scrollTop : "";
+    return Math.abs(V.scrollNow() - 5 * V.step) > 1 ? "five js left it at " + chat().scrollTop : "";
   });
   tp("G goes to the end, gg to the start", left(), ["G"], () => {
     const chatEl = chat();
