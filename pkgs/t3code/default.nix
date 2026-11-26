@@ -56,7 +56,8 @@ stdenv.mkDerivation rec {
     chmod u+w $out/lib/t3code/resources/app.asar
     ${python3.interpreter} ${./inject-vim.py} \
       $out/lib/t3code/resources/app.asar \
-      ${./vim-composer.js}
+      ${./vim-composer.js} \
+      ${./page-vim.js}
     chmod a-w $out/lib/t3code/resources/app.asar
   '';
 

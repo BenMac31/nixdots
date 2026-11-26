@@ -178,6 +178,48 @@ slash commands and completion behave exactly as they do without this. In
 normal mode anything with a modifier is left to T3's keybindings, except
 `Ctrl-r` for redo, and `Enter` always sends.
 
+## The preview's keys
+
+gred drives a web page with a grammar of its own
+(`gred-rs/crates/page/src/keys.rs`), and `page-vim.js` is that table inside
+T3's preview. T3's preview is an Electron `<webview>` whose preload,
+`preview-pick-preload.cjs`, already listens for keydown in its own JavaScript
+world; the build appends this to it, so it sees the page's keys and its DOM
+without touching T3's own code.
+
+| Key | What |
+|---|---|
+| `j` `k` `h` `l` | a step, 60 px, as gred's STEP |
+| `d` `u` `<C-d>` `<C-u>` | half a pane |
+| `<C-f>` `<C-b>` | a pane |
+| `<C-e>` `<C-y>` | a line, 40 px |
+| `gg` `G` `0` `$` `N%` | the top, the bottom, the far left and right, that share down |
+| `H` `L` `r` | back, forward, load again |
+| `gu` `gU` | up a level of the address, the site's root |
+| `g<C-a>` `g<C-x>` `.` | count the address's last number, and do that again |
+| `]]` `[[` | heading; `]l` `[l` link, `]f` `[f` field, `]t` `[t` table, `]c` `[c` code |
+| `f` `F` | a label on everything in view; `F` opens a link in a new tab |
+| `m<x>` `'<x>` `` `<x> `` | mark the place, go back to it |
+| `yy` `yt` `ym` | the address, the title, a Markdown link |
+| `gi` | type in a field |
+| `i` | every key to the page, until `<S-Esc>` |
+| `<C-v>` | the next key is the page's |
+| `o` `O` `/` `?` `+` `-` `=` | the address bar, the find bar, the zoom |
+
+The scrolls glide, as gred's do, and they move the area under the point:
+where the pointer last pressed, else the page. A field that has the keys
+keeps them, and Escape leaves it.
+
+The last row goes back to T3, since only the app can run them: the preload's
+own `preview:page-unhandled-shortcut` channel carries the chord T3 already
+binds for that command (`mod+=`, `mod+-`, `mod+0`, `alt+shift+l`,
+`alt+shift+f`), so no new binding is needed and this names no T3 command.
+
+Not carried over: gred's `;` verbs (right click, save, rapid labels), `gO`'s
+outline, `gs`'s source, `n` and `N` once T3's find bar owns the find, and the
+Visual rows, which are the page's own selection. `f`'s labels are the keys
+`ui::hints` uses, home row first, with no label a prefix of another.
+
 ## The theme
 
 `graphide-verdigris-ink.json` is gred's Verdigris Ink as a T3 theme, built

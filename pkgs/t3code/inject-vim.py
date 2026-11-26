@@ -27,6 +27,8 @@ MARKER = "t3code-vim-composer"
 TARGET = ("apps", "server", "dist", "client", "index.html")
 ANCHOR = '<script type="module"'
 
+PAGE_MARKER = "t3code-page-vim"
+
 
 def die(msg):
     sys.stderr.write("inject-vim: %s\n" % msg)
@@ -79,10 +81,40 @@ def entry(header, path):
     return files[path[-1]]
 
 
+def find(header, name):
+    """The entry for the first file called `name`, with its path."""
+    stack = [((), header)]
+    while stack:
+        path, node = stack.pop()
+        for key, value in node.get("files", {}).items():
+            if key == name:
+                return path + (key,), value
+            if "files" in value:
+                stack.append((path + (key,), value))
+    return None, None
+
+
+def patch(buf, payload_start, item, patched, what):
+    """Repoint one entry at `patched`, appended to the payload."""
+    payload = buf[payload_start:]
+    item["offset"] = str(len(payload))
+    item["size"] = len(patched)
+    sys.stderr.write("inject-vim: %s\n" % what)
+    return payload + patched
+
+
+def payload_patch(payload, item, patched):
+    """As patch(), on a payload already being built."""
+    item["offset"] = str(len(payload))
+    item["size"] = len(patched)
+    return payload + patched
+
+
 def main():
-    if len(sys.argv) != 3:
-        die("usage: inject-vim.py <app.asar> <vim-composer.js>")
+    if len(sys.argv) not in (3, 4):
+        die("usage: inject-vim.py <app.asar> <vim-composer.js> [page-vim.js]")
     asar_path, plugin_path = sys.argv[1], sys.argv[2]
+    page_path = sys.argv[3] if len(sys.argv) == 4 else None
 
     with open(plugin_path, "rb") as fh:
         plugin = fh.read().decode("utf-8")
@@ -112,11 +144,41 @@ def main():
     )
     patched = html.replace(ANCHOR, tag + ANCHOR, 1).encode("utf-8")
 
-    payload = buf[payload_start:]
-    item["offset"] = str(len(payload))
-    item["size"] = len(patched)
+    payload = patch(
+        buf, payload_start, item,
+        patched, "composer vim mode inlined (%d bytes of js, html %d -> %d)"
+        % (len(plugin), size, len(patched)),
+    )
 
-    out = write_header(header) + payload + patched
+    # The preview's keys. T3's <webview> preload already listens for keydown
+    # in its own world, so the page's vim layer is appended to it: the same
+    # world, the same DOM, and electron.ipcRenderer for the chords only the
+    # app can run.
+    if page_path:
+        with open(page_path, "rb") as fh:
+            page = fh.read().decode("utf-8")
+        name = "preview-pick-preload.cjs"
+        where, preload = find(header, name)
+        if preload is None:
+            die("asar has no %s (T3's preview layout changed)" % name)
+        if "offset" not in preload or "size" not in preload:
+            die("%s has no offset/size (is it unpacked?)" % name)
+        # Its offset is into the payload as it stood before the html was
+        # appended, which patch() left untouched at the front.
+        start = int(preload["offset"])
+        body = payload[start:start + int(preload["size"])].decode("utf-8")
+        if PAGE_MARKER in body:
+            die("%s is already patched" % name)
+        if "preview:page-unhandled-shortcut" not in body:
+            die("%s no longer forwards shortcuts; the preview's protocol changed" % name)
+        made = (body + "\n;/* %s: injected by nixos/pkgs/t3code */\n" % PAGE_MARKER + page).encode("utf-8")
+        payload = payload_patch(payload, preload, made)
+        sys.stderr.write(
+            "inject-vim: preview vim keys appended to %s (%d bytes of js, %d -> %d)\n"
+            % ("/".join(where), len(page), len(body), len(made))
+        )
+
+    out = write_header(header) + payload
     with open(asar_path, "wb") as fh:
         fh.write(out)
 
@@ -128,6 +190,12 @@ def main():
         die("verification failed: patched entry does not read back")
     if MARKER not in got.decode("utf-8"):
         die("verification failed: marker missing from the patched entry")
+    if page_path:
+        _, it3 = find(header2, "preview-pick-preload.cjs")
+        at = start2 + int(it3["offset"])
+        back = out[at:at + int(it3["size"])].decode("utf-8")
+        if PAGE_MARKER not in back or "preview:page-unhandled-shortcut" not in back:
+            die("verification failed: the preview preload does not read back patched")
 
     sys.stderr.write(
         "inject-vim: composer vim mode inlined (%d bytes of js, html %d -> %d)\n"

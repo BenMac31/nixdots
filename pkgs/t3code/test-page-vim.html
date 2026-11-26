@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>t3pagevim</title>
+<style>
+  body{margin:0;font:400 16px/1.5 system-ui,sans-serif}
+  main{height:3000px;padding:0 20px}
+  h2{margin:400px 0 0}
+  pre{margin:300px 0 0}
+  table{margin:200px 0 0}
+  #box{height:200px;overflow-y:auto;border:1px solid #888;margin-top:40px}
+  #box div{height:1200px}
+</style></head>
+<body>
+  <main>
+    <p id="top">The top of the page.</p>
+    <a href="https://example.com/one">one</a>
+    <a href="https://example.com/two">two</a>
+    <button id="btn">a button</button>
+    <input id="field" type="text">
+    <h2 id="h-one">First heading</h2>
+    <h2 id="h-two">Second heading</h2>
+    <pre id="code-one">code</pre>
+    <table id="table-one"><tr><td>cell</td></tr></table>
+    <div id="box"><div>an area that scrolls on its own</div></div>
+  </main>
+  <pre id="out"></pre>
+  <script src="page-vim.js"></script>
+  <script src="test-page-vim.js"></script>
+</body></html>

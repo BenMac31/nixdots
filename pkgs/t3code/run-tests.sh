@@ -13,10 +13,11 @@ D="${XDG_RUNTIME_DIR:-/tmp}/t3vim-test"
 rm -rf "$D"; mkdir -p "$D"
 trap 'rm -rf "$D"' EXIT
 
-TMPDIR="$D" "$CHROME" --headless=new --disable-gpu --no-sandbox --no-first-run \
-  --user-data-dir="$D/profile" --virtual-time-budget=15000 \
-  --dump-dom "file://$PWD/test-vim-composer.html" 2>/dev/null \
-  | python3 -c '
+run() {
+  TMPDIR="$D" "$CHROME" --headless=new --disable-gpu --no-sandbox --no-first-run \
+    --user-data-dir="$D/profile-$2" --virtual-time-budget=15000 \
+    --window-size=1200,800 --dump-dom "file://$PWD/$1" 2>/dev/null \
+    | python3 -c '
 import sys, re, html
 d = sys.stdin.read()
 m = re.search(r"<pre id=\"out\">(.*?)</pre>", d, re.S)
@@ -26,3 +27,12 @@ report = html.unescape(m.group(1))
 print(report)
 sys.exit(0 if re.search(r"FAIL 0$", report.strip()) else 1)
 '
+}
+
+rc=0
+echo "== the composer and the app"
+run test-vim-composer.html composer || rc=1
+echo
+echo "== the preview's page keys"
+run test-page-vim.html page || rc=1
+exit $rc
