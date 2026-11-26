@@ -90,7 +90,8 @@ command in it. Listed so nobody spends a second afternoon looking.
 | `<leader>m` view.graph | the graph | none |
 | `<leader>T` view.tests | tests | none |
 | `<leader>hs hr hS hR hu hb` | hunk accept, reject, undo, blame | diff.toggle only |
-| `<leader>sm sk sa sp sr ss s.` | marks, keymaps, transcripts, projects, resume, pickers, recent | filePicker, projectSearch, commandPalette, chat.find only |
+| `<leader><leader>` | the fuzzy agent picker | none. T3's command palette holds commands only, no threads, so this is left with no chord rather than opening something that cannot switch agents. `<leader>1` to `<leader>9` are the switch T3 can do |
+| `<leader>sm sk sa sr ss s.` | marks, keymaps, transcripts, resume, pickers, recent | filePicker, projectSearch, commandPalette, chat.find only |
 | `<leader>ds` `<leader>ws` | symbols here, symbols everywhere | none |
 | `<leader>rn` `<leader>cf` | rename, format | none |
 | `<leader>ar af ab aR ad aL` | restart, fork, bump, resume-limited, definition, launcher | none. `thread.fork` exists as an RPC but is not bindable |
@@ -117,8 +118,12 @@ purpose, so they never shadow a Graphide key.
 * the queued-message flow: `thread.editQueuedMessage`,
   `thread.steerQueuedMessage`, `composer.sendAlternate`,
   `composer.sendBackground`, `composer.sendAndNewThread`, `composer.stash`
-* `thread.settle`, `thread.jump.1-9`, `modelPicker.jump.1-9`, the provider
-  walk, `editor.openFavorite`, `view.reopenClosed`, the theme trio
+* `thread.settle`, `modelPicker.jump.1-9`, the provider walk,
+  `editor.openFavorite`, `view.reopenClosed`, the theme trio
+* `thread.jump.1-9` is the exception that earned a place in the tree:
+  `<leader>1` to `<leader>9`. Graphide has no such key, but it is the only
+  agent switch T3 can do in one stroke, and `<leader><leader>`, which would
+  be the Graphide way, has nothing to point at.
 
 ## Rejected approaches, and why
 

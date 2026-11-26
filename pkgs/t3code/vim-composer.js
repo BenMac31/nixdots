@@ -968,7 +968,22 @@
      message says so), and gred.toml's which-key description. Rows are in
      gred.toml's order, which is the order the hint panel lists them in. */
   const SEQ_ROWS = [
-    ["<leader><leader>", "c", "switch agent"],
+    /* Graphide opens a fuzzy agent picker here. T3 has none: its command
+       palette holds commands only, no threads, so pointing this at the
+       palette put a wrong action under the key. <leader>1 to <leader>9 below
+       are the switch that T3 can actually do. */
+    ["<leader><leader>", null, "switch agent"],
+    /* T3's thread.jump.1 to 9, which Graphide has no key for: the fast agent
+       switch, under the leader so it is found beside the rest. */
+    ["<leader>1", "1", "agent 1"],
+    ["<leader>2", "2", "agent 2"],
+    ["<leader>3", "3", "agent 3"],
+    ["<leader>4", "4", "agent 4"],
+    ["<leader>5", "5", "agent 5"],
+    ["<leader>6", "6", "agent 6"],
+    ["<leader>7", "7", "agent 7"],
+    ["<leader>8", "8", "agent 8"],
+    ["<leader>9", "9", "agent 9"],
     ["<leader>/", "/", "fuzzy find here"],
     ["<leader>sf", "f", "files"],
     ["<leader>sg", "g", "grep"],
@@ -979,7 +994,7 @@
     ["<leader>sc", "c", "commands"],
     ["<leader>sm", null, "marks"],
     ["<leader>s.", null, "recent"],
-    ["<leader>sp", null, "recent projects"],
+    ["<leader>sp", ";", "recent projects"],
     ["<leader>sr", null, "resume the last search"],
     ["<leader>ss", null, "every search"],
     ["<leader>so", null, "settings"],
@@ -988,7 +1003,7 @@
     ["<leader>ah", "m", "the new agent: Claude Code, Codex or a plugin's"],
     /* gred.toml binds agent.place to <C-,> as well, which keybindings.json
        sends to composer.workspace, so this is the same action by its tree key. */
-    ["<leader>ai", "1", "where the new agent starts"],
+    ["<leader>ai", ";", "where the new agent starts"],
     ["<leader>ad", null, "the agent definition the new agent starts as"],
     ["<leader>aL", null, "the launch script the new agent runs through"],
     ["<leader>ay", "y", "Skip permissions on or off for the new agent"],

@@ -215,7 +215,7 @@
 
   /* The dispatch contract, written out independently of the plugin's table. */
   const CONTRACT = [
-    ["<leader>sf", "f"], ["<leader>sg", "g"], ["<leader>sc", "c"], ["<leader><leader>", "c"],
+    ["<leader>sf", "f"], ["<leader>sg", "g"], ["<leader>sc", "c"],
     ["<leader>/", "/"], ["<leader>an", "n"], ["<leader>aN", "o"], ["<leader>ak", "k"],
     ["<leader>am", "m"], ["<leader>ah", "m"], ["<leader>ae", "e"], ["<leader>at", "t"],
     ["<leader>av", "v"], ["<leader>aw", "w"], ["<leader>al", "l"], ["<leader>ay", "y"],
@@ -223,6 +223,11 @@
     ["<leader>tw", "r"], ["<leader>hp", "d"], ["<C-w>s", "s"], ["<C-w>v", "b"],
     ["<C-w>c", "x"], ["<C-w>q", "x"], ["<C-w>T", "u"], ["gt", "."], ["]a", "."],
     ["gT", ","], ["[a", ","], ["ga", "j"],
+    ["<leader>ai", ";"], ["<leader>sp", ";"],
+    ["<C-w>h", "q"], ["<C-w>k", "q"], ["<C-w>l", "z"], ["<C-w>j", "z"],
+    ["<leader>1", "1"], ["<leader>2", "2"], ["<leader>3", "3"], ["<leader>4", "4"],
+    ["<leader>5", "5"], ["<leader>6", "6"], ["<leader>7", "7"], ["<leader>8", "8"],
+    ["<leader>9", "9"],
   ];
   for (const [seq, key] of CONTRACT) {
     ts("normal " + seq + " sends " + key, composer("hello world", 3), [seq],
@@ -234,15 +239,14 @@
   ts("visual <leader>an sends n, stays visual", composer("hello", 0), ["v", "l", "<leader>an"],
      (g, s) => oneChord("n")(g, s) || want("mode", "VISUAL")(g));
   ts("<C-w><C-s> is <C-w>s", composer("abc", 0), [["w", { ctrl: true }], ["s", { ctrl: true }]], oneChord("s"));
-  /* Pane focus: T3's panes are linear, so h and k are previous, j and l next. */
-  ts("<C-w>h focuses the previous pane", composer("abc", 0), [["w", { ctrl: true }], "h"], oneChord("q"));
-  ts("<C-w>k focuses the previous pane", composer("abc", 0), [["w", { ctrl: true }], "k"], oneChord("q"));
-  ts("<C-w>l focuses the next pane", composer("abc", 0), [["w", { ctrl: true }], "l"], oneChord("z"));
-  ts("<C-w>j focuses the next pane", composer("abc", 0), [["w", { ctrl: true }], "j"], oneChord("z"));
-  ts("<C-w>h with nothing focused", global(), [["w", { ctrl: true }], "h"], oneChord("q"));
-  /* A digit chord carries a Digit code, not an empty one. */
-  ts("<leader>ai sends the workspace chord", composer("abc", 0), ["<leader>ai"],
+  /* T3's thread.jump.N under the leader, and a digit chord carries a Digit
+     code rather than an empty one. */
+  ts("<leader>1 jumps to agent 1", composer("abc", 0), ["<leader>1"],
      (g, s) => oneChord("1")(g, s) || (s[0].code === "Digit1" ? "" : "code " + s[0].code));
+  /* Graphide's agent picker has no T3 equivalent: consumed, nothing sent. */
+  ts("<leader><leader> sends nothing", composer("abc", 0), ["<leader>", "<leader>"],
+     (g, s) => (s.length === 0 ? "" : "sent " + JSON.stringify(s.map((x) => x.key)))
+               || want("text", "abc")(g) || want("seq", "")(g));
   /* The panel waits HINT_DELAY_MS, so a fast two-key sequence never flashes it. */
   ts("the hint panel is not up before its delay", composer("abc", 0), ["<leader>"],
      (g) => (V.hint() === null && g.seq === "<leader>" ? "" : "hint up at once: " + JSON.stringify(V.hint())));
@@ -293,7 +297,10 @@
      (g, s) => (s.length === 1 ? "" : "sent " + s.length) || want("text", "d")(g));
   ts("3l after a sequence", composer("hello world", 0), ["]a", "3", "l"], (g, s) => want("pos", 3)(g));
   ts("count cleared by a sequence", composer("hello world", 0), ["3", "<leader>sf", "l"], (g) => want("pos", 1)(g));
-  ts("digit is not a tree key", composer("hello", 0), ["<leader>", "3", "l"], none(want("pos", 1)));
+  /* A digit after the leader is an agent jump; a digit with nothing pending
+     is still a count, which the four tests above cover. */
+  ts("<leader>3 jumps, then l is vim's", composer("hello", 0), ["<leader>", "3", "l"],
+     (g, s) => oneChord("3")(g, s) || want("pos", 1)(g));
   ts("f<Space> is vim's find",   composer("ab cd", 0), ["f", " "], none(want("pos", 2)));
   ts("r] is vim's replace",      composer("abc", 0), ["r", "]"], none(want("text", "]bc")));
   ts("di[ is vim's text object", composer("x[ab]y", 2), ["d", "i", "["], none(want("text", "x[]y")));
