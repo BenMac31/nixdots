@@ -986,7 +986,9 @@
     ["<leader>an", "n", "new agent"],
     ["<leader>aN", "o", "new agent, the other of Claude Code and Codex"],
     ["<leader>ah", "m", "the new agent: Claude Code, Codex or a plugin's"],
-    ["<leader>ai", null, "where the new agent starts"],
+    /* gred.toml binds agent.place to <C-,> as well, which keybindings.json
+       sends to composer.workspace, so this is the same action by its tree key. */
+    ["<leader>ai", "1", "where the new agent starts"],
     ["<leader>ad", null, "the agent definition the new agent starts as"],
     ["<leader>aL", null, "the launch script the new agent runs through"],
     ["<leader>ay", "y", "Skip permissions on or off for the new agent"],
@@ -1193,6 +1195,9 @@
   }
 
   const CHORD_CODES = { "/": "Slash", ".": "Period", ",": "Comma" };
+  const chordCode = (key) =>
+    CHORD_CODES[key] ||
+    (/^[a-z]$/.test(key) ? "Key" + key.toUpperCase() : /^[0-9]$/.test(key) ? "Digit" + key : "");
 
   /* The one way this file talks to T3's command layer: a synthetic chord at
      window, which keybindings.json maps to a T3 command. */
@@ -1200,7 +1205,7 @@
     SEQ.sent++;
     window.dispatchEvent(new KeyboardEvent("keydown", {
       key,
-      code: CHORD_CODES[key] || (/^[a-z]$/.test(key) ? "Key" + key.toUpperCase() : ""),
+      code: chordCode(key),
       bubbles: true,
       cancelable: true,
       ctrlKey: true,

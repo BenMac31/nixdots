@@ -172,8 +172,8 @@
   const sent = [];
   window.addEventListener("keydown", (e) => {
     if (e.ctrlKey && e.altKey && e.shiftKey) {
-      sent.push({ key: e.key, meta: e.metaKey, trusted: e.isTrusted, atWindow: e.target === window,
-                  bubbles: e.bubbles, cancelable: e.cancelable });
+      sent.push({ key: e.key, code: e.code, meta: e.metaKey, trusted: e.isTrusted,
+                  atWindow: e.target === window, bubbles: e.bubbles, cancelable: e.cancelable });
     }
   });
 
@@ -240,6 +240,9 @@
   ts("<C-w>l focuses the next pane", composer("abc", 0), [["w", { ctrl: true }], "l"], oneChord("z"));
   ts("<C-w>j focuses the next pane", composer("abc", 0), [["w", { ctrl: true }], "j"], oneChord("z"));
   ts("<C-w>h with nothing focused", global(), [["w", { ctrl: true }], "h"], oneChord("q"));
+  /* A digit chord carries a Digit code, not an empty one. */
+  ts("<leader>ai sends the workspace chord", composer("abc", 0), ["<leader>ai"],
+     (g, s) => oneChord("1")(g, s) || (s[0].code === "Digit1" ? "" : "code " + s[0].code));
   /* The panel waits HINT_DELAY_MS, so a fast two-key sequence never flashes it. */
   ts("the hint panel is not up before its delay", composer("abc", 0), ["<leader>"],
      (g) => (V.hint() === null && g.seq === "<leader>" ? "" : "hint up at once: " + JSON.stringify(V.hint())));

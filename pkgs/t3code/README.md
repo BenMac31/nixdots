@@ -9,6 +9,17 @@ composer itself is a Tiptap (ProseMirror) contenteditable.
 So `vim-composer.js` runs in the renderer, and `inject-vim.py` inlines it into
 `app.asar` at build time. Set `ai.t3code.vimComposer = false` for a stock T3.
 
+**A change here needs a rebuild, not a T3 restart.** The plugin lives inside
+`app.asar`, so restarting T3 reloads the same bundle it already had. Run
+`home-manager switch` and then relaunch T3. To check which build is live:
+
+    grep -ac SEQ_ROWS "$(readlink -f ~/.nix-profile/bin/t3code | sed 's|/bin/t3code||')/lib/t3code/resources/app.asar"
+
+A zero there means the running T3 predates the sequence engine, and the keys
+in `~/.t3/userdata/keybindings.json` that the engine dispatches to will do
+nothing. Worse, `<C-w>` then falls through to T3's own `mod+w`, which closes
+the right panel.
+
 ## How the plugin talks to the editor
 
 Nothing here reads a minified symbol. Every edit goes through a web platform
