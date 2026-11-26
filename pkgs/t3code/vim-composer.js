@@ -1262,6 +1262,13 @@
     "[role='textbox']", "[role='combobox']", "[role='searchbox']", "[role='spinbutton']",
     "[role='slider']", "[role='menu']", "[role='menubar']", "[role='listbox']",
     "[role='dialog']", "[role='alertdialog']", ".xterm",
+    /* Space activates these, everywhere on the web. Taking the leader over
+       them would break a focused button for the sake of a leader nobody
+       presses with a button focused. Enter and PageDown are unaffected. */
+    "button", "summary", "[role='button']", "[role='checkbox']",
+    "[role='radio']", "[role='switch']", "[role='tab']", "[role='option']",
+    "[role='treeitem']", "[role='menuitem']", "[role='menuitemcheckbox']",
+    "[role='menuitemradio']",
   ].join(",");
 
   /* ------------------------------------------------------------------- ui -- */

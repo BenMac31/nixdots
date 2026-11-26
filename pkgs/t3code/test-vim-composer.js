@@ -302,6 +302,16 @@
        const m = document.createElement("div"); m.id = "tmp-menu"; m.setAttribute("role", "menu"); m.tabIndex = 0;
        document.body.appendChild(m); m.focus();
      }, ["g", "t"], (g, s) => { document.getElementById("tmp-menu").remove(); return none()(g, s); });
+  ts("global: a focused button keeps Space", () => {
+       setup("abc", 0);
+       const b = document.createElement("button"); b.id = "tmp-btn"; b.textContent = "go";
+       document.body.appendChild(b); b.focus();
+     }, [" "], (g, s) => { document.getElementById("tmp-btn").remove(); return none()(g, s); });
+  ts("global: a focused checkbox role keeps Space", () => {
+       setup("abc", 0);
+       const c = document.createElement("div"); c.id = "tmp-cb"; c.setAttribute("role", "checkbox");
+       c.tabIndex = 0; document.body.appendChild(c); c.focus();
+     }, [" "], (g, s) => { document.getElementById("tmp-cb").remove(); return none()(g, s); });
   ts("global: plain keys pass", global(), ["x", "c", "l"], none());
 
   /* Hint panel content */
