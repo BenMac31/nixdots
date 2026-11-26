@@ -5,6 +5,40 @@ let
     exec ${pool.command} claude "$@"
   '';
   antigravity = pkgs.unfree.callPackage ../../../../pkgs/antigravity-cli.nix { };
+  # agy through the pool instead of its own Google sign-in. The pool
+  # (CLIProxyAPI on XiaServer) holds Antigravity credentials and serves the
+  # same gemini-4-* models over the Gemini wire protocol, so agy reaches them
+  # with this machine's pool key and no sign-in of its own.
+  #
+  # agy's route for that is `modelProvider: "gemini"` in settings.json plus
+  # GEMINI_API_KEY and GOOGLE_GEMINI_BASE_URL (its 1.5.x changelog). --settings
+  # is merged over the saved settings.json and never written back, so the model,
+  # editor mode and trusted workspaces a session saved still apply, and a plain
+  # `agy` outside T3 keeps using its own sign-in.
+  #
+  # `agy acp`, which is how T3 drives it, reads --settings too: with this
+  # wrapper an ACP session needs no `authenticate` call and answers from the
+  # pool. Only the models the pool serves answer; agy drops a model's effort
+  # suffix before sending it, so Gemini 4 Neon (High) arrives as gemini-4-neon
+  # and works, while Gemini 3.8 Flash (Low) arrives as gemini-3.8-flash, which
+  # the pool does not carry, and the turn fails with "unknown provider".
+  agy = pkgs.writeShellScriptBin "t3code-agy" ''
+    key="''${GRAPHIDE_POOL_KEY:-}"
+    file="''${GRAPHIDE_POOL_KEY_FILE:-''${XDG_CONFIG_HOME:-$HOME/.config}/graphide/pool-key}"
+    if [ -z "$key" ] && [ -r "$file" ]; then
+      read -r key < "$file" || true
+    fi
+    if [ -z "$key" ]; then
+      echo "t3code-agy: this machine has no pool key ($file). Store one with: ai-pool setup < FILE" >&2
+      exit 1
+    fi
+    # The pool's key must be the only thing agy can authenticate with.
+    unset GOOGLE_API_KEY GOOGLE_APPLICATION_CREDENTIALS AGY_ADC_AUTH AGY_ACCOUNT
+    export GEMINI_API_KEY="$key"
+    export GOOGLE_GEMINI_BASE_URL="''${GRAPHIDE_POOL_URL:-${pool.url}}"
+    export GRAPHIDE_POOL_ACTIVE=1
+    exec ${lib.getExe antigravity} --settings '{"modelProvider":"gemini"}' "$@"
+  '';
   cfg = config.ai.t3code;
   # T3 owns settings.json at runtime, so Nix folds these in on activation
   # rather than writing the whole file. Codex is left out: it already reaches
@@ -21,7 +55,7 @@ let
         driver = "antigravity";
         config = {
           enabled = true;
-          binaryPath = lib.getExe antigravity;
+          binaryPath = lib.getExe (if pool.enable then agy else antigravity);
         };
       };
     };
@@ -47,8 +81,13 @@ in
           linked against /lib64/ld-linux-x86-64.so.2, which does not exist
           here.
 
-          Signing in is still interactive: `agy` writes its own OAuth token,
-          which both it and T3 read.
+          With `services.ai-pool.enable`, T3 gets agy through the pool
+          (`t3code-agy`), so it needs no sign-in of its own and draws on the
+          pooled Antigravity accounts. Only the models the pool serves answer
+          there: the gemini-4-* families and the Flash models, not agy's own
+          Claude and GPT-OSS entries, and not every effort step of every model.
+          Without the pool, agy signs in to a Google account itself and T3
+          reads the OAuth token it writes.
         '';
       };
       vimComposer = lib.mkOption {
@@ -79,7 +118,9 @@ in
       };
     }
     (lib.mkIf cfg.antigravity {
-      home.packages = [ antigravity ];
+      # `agy` is the vendor's own binary, so a session outside T3 still signs
+      # in to a Google account; `t3code-agy` beside it is the pool's route.
+      home.packages = [ antigravity ] ++ lib.optional pool.enable agy;
     })
     (lib.mkIf (providerInstances != { }) {
       home.activation.t3codeProviders = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
