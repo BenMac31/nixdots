@@ -2,6 +2,14 @@
 <html><head><meta charset="utf-8"><title>t3vim</title>
   <style>.composer-tiptap{white-space:pre-wrap;word-break:break-word}</style></head>
 <body>
+  <!-- The conversation, the shape T3 gives it: one scroller with rows that
+       carry their kind, so the page's keys have something real to move. -->
+  <div class="messages-timeline-scroll" style="height:120px;overflow-y:auto">
+    <div data-message-role="user" data-timeline-row-kind="message" style="height:200px">one</div>
+    <div data-timeline-row-kind="work" style="height:200px">work</div>
+    <div data-message-role="assistant" data-timeline-row-kind="message" style="height:200px">two</div>
+    <div data-message-role="user" data-timeline-row-kind="message" style="height:200px">three</div>
+  </div>
   <div data-chat-composer-form="true">
     <div class="composer-tiptap" contenteditable="true"></div>
   </div>

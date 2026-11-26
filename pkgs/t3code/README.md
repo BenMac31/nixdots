@@ -100,6 +100,35 @@ The keydown listener is on `window` in the capture phase. The plugin runs
 before T3's bundle, so it is registered ahead of T3's own handlers, and a key
 it takes mid-sequence never reaches them.
 
+## Out of the composer, into the conversation
+
+In gred an agent's page is a read-only Vim buffer and the composer is a field
+inside it (`fleet/src/page/keys.rs`). Escape in the composer's normal mode
+with nothing typed of a command leaves it, and the conversation takes the
+keys (`Composer::rests`, "where an escape would leave it", and page.rs's
+`Typed::Leave`). The same two steps work here:
+
+| Key | What |
+|---|---|
+| `Esc` `Esc` | insert to normal, then out of the composer |
+| `j` `k` | the view a line down, up |
+| `gg` `G` | the first line, the last |
+| `<C-d>` `<C-u>` | half a screen |
+| `<C-f>` `<C-b>` | a screen |
+| `<C-e>` `<C-y>` | the view a line |
+| `]]` `[[` | the next message, the one before |
+| `][` `[]` | turn |
+| `]t` `[t` | tool call |
+| `i` `a` `I` `A` `o` | write to the agent again |
+| `/` | search the conversation (`chat.find`) |
+
+gred has a cursor line to move and T3's conversation has none, so `j` and `k`
+move the view by a line, which is what `<C-e>` and `<C-y>` do. The rest of
+gred's conversation keys are surfaces T3 has not: folds, `yy`, `K`, and the
+labels `f` puts on links. `<C-c>` is left to the platform; gred's Vim keys
+interrupt the turn with it, but here that would take copying a selection out
+of the chat, and `<leader>ak` stops the agent.
+
 ## j and k in T3's lists
 
 T3's thread list (the sidebar, and the thread panel, which is the same row

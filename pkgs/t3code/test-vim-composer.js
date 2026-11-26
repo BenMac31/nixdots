@@ -428,6 +428,53 @@
   /* A stale pending g does not turn a later g into gg. */
   tl("a lone g is dropped, not kept", 3, 1, ["g"], (b, g, s) => none(() => at("row1"))(g, s));
 
+  /* -------------------------------------------------------------- page --- */
+
+  /* gred's agent page: the conversation is a read-only Vim buffer and the
+     composer a field in it, so an escape in normal mode at rest leaves and
+     the conversation reads j k gg G <C-d> <C-u>, while i a I A o write to
+     the agent again. */
+  const chat = () => document.querySelector(".messages-timeline-scroll");
+  function tp(name, prep, steps, check) {
+    ts("page: " + name, () => { chat().scrollTop = 0; prep(); }, steps, check);
+  }
+  /* Starting in the composer, in normal mode, having left it with Escape. */
+  const left = () => () => { setup("hello", 0); V.feed("Escape"); };
+
+  tp("Escape in normal mode leaves the composer", left(), [],
+     (g, s) => (document.activeElement === el ? "still in the composer" : "")
+       || (V.state.mode === "INSERT" ? "" : "mode " + V.state.mode));
+  tp("j and k scroll the conversation", left(), ["jjj"], () => {
+    const at = chat().scrollTop;
+    if (at <= 0) return "j did not scroll: " + at;
+    V.feed("k");
+    return chat().scrollTop < at ? "" : "k did not scroll back: " + chat().scrollTop;
+  });
+  tp("G goes to the end, gg to the start", left(), ["G"], () => {
+    const chatEl = chat();
+    if (chatEl.scrollTop < chatEl.scrollHeight - chatEl.clientHeight - 2) return "G stopped at " + chatEl.scrollTop;
+    V.feedSeq("gg");
+    return chatEl.scrollTop === 0 ? "" : "gg stopped at " + chatEl.scrollTop;
+  });
+  tp("<C-d> and <C-u> move half a screen", left(), [["d", { ctrl: true }]], () => {
+    const half = Math.round(chat().clientHeight / 2);
+    if (Math.abs(chat().scrollTop - half) > 2) return "scrolled " + chat().scrollTop + " want " + half;
+    V.feed("u", { ctrl: true });
+    return chat().scrollTop === 0 ? "" : "<C-u> left it at " + chat().scrollTop;
+  });
+  tp("]] walks the messages", left(), ["]]"], () => (chat().scrollTop > 0 ? "" : "did not move"));
+  tp("i writes to the agent again", left(), ["i"],
+     (g) => (document.activeElement === el ? "" : "not in the composer")
+       || want("mode", "INSERT")(V.debug()));
+  tp("A writes at the end", left(), ["A"],
+     () => (V.debug().pos === 5 ? "" : "pos " + V.debug().pos)
+       || (V.debug().mode === "INSERT" ? "" : "mode " + V.debug().mode));
+  tp("/ searches the conversation", left(), ["/"], (g, s) => oneChord("/")(g, s));
+  /* The trees still run with the conversation reading. */
+  tp("<leader> still opens the tree", left(), ["<leader>sf"], (g, s) => oneChord("f")(g, s));
+  /* A key the page has no use for is left alone. */
+  tp("x is nobody's", left(), ["x"], none());
+
   /* The settings page's navigation, the other list T3 drives with the arrows:
      the same rows-plus-container shape on [data-settings-section], with no
      Left or Right and no shift check. */

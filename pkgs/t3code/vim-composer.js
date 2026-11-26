@@ -1249,6 +1249,9 @@
         handleKey(k);
         return;
       }
+      /* Nothing of the app's: the conversation's own keys after a prefix,
+         gg and the ] and [ walks. */
+      if (at && !local && pageSeq(at.name, k)) { S.count = ""; refresh(); return; }
       S.count = "";
       seqFlash(seqName([...seqTokens(at ? at.name : ""), k]) + " is not mapped");
       refresh();
@@ -1389,6 +1392,156 @@
 
   /* ------------------------------------------------------------------- ui -- */
 
+  /* ------------------------------------------------------------- page --- */
+
+  /* gred's agent page: the conversation is a read-only Vim buffer and the
+     composer is a field inside it (fleet/src/page/keys.rs). An Escape in the
+     composer's normal mode, with nothing typed of a command, gives the keys
+     back to the page (`Composer::rests`, "where an escape would leave it",
+     and page.rs's `Typed::Leave`). The page then reads:
+
+       j k            a line down, up          (agent.down, agent.up)
+       gg G           the first line, the last (agent.first, agent.last)
+       <C-d> <C-u>    half a screen            (agent.half_down, half_up)
+       <C-f> <C-b>    a screen                 (agent.page_down, page_up)
+       <C-e> <C-y>    the view a line          (agent.line_down, line_up)
+       ]] [[          message, as gred's do    (agent.next_message, previous)
+       ][ []          turn                     (agent.next_turn, previous)
+       ]t [t          tool call                (agent.next_tool, previous)
+       i a I A o      write to the agent       (agent.insert .. open_line)
+       /              search the conversation  (agent.search)
+
+     gred has a cursor line to move; T3's conversation has none, so j and k
+     move the view by a line, which is what <C-e> and <C-y> do. The rest of
+     the conversation's keys (folds, yank, K, the labels f puts on links) are
+     surfaces T3 does not have. <C-c> is left to the platform: gred's Vim keys
+     interrupt the turn with it, but here it would take copying a selection
+     out of the chat, and <leader>ak stops the agent. */
+  const SCROLL_SEL = ".messages-timeline-scroll";
+  const CONVERSATION_SEL = '[data-workspace-area="conversation"]';
+  /* gred scrolls a page by a line at a time (`node-page`'s scroll step 20). */
+  const PAGE_LINE = 20;
+
+  let scrollCache = null;
+  function scroller() {
+    if (scrollCache && scrollCache.isConnected) return scrollCache;
+    scrollCache = document.querySelector(SCROLL_SEL);
+    if (scrollCache) return scrollCache;
+    /* A release that renames the scroller: take the tallest thing in the
+       conversation that scrolls. */
+    const area = document.querySelector(CONVERSATION_SEL);
+    if (!area) return null;
+    for (const n of area.querySelectorAll("div")) {
+      if (n.scrollHeight > n.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(n).overflowY)) {
+        scrollCache = n;
+        return n;
+      }
+    }
+    return null;
+  }
+
+  const pageBy = (by) => { const sc = scroller(); if (!sc) return false; sc.scrollBy({ top: by }); return true; };
+  const pageEnd = (last) => {
+    const sc = scroller();
+    if (!sc) return false;
+    sc.scrollTo({ top: last ? sc.scrollHeight : 0 });
+    return true;
+  };
+
+  /* The next row of its kind past the top of the view, or the one before it. */
+  function pageJump(sel, back) {
+    const sc = scroller();
+    if (!sc) return false;
+    const rows = Array.from(sc.querySelectorAll(sel));
+    if (!rows.length) return false;
+    const top = sc.getBoundingClientRect().top;
+    let to = null;
+    if (back) {
+      for (let i = rows.length - 1; i >= 0; i--) {
+        if (rows[i].getBoundingClientRect().top - top < -2) { to = rows[i]; break; }
+      }
+    } else {
+      for (const row of rows) {
+        if (row.getBoundingClientRect().top - top > 2) { to = row; break; }
+      }
+    }
+    if (!to) return pageEnd(!back);
+    sc.scrollBy({ top: to.getBoundingClientRect().top - top - 8 });
+    return true;
+  }
+
+  /* Back into the composer, as gred's i a I A o write to the agent. */
+  function intoComposer(where) {
+    const el = document.querySelector(EDITABLE_SEL);
+    if (!el) return false;
+    el.focus();
+    S.el = el;
+    S.mode = NORMAL;
+    reset();
+    seqCancel();
+    const m = scan(el);
+    if (where === "start") caretTo(m, 0);
+    else if (where !== "") caretTo(m, m.text.length);
+    if (where === "line") { handleKey("o"); return true; }   /* o opens a line and writes */
+    S.mode = INSERT;
+    refresh();
+    return true;
+  }
+
+  /* Out of the composer, into the conversation. */
+  function leaveComposer() {
+    const el = S.el;
+    S.el = null;
+    S.mode = INSERT;      /* what the composer is in again when it is focused */
+    reset();
+    seqCancel();
+    if (el) { el.classList.remove("t3vim-normal"); if (el.blur) el.blur(); }
+    hideUI();
+    refresh();
+  }
+
+  /* One key with the conversation reading. True when the key was taken. */
+  function pageKey(e) {
+    const k = e.key;
+    if (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) {
+      const sc = scroller();
+      if (!sc) return false;
+      const half = Math.max(PAGE_LINE, Math.round(sc.clientHeight / 2));
+      const screen = Math.max(PAGE_LINE, sc.clientHeight - 2 * PAGE_LINE);
+      if (k === "d") return pageBy(half);
+      if (k === "u") return pageBy(-half);
+      if (k === "f") return pageBy(screen);
+      if (k === "b") return pageBy(-screen);
+      if (k === "e") return pageBy(PAGE_LINE);
+      if (k === "y") return pageBy(-PAGE_LINE);
+      return false;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return false;
+    if (k === "j") return pageBy(PAGE_LINE);
+    if (k === "k") return pageBy(-PAGE_LINE);
+    if (k === "G") return pageEnd(true);
+    if (k === "i" || k === "a") return intoComposer("");
+    if (k === "I") return intoComposer("start");
+    if (k === "A") return intoComposer("end");
+    if (k === "o") return intoComposer("line");
+    if (k === "/") { dispatchChord("/"); return true; }
+    return false;
+  }
+
+  /* What the conversation makes of a key after one of the app's prefixes,
+     where the app's own tree has nothing for it: gg, and the ] and [ walks.
+     gred resolves these the same way round, the keymap first and the
+     surface's own keys after it. */
+  function pageSeq(prefix, k) {
+    if (prefix === "g") return k === "g" ? pageEnd(false) : false;
+    if (prefix !== "]" && prefix !== "[") return false;
+    const back = prefix === "[";
+    if (k === "]") return pageJump('[data-message-role="user"]', back);
+    if (k === "[") return pageJump('[data-message-role="assistant"]', back);
+    if (k === "t") return pageJump('[data-timeline-row-kind="work"]', back);
+    return false;
+  }
+
   /* ------------------------------------------------------------ chrome -- */
 
   /* gred's own measures, from gred-rs: chrome::LINE (the statusline and the
@@ -1495,9 +1648,13 @@
       "html.t3vim-lined [data-chat-composer-form]{margin-bottom:" + LINE + "px}",
       "html.t3vim-lined.t3vim-said [data-chat-composer-form]{margin-bottom:" + 2 * LINE + "px}",
 
-      /* The caret gred draws over the character in normal mode. */
+      /* The caret gred draws over the character in normal mode: the
+         composer's `caret color` (the accent) filled, with the character it
+         covers set in its `caret ink` (Role::OnAccent) over it. */
       ".t3vim-block{position:fixed;z-index:2147482999;pointer-events:none;border-radius:1px;",
-      "background:var(--app-theme-accent,#4fa396);opacity:.3}",
+      "overflow:hidden;white-space:pre;text-align:center;",
+      "background:var(--app-theme-accent,#4fa396);",
+      "color:var(--app-theme-accent-foreground,#04120f)}",
       ".t3vim-normal{caret-color:transparent !important}",
     ].join("");
     document.head.appendChild(css);
@@ -1678,6 +1835,17 @@
     blockEl.style.top = rect.top + "px";
     blockEl.style.width = Math.max(2, rect.width) + "px";
     blockEl.style.height = rect.height + "px";
+    /* The block caret carries the character it covers, in the colour the
+       composer's `caret ink` slot gives it (Role::OnAccent), so the block is
+       solid as gred's is rather than a wash over the text. */
+    const under = t[p] !== undefined && t[p] !== "\n" && t[p] !== " " ? t[p] : "";
+    if (blockEl.textContent !== under) blockEl.textContent = under;
+    if (under) {
+      const cs = getComputedStyle(S.el);
+      blockEl.style.font = cs.fontStyle + " " + cs.fontWeight + " " + cs.fontSize + "/"
+        + rect.height + "px " + cs.fontFamily;
+      blockEl.style.letterSpacing = cs.letterSpacing;
+    }
   }
 
   /* -------------------------------------------------------------- wiring -- */
@@ -1707,6 +1875,10 @@
       const row = (f && f.closest && f.closest(LIST_SEL)) || (t && t.closest && t.closest(LIST_SEL));
       if (row && listKey(e, row)) { eat(e); return; }
     }
+    /* The conversation reads its keys wherever the composer does not have
+       them, which is gred's rule: a control keeps Space and Enter, and the
+       keys it has no use for are the page's. */
+    if (!SEQ.node && !takesText && pageKey(e)) { eat(e); return; }
     if ((t && t.closest && t.closest(NATIVE_KEYS)) || (f && f.closest && f.closest(NATIVE_KEYS))) {
       if (SEQ.node) { seqCancel(); refresh(); }
       return;
@@ -1752,7 +1924,10 @@
       }
       if (S.mode === VISUAL || S.mode === VLINE) { setMode(NORMAL); collapse(); refresh(); eat(e); return; }
       if (S.count || S.opCount || S.operator || S.pending) { reset(); refresh(); eat(e); return; }
-      return;                               /* NORMAL, nothing pending: T3 keeps Escape */
+      /* Normal mode with nothing typed of a command: an escape leaves, and
+         the conversation takes the keys. gred's `Composer::rests` is the
+         same test, and its page answers with `Typed::Leave`. */
+      leaveComposer(); eat(e); return;
     }
 
     if (S.mode === INSERT) {

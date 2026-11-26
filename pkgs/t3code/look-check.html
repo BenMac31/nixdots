@@ -38,9 +38,12 @@
         gap:10px;padding:0 12px;color:var(--app-theme-text-muted);font-size:12px}
   .body{flex:1;padding:16px 20px;color:var(--app-theme-text);max-width:860px}
   .body p{margin:0 0 10px}
-  form{margin:12px;border:1px solid var(--app-theme-border);border-radius:6px;padding:8px 10px}
-  .composer-tiptap{white-space:pre-wrap;word-break:break-word;font:400 13px/1.5 var(--font-mono);
-                   min-height:40px;outline:none}
+  /* The composer's own slots: sunken well, hairline edge lit at .55 of the
+     accent while it has the keys, radius 6, 12 either side and 8 over. */
+  form{margin:12px;background:var(--app-theme-muted);border:1px solid rgba(79,163,150,.55);
+       border-radius:6px;padding:8px 12px}
+  .composer-tiptap{white-space:pre-wrap;word-break:break-word;font:400 12.5px/1.4 var(--font-mono);
+                   min-height:36px;outline:none;caret-color:var(--app-theme-accent)}
 </style></head>
 <body>
   <div class="side">
@@ -71,6 +74,8 @@
     document.title = "graphide  fix the keymap";
     /* A sequence drops after SEQ_TIMEOUT_MS, and a headless run's clock moves
        far faster than a person's, so hold it by typing it again. */
+    if (q.get("caret")) { document.title = "graphide  fix the keymap"; window.__t3vim.paintNow(); }
+    else {
     const show = () => {
       window.__t3vim.feed("Escape");
       if (q.get("msg")) window.__t3vim.feedSeq(q.get("msg") === "1" ? "<leader>q" : q.get("msg"));
@@ -80,5 +85,6 @@
     };
     show();
     setInterval(show, 150);
+    }
   </script>
 </body></html>

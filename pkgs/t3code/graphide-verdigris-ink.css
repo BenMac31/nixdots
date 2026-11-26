@@ -33,9 +33,13 @@
 --app-scrollbar-width:6px;
 /* -- the roles this sheet names, as gred's theme names them -- */
 --gr-line:#ffffff14;--gr-bright:#dae1e6;--gr-faint:#52616b;--gr-sunken:#0d161c;
---gr-sel:#18242c;--gr-raised:#1f2c35;--gr-accent:#4fa396;--gr-thumb:#232b31;--gr-thumb-on:#353d43}
+--gr-sel:#18242c;--gr-raised:#1f2c35;--gr-accent:#4fa396;--gr-thumb:#232b31;--gr-thumb-on:#353d43;
+/* the accent at the strengths gred lays it on at: a lit edge, and what is
+   selected (Theme::ink's selected_text) */
+--gr-accent-lit:rgba(79,163,150,.55);--gr-selected:rgba(79,163,150,.32)}
 :root:not(.dark){--gr-line:#0000002b;--gr-bright:#0f1420;--gr-faint:#8a949c;--gr-sunken:#e7edea;
---gr-sel:#d5e3df;--gr-raised:#ffffff;--gr-accent:#2a7a6e;--gr-thumb:#d6dfdb;--gr-thumb-on:#c3cfca}
+--gr-sel:#d5e3df;--gr-raised:#ffffff;--gr-accent:#2a7a6e;--gr-thumb:#d6dfdb;--gr-thumb-on:#c3cfca;
+--gr-accent-lit:rgba(42,122,110,.55);--gr-selected:rgba(42,122,110,.32)}
 
 /* Depth comes from surface, never shadow. Focus rings stay. */
 [data-slot="sidebar-inner"],[data-slot="composer-host"],[data-user-message-bubble],[data-thread-details-card],[data-timeline-row-kind],.chat-markdown-codeblock,[data-slot="dialog-popup"],[data-slot="dialog-panel"],[data-slot="sheet-popup"],[data-slot="sheet-panel"],[data-slot="popover-popup"],[data-slot="menu-popup"],[data-slot="select-popup"],[data-slot="tooltip-popup"],[data-slot="button"],[data-slot="input"],[data-slot="select-trigger"],[data-slot="badge"],[data-thread-item],[data-chat-header]{box-shadow:none !important;backdrop-filter:none !important}
@@ -72,11 +76,15 @@
 /* Conversation. */
 [data-user-message-bubble]{border-radius:6px !important;border:1px solid var(--gr-line) !important}
 
-/* Composer: the field lies on the page itself (Theme::ink: field = page),
-   a hairline around it and the accent only while it has the keys. */
-[data-slot="composer-host"]{--chat-composer-outline:var(--gr-line);--chat-composer-glass-surface:transparent;--chat-composer-attached-surface:transparent;--chat-composer-highlight:transparent;--chat-composer-attached-seam:var(--gr-line);border-radius:6px !important}
-[data-slot="composer-host"]:focus-within{--chat-composer-outline:var(--gr-accent)}
-.composer-tiptap{font-family:var(--font-mono);font-size:13px}
+/* The composer, to its own slots in fleet/src/composer.rs: the well is
+   sunken with a hairline, radius 6, 12 of room either side and 8 over and
+   under, its text mono 12.5 at 1.4, its placeholder faint, its caret 2 wide
+   in the accent, and its edge the accent at 0.55 while the keys go to it. */
+[data-slot="composer-host"]{--chat-composer-outline:var(--gr-line);--chat-composer-glass-surface:var(--gr-sunken);--chat-composer-attached-surface:var(--gr-sunken);--chat-composer-highlight:transparent;--chat-composer-attached-seam:var(--gr-line);border-radius:6px !important}
+[data-slot="composer-host"]:focus-within{--chat-composer-outline:var(--gr-accent-lit)}
+.composer-tiptap{font-family:var(--font-mono);font-size:12.5px;line-height:1.4;caret-color:var(--gr-accent)}
+.composer-tiptap ::selection{background:var(--gr-selected)}
+.composer-tiptap [data-placeholder]::before,.composer-tiptap .is-empty::before{color:var(--gr-faint) !important}
 
 /* Code: gred mono 12.5, sunken, hairline. */
 .chat-markdown-codeblock{border-radius:6px !important;border:1px solid var(--gr-line) !important;font-size:12.5px}
