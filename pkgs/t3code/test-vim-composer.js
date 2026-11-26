@@ -234,6 +234,15 @@
   ts("visual <leader>an sends n, stays visual", composer("hello", 0), ["v", "l", "<leader>an"],
      (g, s) => oneChord("n")(g, s) || want("mode", "VISUAL")(g));
   ts("<C-w><C-s> is <C-w>s", composer("abc", 0), [["w", { ctrl: true }], ["s", { ctrl: true }]], oneChord("s"));
+  /* Pane focus: T3's panes are linear, so h and k are previous, j and l next. */
+  ts("<C-w>h focuses the previous pane", composer("abc", 0), [["w", { ctrl: true }], "h"], oneChord("q"));
+  ts("<C-w>k focuses the previous pane", composer("abc", 0), [["w", { ctrl: true }], "k"], oneChord("q"));
+  ts("<C-w>l focuses the next pane", composer("abc", 0), [["w", { ctrl: true }], "l"], oneChord("z"));
+  ts("<C-w>j focuses the next pane", composer("abc", 0), [["w", { ctrl: true }], "j"], oneChord("z"));
+  ts("<C-w>h with nothing focused", global(), [["w", { ctrl: true }], "h"], oneChord("q"));
+  /* The panel waits HINT_DELAY_MS, so a fast two-key sequence never flashes it. */
+  ts("the hint panel is not up before its delay", composer("abc", 0), ["<leader>"],
+     (g) => (V.hint() === null && g.seq === "<leader>" ? "" : "hint up at once: " + JSON.stringify(V.hint())));
   ts("held Space does not walk the tree", composer("abc", 0), [],
      (g) => { V.feed(" "); V.feed(" ", { repeat: true }); return want("seq", "<leader>")(V.debug()); });
   ts("shift keydown keeps <leader>a pending", composer("abc", 0), ["<leader>a", "Shift", ["N", { shift: true }]], oneChord("o"));
@@ -316,7 +325,7 @@
 
   /* Hint panel content */
   ts("hint after <leader>", composer("abc", 0), ["<leader>"], (g) => {
-    const h = V.hint();
+    const h = V.showHintNow();
     if (!h || g.seq !== "<leader>") return "no hint, seq " + g.seq;
     const s = h.items.find((x) => x.key === "s"), sp = h.items.find((x) => x.key === "SPC");
     if (!s || s.desc !== "+[S]earch") return "s item " + JSON.stringify(s);
@@ -324,7 +333,7 @@
     return "";
   });
   ts("hint after <leader>a", composer("abc", 0), ["<leader>a"], (g) => {
-    const h = V.hint();
+    const h = V.showHintNow();
     const n = h && h.items.find((x) => x.key === "n"), r = h && h.items.find((x) => x.key === "r");
     if (!n || n.desc !== "new agent" || n.none) return "n item " + JSON.stringify(n);
     if (!r || !r.none) return "r item " + JSON.stringify(r);
@@ -389,7 +398,7 @@
       return none(want("pos", 0))(V.debug(), sent);
     });
     await ta("hint panel shows the leader tree", async () => {
-      setup("abc", 0); V.feedSeq("<leader>");
+      setup("abc", 0); V.feedSeq("<leader>"); V.showHintNow();
       await frames();
       const p = document.querySelector(".t3vim-keys");
       if (!p || p.style.display !== "block") return "panel hidden";
@@ -400,6 +409,7 @@
     });
     await ta("hint panel works with nothing focused", async () => {
       setup("abc", 0); el.blur(); document.body.focus(); V.feed("w", { ctrl: true });
+      V.showHintNow();
       await frames();
       const p = document.querySelector(".t3vim-keys");
       const ok = p && p.style.display === "block" && /Windows/.test(p.textContent);

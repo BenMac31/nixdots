@@ -38,6 +38,9 @@
   const SEQ_TIMEOUT_MS = 1000;
   /* How long a "no T3 equivalent" or "not mapped" message stays up. */
   const FLASH_MS = 1600;
+  /* How long a pending prefix waits before the which-key panel paints.
+     Graphide's `timeoutlen` default, which is what the which-key bar waits. */
+  const HINT_DELAY_MS = 300;
 
   const NORMAL = "NORMAL", INSERT = "INSERT", VISUAL = "VISUAL", VLINE = "V-LINE";
 
@@ -1028,10 +1031,12 @@
     ["<leader>ca", null, "code actions"],
     ["<leader>cf", null, "format the file"],
 
-    ["<C-w>h", null, "focus left"],
-    ["<C-w>j", null, "focus down"],
-    ["<C-w>k", null, "focus up"],
-    ["<C-w>l", null, "focus right"],
+    /* T3's panes are a linear list, so left and up are the previous pane and
+       right and down the next, the same approximation <C-h> and <C-l> make. */
+    ["<C-w>h", "q", "focus left"],
+    ["<C-w>j", "z", "focus down"],
+    ["<C-w>k", "q", "focus up"],
+    ["<C-w>l", "z", "focus right"],
     ["<C-w>s", "s", "split"],
     ["<C-w>v", "b", "split vertically"],
     ["<C-w>q", "x", "quit the pane"],
@@ -1133,12 +1138,28 @@
     timer: 0,
     flash: "",       // a short message for the hint panel
     flashTimer: 0,
+    show: false,     // the hint panel has waited HINT_DELAY_MS and may paint
+    showTimer: 0,
     sent: 0,         // chords dispatched, for the tests
   };
 
   function seqCancel() {
     SEQ.node = null; SEQ.local = false;
     if (SEQ.timer) { clearTimeout(SEQ.timer); SEQ.timer = 0; }
+    SEQ.show = false;
+    if (SEQ.showTimer) { clearTimeout(SEQ.showTimer); SEQ.showTimer = 0; }
+  }
+
+  /* The panel waits before it paints, as Graphide's which-key bar waits
+     timeoutlen. <C-w>h and <leader>sf are typed faster than this, so they
+     never flash a panel; a prefix you stop on still explains itself. The
+     sequence itself is never delayed, only the drawing of it. */
+  function seqArmHint() {
+    if (SEQ.showTimer) clearTimeout(SEQ.showTimer);
+    SEQ.showTimer = setTimeout(() => {
+      SEQ.showTimer = 0;
+      if (SEQ.node) { SEQ.show = true; refresh(); }
+    }, HINT_DELAY_MS);
   }
 
   function seqFlash(msg) {
@@ -1150,6 +1171,7 @@
   const composerVim = () => !!(S.el && S.el.isConnected && S.mode !== INSERT);
 
   function seqArm() {
+    seqArmHint();
     if (SEQ.timer) clearTimeout(SEQ.timer);
     SEQ.timer = setTimeout(() => {
       SEQ.timer = 0;
@@ -1238,7 +1260,7 @@
 
   /* What the hint panel shows: the pending prefix's next keys, or a message. */
   function seqHint() {
-    if (SEQ.node) {
+    if (SEQ.node && SEQ.show) {
       const items = [];
       for (const [k, n] of SEQ.node.kids) {
         items.push({
@@ -1577,6 +1599,13 @@
     },
     hint() { return seqHint(); },
     paintNow() { paintKeys(); paint(); },
+    /* Fire the hint panel's HINT_DELAY_MS wait at once, so a test can check
+       the panel without sleeping for it. */
+    showHintNow() {
+      if (SEQ.showTimer) { clearTimeout(SEQ.showTimer); SEQ.showTimer = 0; }
+      if (SEQ.node) { SEQ.show = true; refresh(); }
+      return seqHint();
+    },
     get sent() { return SEQ.sent; },
     seqTimeoutMs: SEQ_TIMEOUT_MS,
     debug() {
