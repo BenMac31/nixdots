@@ -36,6 +36,17 @@ stdenv.mkDerivation rec {
 
   unpackPhase = "dpkg-deb -x $src .";
 
+  # vim-composer.js and keybindings.json are one key table split in two: the
+  # plugin reaches a T3 command by dispatching a private Ctrl+Alt+Shift chord
+  # that the table binds. A sequence pointing at an unbound chord eats the key
+  # and does nothing, and nothing else would notice.
+  doCheck = vimComposer;
+  checkPhase = ''
+    runHook preCheck
+    ${python3.interpreter} ${./check-chords.py} ${./vim-composer.js} ${./keybindings.json}
+    runHook postCheck
+  '';
+
   installPhase = ''
     runHook preInstall
     mkdir -p $out/lib $out/bin $out/share

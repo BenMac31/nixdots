@@ -280,6 +280,27 @@
     }
   }
 
+  /* Vim's three erasers while typing: <C-h> a character, <C-w> a word, <C-u>
+     back to the start of the line. Graphide's own line editor has the same
+     three (ui/src/line.rs: "Deletes the word before the cursor and the
+     blanks after it (<C-w>)"), and T3 has none of them - it binds mod+w to
+     closing a pane, mod+h to the pane ring and mod+u to the usage page, so
+     all three fired the app instead of editing the text. */
+  function eraseBack(what) {
+    const c = here();
+    if (!c) return false;
+    const m = c.map, p = c.pos;
+    if (p <= 0) return true;
+    let to = what === "word" ? wordBack(m.text, p, false)
+      : what === "line" ? lineStart(m.text, p)
+      : p - 1;
+    if (to >= p) to = p - 1;
+    cut(m, to, p);
+    const n = scan(S.el);
+    caretTo(n, clamp(to, 0, n.text.length));
+    return true;
+  }
+
   /* --------------------------------------------------------------- motions - */
 
   const lineStart = (t, p) => { const i = t.lastIndexOf("\n", Math.max(0, p - 1)); return i < 0 ? 0 : i + 1; };
@@ -1052,17 +1073,21 @@
     ["<leader>ca", null, "code actions"],
     ["<leader>cf", null, "format the file"],
 
-    /* T3's panes are a linear list, so left and up are the previous pane and
-       right and down the next, the same approximation <C-h> and <C-l> make. */
-    ["<C-w>h", "q", "focus left"],
-    ["<C-w>j", "z", "focus down"],
-    ["<C-w>k", "q", "focus up"],
-    ["<C-w>l", "z", "focus right"],
+    /* The direction is worked out from where the panes are, not from T3's
+       ring: see the panes section below. */
+    ["<C-w>h", "@pane.left", "focus left"],
+    ["<C-w>j", "@pane.down", "focus down"],
+    ["<C-w>k", "@pane.up", "focus up"],
+    ["<C-w>l", "@pane.right", "focus right"],
+    /* Vim's own next and previous window. gred leaves them out, but a dead
+       <C-w>w is worse than the ring, which is the one movement T3 has. */
+    ["<C-w>w", "@pane.next", "the next pane"],
+    ["<C-w>p", "@pane.prev", "the previous pane"],
     ["<C-w>s", "s", "split"],
     ["<C-w>v", "b", "split vertically"],
-    ["<C-w>q", "x", "quit the pane"],
-    ["<C-w>c", "x", "close the pane"],
-    ["<C-w>o", null, "close every other pane"],
+    ["<C-w>q", "@pane.close", "quit the pane"],
+    ["<C-w>c", "@pane.close", "close the pane"],
+    ["<C-w>o", "@pane.only", "close every other pane"],
     ["<C-w>=", null, "equal sizes"],
     ["<C-w>x", null, "exchange with the next pane"],
     ["<C-w>H", null, "move to the far left"],
@@ -1133,7 +1158,7 @@
   /* The trie. A node is { kids: Map(key -> node), leaf: {chord, desc}|null,
      name: the sequence so far, group: its which-key name }. */
   const SEQ_ROOT = { kids: new Map(), leaf: null, name: "", group: "" };
-  for (const [seq, chord, desc] of SEQ_ROWS) {
+  for (const [seq, to, desc] of SEQ_ROWS) {
     const toks = seqTokens(seq);
     let n = SEQ_ROOT;
     for (let i = 0; i < toks.length; i++) {
@@ -1145,7 +1170,9 @@
       }
       n = c;
     }
-    n.leaf = { chord, desc };
+    /* A row points at a T3 command by its chord, or at one of this file's own
+       acts by @name (the panes), or at nothing T3 has. */
+    n.leaf = to && to[0] === "@" ? { chord: null, act: to.slice(1), desc } : { chord: to, act: null, desc };
   }
   /* Bare keys that start a tree. Nothing else bare is taken, so T3's own
      bare keys (the usage page's c, t, l) keep working. */
@@ -1217,7 +1244,11 @@
     refresh();
   }
 
-  const CHORD_CODES = { "/": "Slash", ".": "Period", ",": "Comma" };
+  const CHORD_CODES = {
+    "/": "Slash", ".": "Period", ",": "Comma", ";": "Semicolon",
+    "-": "Minus", "=": "Equal", "[": "BracketLeft", "]": "BracketRight",
+    "'": "Quote",
+  };
   const chordCode = (key) =>
     CHORD_CODES[key] ||
     (/^[a-z]$/.test(key) ? "Key" + key.toUpperCase() : /^[0-9]$/.test(key) ? "Digit" + key : "");
@@ -1237,6 +1268,15 @@
     }));
   }
 
+  /* What a leaf of either tree does. */
+  function seqFire(leaf, name) {
+    if (leaf && leaf.row) return listRun1(listFocused(), leaf.row);
+    if (leaf && leaf.act) { SEQ_ACTS[leaf.act](); return true; }
+    if (leaf && leaf.chord) { dispatchChord(leaf.chord); return true; }
+    seqFlash(name + " (" + (leaf ? leaf.desc : "") + "): no T3 equivalent");
+    return true;
+  }
+
   /* One key into the pending sequence. */
   function seqStep(k) {
     const at = SEQ.node, local = SEQ.local;
@@ -1249,9 +1289,15 @@
         handleKey(k);
         return;
       }
-      /* Nothing of the app's: the conversation's own keys after a prefix,
-         gg and the ] and [ walks. */
-      if (at && !local && pageSeq(at.name, k)) { S.count = ""; refresh(); return; }
+      /* Nothing of the app's: the focused surface's own keys after a prefix.
+         Graphide resolves these the same way round, the keymap first and the
+         surface's keys after it - the list's gg, gp, ]c, and the
+         conversation's gg and its ] and [ walks. */
+      if (at && !local) {
+        const row = listFocused();
+        if (row && listSeq(at.name, k, row)) { S.count = ""; refresh(); return; }
+        if (!row && pageSeq(at.name, k)) { S.count = ""; refresh(); return; }
+      }
       S.count = "";
       seqFlash(seqName([...seqTokens(at ? at.name : ""), k]) + " is not mapped");
       refresh();
@@ -1260,8 +1306,7 @@
     if (next.kids.size) { SEQ.node = next; seqArm(); refresh(); return; }
     seqCancel();
     S.count = "";
-    if (next.leaf && next.leaf.chord) dispatchChord(next.leaf.chord);
-    else seqFlash(next.name + " (" + (next.leaf ? next.leaf.desc : "") + "): no T3 equivalent");
+    seqFire(next.leaf, next.name);
     refresh();
   }
 
@@ -1294,6 +1339,11 @@
      name where the keys lead to more keys and the binding's description
      where they do not. What gred says in words it says on the message line,
      not here. */
+  /* Whether a leaf reaches anything here, which is what the which-key bar
+     greys a key out for. */
+  const seqDoes = (leaf) =>
+    !!leaf && !!(leaf.chord || leaf.act || (leaf.row && leaf.row[1] !== null));
+
   function seqHint() {
     if (!SEQ.node || !SEQ.show) return null;
     const items = [];
@@ -1302,7 +1352,7 @@
         key: k === " " ? "<Space>" : k,
         desc: n.kids.size ? (n.group || "more") : n.leaf ? n.leaf.desc : "",
         group: !!n.kids.size,
-        none: !n.kids.size && !(n.leaf && n.leaf.chord),
+        none: !n.kids.size && !seqDoes(n.leaf),
       });
     }
     return { title: SEQ.node.name, items };
@@ -1332,36 +1382,215 @@
 
   const NATIVE_KEYS = TEXT_KEYS + "," + ACTIVATE_KEYS;
 
+  /* ----------------------------------------------------------- panes ----- */
+
+  /* Graphide's panes (gred/src/panes.rs), over T3's workspace areas.
+
+     T3 marks each region of the window with `data-workspace-area` (its name)
+     and `data-workspace-order` (its place in the ring workspace.focusNext
+     walks): sidebar 0, conversation 1, composer 2, details 3, panel 4,
+     terminal 5. That ring is a list. <C-w>h and friends are not a list: gred
+     picks the pane the eye picks, and `panes.rs::nearest` says which that is
+     - of the panes lying that way, the closest whose span crosses the
+     focused pane's centre line, else the closest at all.
+
+     Pointing all four at focusNext and focusPrevious, which is what this did,
+     made <C-w>h and <C-w>k one key and <C-w>j and <C-w>l another: from the
+     sidebar <C-w>j walked into the chat, and <C-w>k walked back out of it.
+     So the direction is settled here, from the rectangles, and T3's ring is
+     then stepped until the focus arrives - rather than focusing an element
+     directly - so T3 keeps its own memory of where the focus stood in each
+     area, and its focus-visible outline lands with it. */
+  const PANE_SEL = "[data-workspace-area]";
+  /* T3's own test for an area that is really there, copied from its focus
+     module: each of these ancestors puts an area away, a collapsed sidebar
+     among them. */
+  const PANE_AWAY = [
+    "[hidden]", "[inert]", "[data-closed]", '[aria-hidden="true"]',
+    '[data-chat-column-maximized-away="true"]',
+    '[data-slot="sidebar"][data-state="collapsed"]',
+    '[data-workspace-unavailable="true"]',
+  ].join(",");
+  /* panes.rs: `const EPS: f32 = 0.5`, so a shared border counts as touching. */
+  const PANE_EPS = 0.5;
+  const PANE_WORD = { h: "to the left", j: "below", k: "above", l: "to the right" };
+
+  function paneShows(el) {
+    if (!el.isConnected || el.closest(PANE_AWAY)) return false;
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") return false;
+    return Array.from(el.getClientRects()).some((r) => r.width > 0 && r.height > 0);
+  }
+
+  /* The ring, as T3 walks it: the areas that show, in order. Sorted the same
+     way, so an index here is an index there. */
+  function panes() {
+    const out = [];
+    for (const el of document.querySelectorAll(PANE_SEL)) {
+      if (!paneShows(el)) continue;
+      out.push({
+        el,
+        name: el.dataset.workspaceArea || "",
+        order: Number(el.dataset.workspaceOrder),
+        r: el.getBoundingClientRect(),
+      });
+    }
+    out.sort((a, b) => a.order - b.order);
+    return out;
+  }
+
+  const paneOf = (el) => (el && el.closest ? el.closest(PANE_SEL) : null);
+  const paneHere = (list) => {
+    const el = paneOf(document.activeElement);
+    return el ? list.find((p) => p.el === el) || null : null;
+  };
+
+  /* panes.rs::lies_toward. */
+  function paneToward(at, r, dir) {
+    if (dir === "h") return r.right <= at.left + PANE_EPS;
+    if (dir === "l") return r.left >= at.right - PANE_EPS;
+    if (dir === "k") return r.bottom <= at.top + PANE_EPS;
+    return r.top >= at.bottom - PANE_EPS;
+  }
+
+  /* panes.rs::nearest, with its key of (does it cross the centre line, the
+     gap, the distance off that line). */
+  function paneNearest(list, from, dir) {
+    const at = from.r;
+    const cx = at.left + at.width / 2, cy = at.top + at.height / 2;
+    const across = dir === "h" || dir === "l";
+    const key = (r) => [
+      (across ? r.top <= cy && cy <= r.bottom : r.left <= cx && cx <= r.right) ? 0 : 1,
+      dir === "h" ? at.left - r.right : dir === "l" ? r.left - at.right
+        : dir === "k" ? at.top - r.bottom : r.top - at.bottom,
+      across ? Math.abs((r.top + r.bottom) / 2 - cy) : Math.abs((r.left + r.right) / 2 - cx),
+    ];
+    const under = (a, b) => a[0] < b[0] || (a[0] === b[0] && (a[1] < b[1] || (a[1] === b[1] && a[2] < b[2])));
+    let best = null, mark = null;
+    for (const p of list) {
+      if (p === from || !paneToward(at, p.r, dir)) continue;
+      const k = key(p.r);
+      if (!mark || under(k, mark)) { best = p; mark = k; }
+    }
+    return best;
+  }
+
+  const PANE = { sent: 0 };
+
+  /* Step T3's own ring until the focus is in `to`, the short way round. */
+  function paneStepTo(list, from, to) {
+    const i = list.indexOf(from), j = list.indexOf(to);
+    if (i < 0 || j < 0 || i === j) return false;
+    const n = list.length;
+    const fwd = (j - i + n) % n;
+    const next = fwd <= (i - j + n) % n;
+    const steps = next ? fwd : (i - j + n) % n;
+    for (let s = 0; s < steps; s++) {
+      PANE.sent++;
+      dispatchChord(next ? "z" : "q");
+      if (paneOf(document.activeElement) === to.el) return true;
+    }
+    return paneOf(document.activeElement) === to.el;
+  }
+
+  function paneGo(dir) {
+    const list = panes();
+    const from = paneHere(list);
+    /* Nothing focused in any area: the ring's own first step, which is what
+       T3 does from the body. */
+    if (!from) { PANE.sent++; dispatchChord(dir === "h" || dir === "k" ? "q" : "z"); return true; }
+    const to = paneNearest(list, from, dir);
+    if (!to) { seqFlash("no pane " + PANE_WORD[dir]); return true; }
+    if (!paneStepTo(list, from, to)) {
+      /* The ring would not take it there: focus the area itself, which is
+         what T3 falls back to when it finds nothing better inside one. */
+      try { to.el.focus({ preventScroll: true }); } catch { /* not focusable */ }
+    }
+    return true;
+  }
+
+  /* <C-w>w and <C-w>p: the ring itself. Vim's own keys for the next and
+     previous window, and the only movement T3 has a command for. */
+  const paneRing = (d) => { PANE.sent++; dispatchChord(d > 0 ? "z" : "q"); return true; };
+
+  /* <C-w>c and <C-w>q close the focused pane. Each area is put away by its
+     own T3 command, and the chat and its composer cannot be closed at all,
+     so the key says so rather than closing something else. */
+  const PANE_CLOSE = {
+    sidebar: "[",         /* sidebar.toggle */
+    terminal: "]",        /* terminal.close */
+    panel: "x",           /* rightPanel.close */
+    details: "v",         /* threadPanel.toggle */
+  };
+
+  function paneClose() {
+    const here = paneHere(panes());
+    const chord = here && PANE_CLOSE[here.name];
+    if (!chord) { seqFlash("the chat cannot be closed"); return true; }
+    dispatchChord(chord);
+    return true;
+  }
+
+  /* <C-w>o: every pane but the focused one away. */
+  function paneOnly() {
+    const list = panes();
+    const here = paneHere(list);
+    const keep = here ? here.name : "conversation";
+    let shut = 0;
+    for (const p of list) {
+      if (p.name === keep || !PANE_CLOSE[p.name]) continue;
+      dispatchChord(PANE_CLOSE[p.name]);
+      shut++;
+    }
+    if (!shut) seqFlash("nothing else is open");
+    return true;
+  }
+
+  /* The keys the app tree calls by name. A row of SEQ_ROWS whose second
+     field starts with @ runs one of these instead of dispatching a chord. */
+  const SEQ_ACTS = {
+    "pane.left": () => paneGo("h"),
+    "pane.down": () => paneGo("j"),
+    "pane.up": () => paneGo("k"),
+    "pane.right": () => paneGo("l"),
+    "pane.next": () => paneRing(1),
+    "pane.prev": () => paneRing(-1),
+    "pane.close": () => paneClose(),
+    "pane.only": () => paneOnly(),
+  };
+
   /* ----------------------------------------------------------- lists ----- */
 
   /* T3's thread lists (the sidebar, and the thread panel, which is the same
      row component) are a roving-tabindex list: each row is a
      `div role="button" tabindex="0" data-sidebar-row="..."`, and T3 listens
      on the list's container, in the capture phase, for ArrowUp, ArrowDown,
-     ArrowLeft, ArrowRight, Home and End. workspace.focusPrevious (<C-h>)
-     lands on the current row, and from there Graphide moves with j and k.
+     ArrowLeft, ArrowRight, Home and End - and for ContextMenu and Shift+F10,
+     which open the row's own menu. A group row carries aria-expanded, and
+     ArrowRight on a closed one clicks it rather than moving.
 
      Every row is a button, so NATIVE_KEYS below stands the trees aside on it,
      which is right for Space: it activates the focused row. j and k are not
-     Space. They are translated into the arrows T3 already handles rather than
-     reimplemented here, so collapsing a group, loading more and the scroll
-     into view stay T3's own behaviour, and a release that changes the list
-     changes these keys with it.
+     Space. Where T3 already handles a key the act is translated into it
+     rather than reimplemented, so collapsing a group, loading more and the
+     scroll into view stay T3's own behaviour, and a release that changes the
+     list changes these keys with it.
+
+     The table below is `fleet/src/list/keys.rs`, Graphide's agents' list, in
+     its own order. Every key of it is answered: the ones T3 can do, and the
+     ones it cannot, which say so on the message line rather than going dead.
+     That silence was most of what felt unfinished - six keys worked and
+     thirty did nothing.
 
      The settings page's navigation is the same pattern on
-     `[data-settings-section]`, with no Left or Right, so h and l do nothing
-     there. Those two are the only lists T3 drives this way; its pickers and
-     menus are listboxes behind a text field, where a letter has to stay a
-     letter. */
+     `[data-settings-section]`, with no Left or Right and no rows to act on,
+     so only the movements do anything there. Those two are the only lists T3
+     drives this way; its pickers and menus are listboxes behind a text
+     field, where a letter has to stay a letter. */
   const LIST_SEL = "[data-sidebar-row], [data-settings-section]";
-  const LIST_ARROWS = {
-    j: "ArrowDown", k: "ArrowUp",
-    h: "ArrowLeft", l: "ArrowRight",   /* out of a group, into one */
-    G: "End",                          /* gg is below: it needs a pending g */
-  };
-  const LIST = { g: 0, sent: 0 };
+  const LIST = { sent: 0 };
 
-  /* The arrow T3's own list handler is waiting for. Dispatched at the row, so
+  /* The key T3's own list handler is waiting for. Dispatched at the row, so
      the container's capture listener sees it with the row as its target; it
      carries no modifier, which is what that handler requires. */
   function listMove(row, key) {
@@ -1371,23 +1600,221 @@
     }));
   }
 
+  const listRows = (row) => {
+    const box = row.closest("[data-slot='sidebar'], [data-workspace-area]") || document;
+    return Array.from(box.querySelectorAll(LIST_SEL));
+  };
+
+  /* Half a list, and a list: how many rows fit, as gred's HalfDown and
+     PageDown move. T3 handles no PageDown on a row, so it is that many
+     arrows. */
+  function listRun(row, key, n) {
+    for (let i = 0; i < n; i++) {
+      const at = document.activeElement;
+      listMove(at && at.matches && at.matches(LIST_SEL) ? at : row, key);
+    }
+    return true;
+  }
+  function listFit(row, part) {
+    const h = row.getBoundingClientRect().height || 28;
+    const box = row.closest("[data-slot='sidebar-inner'], [data-slot='sidebar'], [data-workspace-area]");
+    const tall = (box ? box.getBoundingClientRect().height : window.innerHeight) || 600;
+    return Math.max(1, Math.round(tall / h / part));
+  }
+
+  /* A group row: aria-expanded says which way it is. gred's za zo zc zR zM. */
+  const listOpen = (row) => row.getAttribute("aria-expanded");
+  function listGroup(row, want) {
+    const at = listOpen(row);
+    if (at === null) { seqFlash("not a group"); return true; }
+    if (want === "toggle" || (want === "open") === (at === "false")) row.click();
+    return true;
+  }
+  function listGroupAll(row, open) {
+    let n = 0;
+    for (const r of listRows(row)) {
+      if (listOpen(r) === (open ? "false" : "true")) { r.click(); n++; }
+    }
+    if (!n) seqFlash(open ? "every group is open" : "every group is closed");
+    return true;
+  }
+
+  /* The row's own menu, which T3 opens for ContextMenu and Shift+F10: where
+     archive, delete and snooze live, since T3 binds no key to any of them. */
+  function listMenu(row) {
+    const r = row.getBoundingClientRect();
+    row.dispatchEvent(new PointerEvent("contextmenu", {
+      bubbles: true, cancelable: true, button: -1, clientX: r.left, clientY: r.bottom,
+    }));
+    return true;
+  }
+
+  /* gred's i a r on a row write to that agent: the row is opened and the
+     composer takes the keys. Opening is a navigation, so the composer may
+     not be there for a frame or two. */
+  function listCompose(row) {
+    row.click();
+    let tries = 0;
+    const tryIt = () => {
+      if (intoComposer("") || ++tries > 8) return;
+      requestAnimationFrame(tryIt);
+    };
+    tryIt();
+    return true;
+  }
+
+  /* `fleet/src/list/keys.rs`, in its order: the keys, what they do, and the
+     word the which-key bar and the message line use. A chord string is a T3
+     command through keybindings.json; @name is one of LIST_ACTS; null is a
+     key Graphide has and T3 has nothing for, which answers rather than doing
+     nothing at all. */
+  const LIST_ROWS = [
+    ["j", "@down", "the line below"],
+    ["k", "@up", "the line above"],
+    ["G", "@last", "the last line"],
+    ["l", "@right", "into the line"],
+    ["h", "@fold", "the group of the line folded"],
+    ["i", "@compose", "write to the agent"],
+    ["a", "@compose", "always allow what it asks, else write to it"],
+    ["o", "n", "a new agent"],
+    ["n", null, "no to what it asks, else the next agent that asks"],
+    ["y", null, "yes to what it asks"],
+    ["A", null, "always allow that, everywhere"],
+    ["e", null, "edit what it asks to do"],
+    ["r", "@compose", "answer it in words"],
+    ["V", null, "start or end a selection of lines"],
+    ["K", "v", "show or hide the details"],
+    ["/", null, "filter the list"],
+    ["f", null, "a label on each link of the preview"],
+    ["N", null, "the agent before that asks"],
+    [".", null, "do the last change again"],
+    ["!", null, "mark important, or not"],
+    ["L", null, "to the bottom of the queue"],
+    ["x", null, "switch off the computer whose strip it is"],
+    ["<C-d>", "@halfdown", "half the list down"],
+    ["<C-u>", "@halfup", "half the list up"],
+    ["<C-c>", "k", "stop the agent's turn"],
+    ["<C-x>", null, "its page in a pane below"],
+    ["<C-v>", null, "its page in a pane beside"],
+    ["<C-t>", null, "its page in a new tab"],
+    ["gg", "@first", "first line"],
+    ["gd", null, "the file its page is at"],
+    ["gp", "i", "pin to the top of the list, or unpin"],
+    ["gb", null, "bring the agent on another computer back"],
+    ["za", "@group", "toggle the group"],
+    ["zo", "@open", "open"],
+    ["zc", "@close", "close"],
+    ["zR", "@openall", "open all"],
+    ["zM", "@closeall", "close all"],
+    ["zz", "@menu", "archive it for a while, then be reminded of it"],
+    ["dd", "p", "stop and settle"],
+    ["dm", "@menu", "the row's menu: archive, delete, snooze"],
+    ["]c", "d", "its change"],
+    ["[c", "d", "its change"],
+  ];
+
+  const LIST_ACTS = {
+    down: (row) => listMove(row, "ArrowDown") || true,
+    up: (row) => listMove(row, "ArrowUp") || true,
+    first: (row) => listMove(row, "Home") || true,
+    last: (row) => listMove(row, "End") || true,
+    right: (row) => listMove(row, "ArrowRight") || true,
+    fold: (row) => listMove(row, "ArrowLeft") || true,
+    halfdown: (row) => listRun(row, "ArrowDown", listFit(row, 2)),
+    halfup: (row) => listRun(row, "ArrowUp", listFit(row, 2)),
+    group: (row) => listGroup(row, "toggle"),
+    open: (row) => listGroup(row, "open"),
+    close: (row) => listGroup(row, "close"),
+    openall: (row) => listGroupAll(row, true),
+    closeall: (row) => listGroupAll(row, false),
+    menu: (row) => listMenu(row),
+    compose: (row) => listCompose(row),
+  };
+
+  /* The table, split the way the keys arrive: one key, a chord, or a key
+     after a prefix. A prefix the app's own tree owns (g, ] and [) reaches
+     the list through seqStep's fall-through; one it does not (d and z) is
+     started here. */
+  const LIST_ONE = new Map();          /* "j" -> row */
+  const LIST_CHORD = new Map();        /* "<C-d>" -> row */
+  const LIST_TREE = new Map();         /* "d" -> Map("d" -> row) */
+  for (const row of LIST_ROWS) {
+    const keys = row[0];
+    if (keys.length > 1 && keys[0] === "<") { LIST_CHORD.set(keys, row); continue; }
+    if (keys.length === 1) { LIST_ONE.set(keys, row); continue; }
+    if (!LIST_TREE.has(keys[0])) LIST_TREE.set(keys[0], new Map());
+    LIST_TREE.get(keys[0]).set(keys[1], row);
+  }
+  /* The prefixes the list owns outright, which nothing in the app's tree
+     starts: everything but g, ] and [. */
+  const LIST_STARTS = new Set([...LIST_TREE.keys()].filter((k) => !SEQ_STARTS.has(k) && k !== "g" && k !== "]" && k !== "["));
+
+  /* The list's own prefixes as trie nodes, so the pending key, the wait and
+     the which-key bar are the app tree's and this adds no second machinery.
+     The group names are gred's: `dd` lives under Vim's delete, `z` under its
+     folds. */
+  const LIST_GROUPS = { d: "Delete", z: "Fold" };
+  const LIST_NODES = new Map();
+  for (const [pre, kids] of LIST_TREE) {
+    const node = { kids: new Map(), leaf: null, name: pre, group: LIST_GROUPS[pre] || "" };
+    for (const [k, def] of kids) {
+      node.kids.set(k, { kids: new Map(), leaf: { row: def, desc: def[2] }, name: pre + k, group: "" });
+    }
+    LIST_NODES.set(pre, node);
+  }
+
+  /* The list row the keys are for: the focused one, or the one the event came
+     from. */
+  function listFocused(target) {
+    const f = document.activeElement;
+    const a = f && f.closest ? f.closest(LIST_SEL) : null;
+    if (a) return a;
+    return target && target.closest ? target.closest(LIST_SEL) : null;
+  }
+
+  function listStart(k) {
+    SEQ.node = LIST_NODES.get(k) || null;
+    SEQ.local = false;
+    SEQ.flash = "";
+    if (SEQ.node) seqArm();
+    refresh();
+  }
+
+  function listRun1(row, def) {
+    if (!row) return false;
+    const [keys, act, desc] = def;
+    if (act === null) { seqFlash(keys + " (" + desc + "): no T3 equivalent"); refresh(); return true; }
+    if (act[0] === "@") return LIST_ACTS[act.slice(1)](row);
+    dispatchChord(act);
+    return true;
+  }
+
+  /* A key after a list prefix, from seqStep's fall-through or from the list's
+     own pending prefix. */
+  function listSeq(prefix, k, row) {
+    const kids = LIST_TREE.get(prefix);
+    const def = kids && kids.get(k);
+    if (!def) return false;
+    return listRun1(row, def);
+  }
+
   /* One key with a list row focused. True when the key was taken. */
   function listKey(e, row) {
-    if (e.ctrlKey || e.metaKey || e.altKey) return false;   /* T3's own chords */
     const k = e.key;
-    if (k === "g" && !e.shiftKey) {
-      if (e.repeat) return true;                            /* a held g is not gg */
-      if (LIST.g && Date.now() - LIST.g < TIMEOUTLEN_MS) {
-        LIST.g = 0; listMove(row, "Home"); return true;
-      }
-      LIST.g = Date.now();
-      return true;
+    if (e.ctrlKey && !e.altKey && !e.metaKey) {
+      const def = LIST_CHORD.get("<C-" + k + ">");
+      /* <C-c> with something selected is a copy, which the platform owes the
+         user before Graphide owes them an interrupt. */
+      if (!def) return false;
+      if (k === "c" && String(window.getSelection() || "")) return false;
+      return listRun1(row, def);
     }
-    LIST.g = 0;
-    const arrow = LIST_ARROWS[k];
-    if (!arrow) return false;        /* Space, Enter, everything else: T3's */
-    listMove(row, arrow);
-    return true;
+    if (e.metaKey || e.altKey) return false;              /* T3's own chords */
+    if (e.repeat && LIST_STARTS.has(k)) return true;      /* a held d is not dd */
+    if (LIST_STARTS.has(k)) { listStart(k); return true; }
+    const def = LIST_ONE.get(k);
+    if (!def) return false;        /* Space, Enter, Tab, everything else: T3's */
+    return listRun1(row, def);
   }
 
   /* ------------------------------------------------------------------- ui -- */
@@ -1571,6 +1998,13 @@
     if (el) { el.classList.remove("t3vim-normal"); if (el.blur) el.blur(); }
     hideUI();
     refresh();
+  }
+
+  /* Bare <C-h> <C-j> <C-k> <C-l>: the pane that way. */
+  function paneKey(e) {
+    if (!e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return false;
+    if (!PANE_WORD[e.key]) return false;
+    return paneGo(e.key);
   }
 
   /* One key with the conversation reading. True when the key was taken. */
@@ -1942,14 +2376,35 @@
     if (e.defaultPrevented) return;
     const t = e.target && e.target.nodeType === 1 ? e.target : document.activeElement;
     const f = document.activeElement;
-    /* A focused list row, with no sequence pending: j k h l gg G move in it.
-       A pending sequence keeps its keys and falls through to be cancelled, as
-       any other focus that wants its own keys does. */
+    /* Anything taking text keeps every key; a focused list row reads
+       Graphide's list table. */
     const takesText = (t && t.closest && t.closest(TEXT_KEYS)) || (f && f.closest && f.closest(TEXT_KEYS));
-    if (!SEQ.node && !takesText) {
-      const row = (f && f.closest && f.closest(LIST_SEL)) || (t && t.closest && t.closest(LIST_SEL));
-      if (row && listKey(e, row)) { eat(e); return; }
+    const row = takesText ? null : listFocused(t);
+    /* A pending sequence sees the key before the focused control does, so
+       long as nothing is taking text. The list's own keys are sequences -
+       dd, za, gg - and every row is a button, which the NATIVE_KEYS bail
+       below would otherwise cancel them for. */
+    if (SEQ.node && row) {
+      const r = seqPendingKey(e);
+      if (r === "eat") { eat(e); return; }
+      if (r === "skip") return;
     }
+    if (!SEQ.node && row && listKey(e, row)) { eat(e); return; }
+    /* A prefix the app's tree owns, pressed on a row: it starts there, and
+       the list gets its second key through seqStep's fall-through, which is
+       how gg, gp and ]c reach the list. Not the leader: Space activates a
+       focused row, here as everywhere on the web, and taking it would break
+       the row for the sake of a leader nobody presses with one focused. */
+    if (!SEQ.node && row && !e.ctrlKey && !e.metaKey && !e.altKey &&
+        e.key !== " " && SEQ_STARTS.has(e.key)) {
+      eat(e); seqStart(e.key, false); return;
+    }
+    /* The panes, from anywhere but a text box and the terminal: gred binds
+       bare <C-h> <C-j> <C-k> <C-l> to the four directions in Normal and
+       Visual mode (presets/gred.toml), beside the <C-w> tree. Inside the
+       terminal they stay the shell's, and <C-w> then a direction is the way
+       out, as it is in tmux. */
+    if (!SEQ.node && !takesText && paneKey(e)) { eat(e); return; }
     /* The conversation reads its keys wherever the composer does not have
        them, which is gred's rule: a control keeps Space and Enter, and the
        keys it has no use for are the page's. */
@@ -2006,6 +2461,16 @@
     }
 
     if (S.mode === INSERT) {
+      /* The three erasers are vim's while typing, and T3's keybindings had
+         all three: <C-w> closed the right panel, <C-u> opened the usage page
+         and <C-h> stepped the pane ring. */
+      if (ctrlOnly && !e.shiftKey && (k === "w" || k === "h" || k === "u")) {
+        eat(e);
+        eraseBack(k === "w" ? "word" : k === "h" ? "char" : "line");
+        S.rec = null;                       /* what was typed is no longer what . repeats */
+        refresh();
+        return;
+      }
       if (S.rec && !e.ctrlKey && !e.metaKey && !e.altKey) {
         if (k.length === 1) S.rec.push(k);
         else if (k === "Backspace") S.rec.pop();
@@ -2021,6 +2486,9 @@
     }
     const free = !S.operator && !S.pending;  /* not mid-command: f<Space>, r], di[ stay vim's */
     if (ctrlOnly && !e.shiftKey && k === "w" && free) { eat(e); seqStart("<C-w>", true); return; }
+    /* The four directions from the composer too, as gred has them in Normal
+       and Visual mode: the composer is a pane like any other. */
+    if (ctrlOnly && !e.shiftKey && PANE_WORD[k] && free) { eat(e); paneGo(k); return; }
     if (e.ctrlKey || e.metaKey || e.altKey) return;   /* T3's own keybindings */
     if (k === "Enter") { setMode(INSERT); return; }   /* let T3 send */
     if (k === "Tab") return;
@@ -2036,6 +2504,12 @@
        !editableFocus, which the focused composer fails, so send the command
        palette's chord from here, where editableFocus reads false. */
     if (free && k === ":") { S.count = ""; dispatchChord("c"); refresh(); return; }
+    /* dd with nothing to delete settles the thread, which is what Graphide's
+       composer does with it: "gred's own composer sends dd as the agents'
+       list does, and archives" (fleet/src/composer.rs). */
+    if (k === "d" && S.operator === "d" && scan(S.el).text === "") {
+      reset(); refresh(); dispatchChord("p"); return;
+    }
     try { handleKey(k); } catch { reset(); refresh(); }
   }
 
@@ -2104,6 +2578,20 @@
     },
     get sent() { return SEQ.sent; },
     get listSent() { return LIST.sent; },
+    /* The panes as this file sees them, and where a direction would go, so a
+       test can check the walk without a focus to move. */
+    panes() { return panes().map((p) => ({ name: p.name, order: p.order })); },
+    paneToward(dir) {
+      const list = panes();
+      const from = paneHere(list);
+      if (!from) return null;
+      const to = paneNearest(list, from, dir);
+      return to ? to.name : null;
+    },
+    get paneSent() { return PANE.sent; },
+    /* Graphide's list keys and what each reaches here, for the table in
+       GRAPHIDE-PARITY.md and the test that keeps it honest. */
+    listKeys() { return LIST_ROWS.map(([keys, act, desc]) => ({ keys, act, desc })); },
     /* Land the view where the glide is taking it, at once: a test should not
        have to wait for frames, and headless Chromium serves few of them. */
     scrollNow() {

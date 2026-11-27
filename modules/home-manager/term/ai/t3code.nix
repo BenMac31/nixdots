@@ -106,6 +106,25 @@ in
           localStorage['t3code:vim-composer'] = 'off'.
         '';
       };
+      keybindings = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Install pkgs/t3code/keybindings.json as T3's keybindings table: the
+          half of Graphide's keys that are one chord, which T3's own layer can
+          hold. The sequences (<leader>, <C-w>, g, the list's dd) and every
+          modal key are vim-composer.js's, and reach T3 through the private
+          Ctrl+Alt+Shift chords this table binds.
+
+          It is the whole table, not a patch, because T3 appends its own
+          default for any command no row holds: a key left out comes back on
+          the next start.
+
+          Turn this off to keep whatever is in ~/.t3/userdata/keybindings.json.
+          What was there before Nix first wrote it is kept beside it as
+          keybindings.json.before-nix.
+        '';
+      };
     };
   };
   config = lib.mkIf cfg.enable (lib.mkMerge [
@@ -126,6 +145,12 @@ in
       home.activation.t3codeProviders = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run ${lib.getExe pkgs.python3} ${./t3code-settings.py} \
           "$HOME/.t3/userdata/settings.json" ${settingsPatch}
+      '';
+    })
+    (lib.mkIf cfg.keybindings {
+      home.activation.t3codeKeys = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run ${lib.getExe pkgs.python3} ${./t3code-keys.py} \
+          "$HOME/.t3/userdata/keybindings.json" ${../../../../pkgs/t3code/keybindings.json}
       '';
     })
   ]);

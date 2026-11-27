@@ -1,17 +1,36 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>t3vim</title>
   <style>.composer-tiptap{white-space:pre-wrap;word-break:break-word}</style></head>
-<body>
-  <!-- The conversation, the shape T3 gives it: one scroller with rows that
-       carry their kind, so the page's keys have something real to move. -->
-  <div class="messages-timeline-scroll" style="height:120px;overflow-y:auto">
-    <div data-message-role="user" data-timeline-row-kind="message" style="height:200px">one</div>
-    <div data-timeline-row-kind="work" style="height:200px">work</div>
-    <div data-message-role="assistant" data-timeline-row-kind="message" style="height:200px">two</div>
-    <div data-message-role="user" data-timeline-row-kind="message" style="height:200px">three</div>
-  </div>
-  <div data-chat-composer-form="true">
-    <div class="composer-tiptap" contenteditable="true"></div>
+<body style="margin:0">
+  <!-- T3's window, the shape it gives it: every region carries
+       data-workspace-area and data-workspace-order, laid out where T3 lays
+       them out, so the pane keys have real rectangles to walk. The orders are
+       T3's own: sidebar 0, conversation 1, composer 2, details 3, panel 4,
+       terminal 5. -->
+  <div id="ws" style="position:relative;width:1000px;height:600px">
+    <div data-workspace-area="sidebar" data-workspace-order="0" tabindex="-1"
+         style="position:absolute;left:0;top:0;width:200px;height:600px"></div>
+    <div data-workspace-area="conversation" data-workspace-order="1" tabindex="-1"
+         style="position:absolute;left:200px;top:0;width:500px;height:440px">
+      <!-- one scroller with rows that carry their kind, so the page's keys
+           have something real to move -->
+      <div class="messages-timeline-scroll" style="height:120px;overflow-y:auto">
+        <div data-message-role="user" data-timeline-row-kind="message" style="height:200px">one</div>
+        <div data-timeline-row-kind="work" style="height:200px">work</div>
+        <div data-message-role="assistant" data-timeline-row-kind="message" style="height:200px">two</div>
+        <div data-message-role="user" data-timeline-row-kind="message" style="height:200px">three</div>
+      </div>
+    </div>
+    <div data-workspace-area="composer" data-workspace-order="2" tabindex="-1"
+         style="position:absolute;left:200px;top:440px;width:500px;height:100px">
+      <div data-chat-composer-form="true">
+        <div class="composer-tiptap" contenteditable="true"></div>
+      </div>
+    </div>
+    <div data-workspace-area="details" data-workspace-order="3" tabindex="-1"
+         style="position:absolute;left:700px;top:0;width:300px;height:600px"></div>
+    <div data-workspace-area="terminal" data-workspace-order="5" tabindex="-1"
+         style="position:absolute;left:200px;top:540px;width:500px;height:60px"></div>
   </div>
   <pre id="out"></pre>
   <script src="vim-composer.js"></script>

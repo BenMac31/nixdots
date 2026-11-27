@@ -121,6 +121,18 @@
   t("J eats indent",         "one\n   two", 0, "J", { text: "one two" });
   t(">> indents",            "abc", 0, ">>", { text: "\tabc" });
   t("<< outdents",           "\tabc", 1, "<<", { text: "abc" });
+  /* Vim's three erasers while typing. T3 had all three: mod+w closed the
+     right panel, mod+u opened the usage page, mod+h stepped the pane ring. */
+  t("<C-w> erases a word",   "hello world", 10, ["A", ["w", { ctrl: true }]],
+    { text: "hello ", pos: 6, mode: "INSERT" });
+  t("<C-w> twice",           "hello world", 10, ["A", ["w", { ctrl: true }], ["w", { ctrl: true }]],
+    { text: "", pos: 0, mode: "INSERT" });
+  t("<C-h> erases a char",   "abc", 2, ["A", ["h", { ctrl: true }]],
+    { text: "ab", pos: 2, mode: "INSERT" });
+  t("<C-u> erases the line", "one\ntwo", 4, ["A", ["u", { ctrl: true }]],
+    { text: "one\n", pos: 4, mode: "INSERT" });
+  t("<C-h> at the start does nothing", "abc", 0, ["i", ["h", { ctrl: true }]],
+    { text: "abc", pos: 0, mode: "INSERT" });
   t("cw is ce",              "hello world", 0, "cw", { text: " world", mode: "INSERT" });
   t("cc keeps the line",     "hello", 2, "cc", { text: "", mode: "INSERT" });
   t("C to end of line",      "hello", 1, "C", { text: "h", mode: "INSERT" });
@@ -221,10 +233,12 @@
     ["<leader>av", "v"], ["<leader>aw", "w"], ["<leader>al", "l"], ["<leader>ay", "y"],
     ["<leader>ap", "p"], ["<leader>aT", "i"], ["<leader>ac", "h"], ["<leader>tt", "a"],
     ["<leader>tw", "r"], ["<leader>hp", "d"], ["<C-w>s", "s"], ["<C-w>v", "b"],
-    ["<C-w>c", "x"], ["<C-w>q", "x"], ["<C-w>T", "u"], ["gt", "."], ["]a", "."],
+    ["<C-w>T", "u"], ["gt", "."], ["]a", "."],
     ["gT", ","], ["[a", ","], ["ga", "j"],
     ["<leader>ai", ";"], ["<leader>sp", ";"],
-    ["<C-w>h", "q"], ["<C-w>k", "q"], ["<C-w>l", "z"], ["<C-w>j", "z"],
+    /* <C-w>h j k l, and <C-w>c and q, are no longer one chord each: the
+       direction comes from where the panes are and the close from which pane
+       it is. The panes section below has them. */
     ["<leader>1", "1"], ["<leader>2", "2"], ["<leader>3", "3"], ["<leader>4", "4"],
     ["<leader>5", "5"], ["<leader>6", "6"], ["<leader>7", "7"], ["<leader>8", "8"],
     ["<leader>9", "9"],
@@ -253,6 +267,13 @@
   ts("held Space does not walk the tree", composer("abc", 0), [],
      (g) => { V.feed(" "); V.feed(" ", { repeat: true }); return want("seq", "<leader>")(V.debug()); });
   ts("shift keydown keeps <leader>a pending", composer("abc", 0), ["<leader>a", "Shift", ["N", { shift: true }]], oneChord("o"));
+  /* dd with nothing to delete settles the thread, as Graphide's own composer
+     does with it (fleet/src/composer.rs). Whitespace is something, so it is
+     only the empty one. */
+  ts("dd in an empty composer settles the thread", composer("", 0), ["d", "d"],
+     (g, s) => oneChord("p")(g, s));
+  ts("dd on a blank line still deletes it", composer("   ", 0), ["d", "d"],
+     (g, s) => none()(g, s) || want("text", "")(g));
   ts(": sends the palette chord in normal", composer("abc", 1), [":"],
      (g, s) => oneChord("c")(g, s) || want("text", "abc")(g));
   ts(": sends the palette chord in visual", composer("abc", 1), ["v", ":"], oneChord("c"));
@@ -273,7 +294,7 @@
   /* No T3 counterpart: consumed, nothing sent, a message says so. */
   for (const seq of ["<leader>q", "<leader>m", "<leader>T", "<leader>so", "<leader>ds", "<leader>rn",
                      "<leader>hs", "<leader>aF", "]q", "[q", "]d", "[d", "gd", "gD", "grr", "gra",
-                     "<C-w>o", "<C-w>=", "<C-w>H", "<C-w><lt>"]) {
+                     "<C-w>=", "<C-w>H", "<C-w><lt>"]) {
     ts("no counterpart " + seq, composer("hello world", 3), [seq],
        none((g) => want("text", "hello world")(g) || want("pos", 3)(g) || want("mode", "NORMAL")(g)
          || (/no T3 equivalent/.test(V.said()) ? "" : "said " + JSON.stringify(V.said()))));
@@ -332,6 +353,130 @@
        c.tabIndex = 0; document.body.appendChild(c); c.focus();
      }, [" "], (g, s) => { document.getElementById("tmp-cb").remove(); return none()(g, s); });
   ts("global: plain keys pass", global(), ["x", "c", "l"], none());
+
+  /* ------------------------------------------------------------- panes --- */
+
+  /* The window the fixture lays out: sidebar on the left, the conversation
+     with the composer under it, details on the right, the terminal at the
+     foot. Graphide's <C-w>h and friends pick the pane the eye picks
+     (panes.rs::nearest), so what is tested is the direction, not a ring
+     step. */
+  const area = (name) => document.querySelector('[data-workspace-area="' + name + '"]');
+  const focusArea = (name) => { const a = area(name); a.focus(); return a; };
+  const areaNow = () => {
+    const a = document.activeElement;
+    const box = a && a.closest ? a.closest("[data-workspace-area]") : null;
+    return box ? box.dataset.workspaceArea : undefined;
+  };
+
+  /* T3's own ring, as its focus module walks it: the visible areas by order,
+     wrapping, moved by the two chords the plugin sends. Installed only for
+     the tests that need the focus to actually travel. */
+  function ring() {
+    const onKey = (e) => {
+      if (!(e.ctrlKey && e.altKey && e.shiftKey)) return;
+      if (e.key !== "z" && e.key !== "q") return;
+      const all = Array.from(document.querySelectorAll("[data-workspace-area]"))
+        .sort((a, b) => Number(a.dataset.workspaceOrder) - Number(b.dataset.workspaceOrder));
+      const at = document.activeElement;
+      const box = at && at.closest ? at.closest("[data-workspace-area]") : null;
+      const i = all.indexOf(box);
+      const d = e.key === "z" ? 1 : -1;
+      const to = all[i < 0 ? (d === 1 ? 0 : all.length - 1) : (i + d + all.length) % all.length];
+      if (to) to.focus();
+    };
+    window.addEventListener("keydown", onKey, false);
+    return () => window.removeEventListener("keydown", onKey, false);
+  }
+
+  /* name, the pane to start in, steps, check() */
+  function tw(name, from, steps, check) {
+    ts("panes: " + name, () => { setup("abc", 0); el.blur(); focusArea(from); }, steps, (g, s) => {
+      let prob;
+      try { prob = check(g, s); } finally { el.focus(); }
+      return prob;
+    });
+  }
+  const inArea = (name) => () => (areaNow() === name ? "" : "in " + JSON.stringify(areaNow()) + " want " + name);
+
+  /* The geometry on its own, with nothing focused to move. */
+  ts("panes: the fixture is the window T3 lays out", global(), [], () => {
+    const names = V.panes().map((p) => p.name).join(",");
+    return names === "sidebar,conversation,composer,details,terminal" ? "" : "panes " + names;
+  });
+  tw("h from the conversation is the sidebar", "conversation", [], () =>
+    (V.paneToward("h") === "sidebar" ? "" : "h -> " + V.paneToward("h")));
+  tw("l from the conversation is the details", "conversation", [], () =>
+    (V.paneToward("l") === "details" ? "" : "l -> " + V.paneToward("l")));
+  tw("j from the conversation is the composer", "conversation", [], () =>
+    (V.paneToward("j") === "composer" ? "" : "j -> " + V.paneToward("j")));
+  tw("k from the composer is the conversation", "composer", [], () =>
+    (V.paneToward("k") === "conversation" ? "" : "k -> " + V.paneToward("k")));
+  tw("j from the composer is the terminal", "composer", [], () =>
+    (V.paneToward("j") === "terminal" ? "" : "j -> " + V.paneToward("j")));
+  /* The bug this replaced: from the sidebar the ring's next pane is the
+     conversation, so <C-w>j walked sideways. Nothing is below the sidebar. */
+  tw("nothing is below the sidebar", "sidebar", [], () =>
+    (V.paneToward("j") === null ? "" : "j -> " + V.paneToward("j")));
+  tw("nothing is above the sidebar", "sidebar", [], () =>
+    (V.paneToward("k") === null ? "" : "k -> " + V.paneToward("k")));
+  tw("h and k from the conversation are not the same pane", "conversation", [], () =>
+    (V.paneToward("h") !== V.paneToward("k") ? "" : "both " + V.paneToward("h")));
+
+  /* End to end: the direction is decided here and T3's ring carries it. */
+  tw("<C-w>l steps the ring until it arrives", "conversation", [], () => {
+    const off = ring();
+    try { V.feedSeq("<C-w>l"); return inArea("details")(); } finally { off(); }
+  });
+  tw("<C-w>h steps the ring backwards", "conversation", [], () => {
+    const off = ring();
+    try { V.feedSeq("<C-w>h"); return inArea("sidebar")(); } finally { off(); }
+  });
+  tw("bare <C-l> is the pane to the right", "conversation", [], () => {
+    const off = ring();
+    try { V.feed("l", { ctrl: true }); return inArea("details")(); } finally { off(); }
+  });
+  tw("bare <C-j> is the pane below", "conversation", [], () => {
+    const off = ring();
+    try { V.feed("j", { ctrl: true }); return inArea("composer")(); } finally { off(); }
+  });
+  tw("a direction with no pane steps nothing and says so", "sidebar", [], () => {
+    const off = ring();
+    const before = V.paneSent;
+    try {
+      V.feedSeq("<C-w>j");                 /* nothing below the sidebar */
+      if (V.paneSent !== before) return "it stepped the ring with nowhere to go";
+      if (areaNow() !== "sidebar") return "the focus left for " + areaNow();
+      return /no pane below/.test(V.said()) ? "" : "said " + JSON.stringify(V.said());
+    } finally { off(); }
+  });
+  /* An area T3 has put away is not a pane. */
+  tw("a hidden pane is skipped", "conversation", [], () => {
+    const d = area("details");
+    d.setAttribute("aria-hidden", "true");
+    try {
+      const to = V.paneToward("l");
+      return to === null ? "" : "l -> " + to + " with the details hidden";
+    } finally { d.removeAttribute("aria-hidden"); }
+  });
+  /* <C-w>c closes the pane it is in, which is a different command per pane. */
+  tw("<C-w>c in the details closes the details", "details", ["<C-w>c"], oneChord("v"));
+  tw("<C-w>c in the terminal closes the terminal", "terminal", ["<C-w>c"], oneChord("]"));
+  tw("<C-w>c in the sidebar puts the sidebar away", "sidebar", ["<C-w>c"], oneChord("["));
+  tw("<C-w>c in the chat says it cannot be closed", "conversation", ["<C-w>c"], (g, s) =>
+    (s.length ? "sent " + s[0].key : "") || (/cannot be closed/.test(V.said()) ? "" : "said " + JSON.stringify(V.said())));
+  tw("<C-w>o leaves the chat alone and shuts the rest", "conversation", ["<C-w>o"], (g, s) => {
+    const keys = s.map((x) => x.key).sort().join(",");
+    return keys === "[,],v" ? "" : "sent " + keys + " want [,],v";
+  });
+  tw("<C-w>w is the ring's next", "conversation", ["<C-w>w"], oneChord("z"));
+  tw("<C-w>p is the ring's previous", "conversation", ["<C-w>p"], oneChord("q"));
+  /* In the composer, in normal mode, the four directions are still the app's. */
+  ts("panes: <C-l> in the composer leaves it", composer("abc", 0), [], () => {
+    const off = ring();
+    try { V.feed("l", { ctrl: true }); return inArea("details")(); }
+    finally { off(); el.focus(); }
+  });
 
   /* ------------------------------------------------------------- lists --- */
 
@@ -412,8 +557,9 @@
   /* Space still activates the focused row, and the leader is not taken. */
   tl("Space is the row's", 3, 1, [" "], (b, g, s) => none(() => at("row1"))(g, s));
   tl("Enter is the row's", 3, 1, ["Enter"], (b, g, s) => none(() => at("row1"))(g, s));
-  /* <C-j> is T3's own chord (terminal.toggle), not a move. */
-  tl("a chord is T3's", 3, 0, [["j", { ctrl: true }]], (b, g, s) => none(() => at("row0"))(g, s));
+  /* <C-j> is the pane below, not a move in the list: the list's own chords
+     are the four below, and gred's list table has no <C-j>. */
+  tl("<C-j> is the pane below, not a row", 3, 0, [["j", { ctrl: true }]], (b) => at("row0"));
   /* A thread being renamed is an input inside a row: every key is its own. */
   tl("a rename input keeps its keys", 3, 0, [], (b) => {
     const row = b.querySelector('[data-sidebar-row="row0"]');
@@ -425,8 +571,105 @@
     if (V.listSent !== before) return "sent " + (V.listSent - before) + " arrows into a rename";
     return document.activeElement === i ? "" : "focus left the input";
   });
-  /* A stale pending g does not turn a later g into gg. */
-  tl("a lone g is dropped, not kept", 3, 1, ["g"], (b, g, s) => none(() => at("row1"))(g, s));
+  /* g on a row is the app's prefix, and a prefix that only leads on waits as
+     long as it takes (modal::Resolver), so it is still pending. Escape lets
+     it go, and nothing was sent meanwhile. */
+  tl("g waits on a row, and Escape lets it go", 3, 1, ["g"], (b, g, s) => {
+    if (s.length) return "sent " + s[0].key;
+    if (V.state.seq !== "g") return "seq " + JSON.stringify(V.state.seq);
+    V.feed("Escape");
+    return V.state.seq === "" ? at("row1") : "Escape left " + JSON.stringify(V.state.seq);
+  });
+
+  /* The acts: every key of Graphide's list table is answered, by a T3
+     command, by something done here, or by saying there is none. The six
+     movements above were all that worked before. */
+  tl("dd settles the agent", 3, 1, ["d", "d"], (b, g, s) => oneChord("p")(g, s) || at("row1"));
+  tl("gp pins it", 3, 1, ["g", "p"], (b, g, s) => oneChord("i")(g, s));
+  tl("o starts a new agent", 3, 1, ["o"], (b, g, s) => oneChord("n")(g, s));
+  tl("K shows the details", 3, 1, ["K"], (b, g, s) => oneChord("v")(g, s));
+  tl("]c is its change", 3, 1, ["]", "c"], (b, g, s) => oneChord("d")(g, s));
+  tl("<C-c> stops its turn", 3, 1, [["c", { ctrl: true }]], (b, g, s) => oneChord("k")(g, s));
+  /* The platform owes a copy before Graphide owes an interrupt. */
+  tl("<C-c> with a selection is a copy", 3, 1, [], (b) => {
+    const r = document.createRange();
+    r.selectNodeContents(b.querySelector('[data-sidebar-row="row1"]'));
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(r);
+    const before = V.sent;
+    V.feed("c", { ctrl: true });
+    sel.removeAllRanges();
+    return V.sent === before ? "" : "it sent a chord over a selection";
+  });
+  /* A key Graphide has and T3 has not: it says so rather than going dead. */
+  tl("a key T3 has nothing for says so", 3, 1, ["!"], (b, g, s) =>
+    (s.length ? "sent " + s[0].key : "") ||
+    (/no T3 equivalent/.test(V.said()) ? "" : "said " + JSON.stringify(V.said())));
+  tl("dd is not d alone", 3, 1, ["d"], (b, g, s) =>
+    (s.length ? "sent " + s[0].key : "") || (V.state.seq === "d" ? "" : "seq " + JSON.stringify(V.state.seq)));
+  /* <C-d> is half the list, which T3 handles no PageDown for: it is that
+     many arrows, so the list's own scroll and lazy loading still run. */
+  tl("<C-d> is half the list down", 8, 0, [["d", { ctrl: true }]], (b) => {
+    const now = document.activeElement.dataset.sidebarRow;
+    return now !== "row0" ? "" : "it did not move";
+  });
+
+  /* The groups: T3 puts aria-expanded on a group row and clicks it open, so
+     za zo zc are that click and zR zM are every row's. */
+  function groups() {
+    const box = document.createElement("div");
+    box.id = "tmp-sidebar";
+    for (let i = 0; i < 3; i++) {
+      const r = document.createElement("div");
+      r.setAttribute("role", "button");
+      r.tabIndex = 0;
+      r.dataset.sidebarRow = "g" + i;
+      r.setAttribute("aria-expanded", i === 0 ? "false" : "true");
+      r.addEventListener("click", () => {
+        r.setAttribute("aria-expanded", r.getAttribute("aria-expanded") === "true" ? "false" : "true");
+      });
+      box.appendChild(r);
+    }
+    document.body.appendChild(box);
+    return box;
+  }
+  function tg(name, start, steps, check) {
+    ts("list: " + name, () => {
+      setup("abc", 0); el.blur();
+      groups().querySelector('[data-sidebar-row="g' + start + '"]').focus();
+    }, steps, (g, s) => {
+      const box = document.getElementById("tmp-sidebar");
+      const open = Array.from(box.querySelectorAll("[data-sidebar-row]"))
+        .map((r) => r.getAttribute("aria-expanded")).join(",");
+      let prob;
+      try { prob = check(open, g, s); } finally { box.remove(); el.focus(); }
+      return prob;
+    });
+  }
+  const opens = (want) => (open) => (open === want ? "" : "expanded " + open + " want " + want);
+
+  tg("za opens a closed group", 0, ["z", "a"], opens("true,true,true"));
+  tg("za closes an open group", 1, ["z", "a"], opens("false,false,true"));
+  tg("zo opens and leaves an open one alone", 1, ["z", "o"], opens("false,true,true"));
+  tg("zc closes an open group", 1, ["z", "c"], opens("false,false,true"));
+  tg("zc on a closed group leaves it", 0, ["z", "c"], opens("false,true,true"));
+  tg("zR opens them all", 1, ["z", "R"], opens("true,true,true"));
+  tg("zM closes them all", 0, ["z", "M"], opens("false,false,false"));
+  tg("za on a row that is no group says so", 0, [], (open) => {
+    const r = document.querySelector('[data-sidebar-row="g0"]');
+    r.removeAttribute("aria-expanded");
+    V.feed("z"); V.feed("a");
+    return /not a group/.test(V.said()) ? "" : "said " + JSON.stringify(V.said());
+  });
+  /* Archive, delete and snooze are in the row's own menu, which T3 binds no
+     key to; zz and dm open it where gred would act outright. */
+  tg("zz opens the row's menu", 0, [], () => {
+    let opened = 0;
+    const r = document.querySelector('[data-sidebar-row="g0"]');
+    r.addEventListener("contextmenu", () => { opened++; });
+    V.feed("z"); V.feed("z");
+    return opened === 1 ? "" : "the menu opened " + opened + " times";
+  });
 
   /* -------------------------------------------------------------- page --- */
 

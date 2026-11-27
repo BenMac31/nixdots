@@ -13,9 +13,14 @@ Graphide. This one only records the mapping.
 
 | Layer | File | Sequences? | Modal? |
 |---|---|---|---|
-| T3's app chrome | `~/.t3/userdata/keybindings.json` | no, one chord per binding | no |
-| T3's composer | `vim-composer.js` in this directory | yes, it owns them | yes |
+| T3's app chrome | `keybindings.json` here, installed to `~/.t3/userdata/` | no, one chord per binding | no |
+| T3's composer, lists, panes and chat | `vim-composer.js` here | yes, it owns them | yes |
+| T3's preview | `page-vim.js` here | yes | yes |
 | Claude Code's TUI | `~/.claude/keybindings.json` | yes, space separated | per context |
+
+The first two are one table split in two, and `check-chords.py` fails the
+build if the plugin sends a chord the table does not bind: such a key eats the
+press and does nothing, which is worse than either half alone.
 
 T3's own binding engine takes `{key, command, when?}` and its key parser
 splits on `+` only. A second key is a hard error, so the whole `<Space>` tree,
@@ -33,29 +38,57 @@ tree items. Taking the leader over a focused button would break Space on that
 button for the sake of a leader nobody presses with a button focused. The cost
 is that Space no longer pages a scroll area; PageDown still does.
 
-One set of keys does run on a focused control: `j k h l gg G` on a list row,
-below.
+One set of keys does run on a focused control: Graphide's agents'-list table
+on a list row, below.
 
-## Moving in a list
+## The agents' list
 
-Graphide's workflow for the agents panel is `<C-h>` into the pane, then `j`
-and `k` down and up it. Both halves exist in T3, but they had to be joined up:
+Graphide's workflow for the agents panel is `<C-h>` into the pane, then the
+list's own table down and across it. The spec is a second file,
 
-* `<C-h>` / `<C-l>` are `workspace.focusPrevious` / `focusNext`, which is T3's
-  F6 landmark walk over `[data-workspace-area]` (`composer`, `conversation`,
-  `details`, `panel`, `pull-requests`, the sidebar). Landing on an area
-  focuses its `[data-sidebar-row][aria-current="page"]`, so `<C-h>` really
-  does put the cursor on the open thread's row. This is close to Graphide's
-  `pane.left` / `pane.right`, and it is what those two keys already did.
-* `j` and `k` then did nothing, because every row is a `role="button"` and the
-  plugin stands the trees aside on a focused control (so Space still activates
-  it). T3's own list handler listens for `ArrowUp`, `ArrowDown`, `ArrowLeft`,
-  `ArrowRight`, `Home` and `End` on the list's container.
+    graphide-ide/gred-rs/crates/fleet/src/list/keys.rs
 
-So with a row focused the plugin translates `j k h l gg G` into those keys and
-dispatches them at the row. No part of the list is reimplemented: expanding a
-group, "load more" and the scroll into view stay T3's own behaviour, and a T3
-release that changes the list changes these keys with it.
+and its 43 rows are ported whole. T3's own list handler listens for
+`ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`, `Home`, `End` and
+`ContextMenu`/`Shift+F10` on the list's container, and clicks a group row to
+open it, so every act that can be expressed in those is, and the rest go to a
+T3 command or say there is none.
+
+| Graphide | act | T3 |
+|---|---|---|
+| `j` `k` `G` `gg` | down, up, last, first | `ArrowDown` `ArrowUp` `End` `Home` |
+| `l` `h` | into the line, fold the group | `ArrowRight` `ArrowLeft` |
+| `<C-d>` `<C-u>` | half the list | that many arrows: no PageDown is handled |
+| `dd` `<C-CR>` | stop and archive | `thread.settle` |
+| `gp` | pin, or unpin | `thread.pin` |
+| `K` | the details | `threadPanel.toggle` |
+| `]c` `[c` | its change | `diff.toggle` |
+| `<C-c>` | interrupt | `thread.stop`, unless there is a selection to copy |
+| `o` | a new agent | `chat.new` |
+| `i` `a` `r` | write to it | the row is opened, then the composer |
+| `za` `zo` `zc` | the group | the click T3's `ArrowRight` makes |
+| `zR` `zM` | every group | that click on each group row |
+| `zz` | snooze | the row's menu, where T3 keeps snooze |
+| `n` `y` `A` `e` | answer what it asks | none: T3 answers in the conversation, not the list |
+| `V` | a selection of lines | none: T3 selects no rows |
+| `/` | filter the list | none: T3 has no sidebar search |
+| `f` | label the preview's links | none |
+| `N` | the agent before that asks | none |
+| `.` | the last change again | none |
+| `!` `L` | important, later | none |
+| `x` | switch that computer off | none |
+| `gd` `gb` | its file, bring it back | none |
+| `<C-x>` `<C-v>` `<C-t>` | below, beside, a new tab | none: T3 opens a thread in one place |
+| `<Tab>` `<S-Tab>` | mark and move | left to T3, which uses Tab for focus |
+
+Two gaps are worth naming. `thread.settle` is not Graphide's archive: it moves
+the thread to the sidebar's Settled section rather than out of the list.
+T3's real `archive` and `delete` are row-menu items with no command behind
+them, so no key can be bound to either; `dm` opens that menu, beside `zz`.
+
+No part of the list is reimplemented: expanding a group, "load more" and the
+scroll into view stay T3's own behaviour, and a T3 release that changes the
+list changes these keys with it.
 
 This covers `[data-sidebar-row]` (the sidebar and the thread panel, one row
 component) and `[data-settings-section]` (the settings navigation, the same
@@ -64,9 +97,54 @@ arrows; its pickers are listboxes behind a text field, where a letter has to
 stay a letter, and a thread being renamed is an `input` inside a row, where
 every key stays its own.
 
-`Space` and `Enter` keep activating the focused row, and the key trees still
-stay out of focused controls: `<leader>`, `g`, `]` and `[` run with nothing
-focused.
+`Space` and `Enter` keep activating the focused row, so the leader is the one
+tree that does not start on one. `g`, `]` and `[` do: the app's tree gets the
+first key and the list gets the second through the fall-through, which is how
+`gg`, `gp` and `]c` land. That is the order Graphide resolves them in too,
+the keymap first and the surface's own keys after it.
+
+## The panes
+
+The spec is `gred/src/panes.rs` and the `<C-w>` block of `gred.toml`. T3 marks
+each region with `data-workspace-area` and `data-workspace-order`, and the
+order is the ring `workspace.focusNext` walks:
+
+| area | order |
+|---|---|
+| sidebar, settings-nav | 0 |
+| conversation, home, pull-requests, settings | 1 |
+| composer | 2 |
+| details | 3 |
+| panel | 4 |
+| terminal | 5 |
+
+That ring is the only movement T3 has a command for, and a ring is not a
+direction. All four of `<C-w>h j k l` pointed at `focusNext`/`focusPrevious`,
+which made `<C-w>h` and `<C-w>k` one key and `<C-w>j` and `<C-w>l` another:
+from the sidebar `<C-w>j` walked sideways into the chat, and `<C-w>k` walked
+back out of it.
+
+The direction is decided from the rectangles instead, by `panes.rs::nearest`:
+of the panes lying that way, the closest whose span crosses the focused pane's
+centre line, else the closest at all, with `EPS = 0.5` so a shared border
+counts as touching. The visibility test is T3's own, copied from its focus
+module, so this skips exactly the areas the ring skips. Then T3's ring is
+stepped the short way round until the focus arrives, which keeps its memory of
+where the focus stood in each area and its focus-visible outline.
+
+| Graphide | T3 |
+|---|---|
+| `<C-w>h j k l`, and bare `<C-h> <C-j> <C-k> <C-l>` | the direction, then the ring |
+| `<C-w>w` `<C-w>p` | the ring itself (vim's; `gred.toml` omits them) |
+| `<C-w>c` `<C-w>q` | the focused pane's own close command |
+| `<C-w>o` | every other pane's |
+| `<C-w>s` `<C-w>v` | `terminal.split`, `terminal.splitVertical` |
+| `<C-w>T` | `rightPanel.new` |
+| `<C-w>=` `<C-w>x` `<C-w>HJKL` `<C-w>> < + -` | none: T3's panes are dragged, and no command moves or sizes one |
+
+Inside the terminal the bare four stay the shell's, and `<C-w>` then a
+direction is the way out, as it is in tmux. In the chat and its composer
+`<C-w>c` says the chat cannot be closed rather than closing something else.
 
 ## The look
 
@@ -111,9 +189,8 @@ target, so only these are safe to put on a bare or shifted key:
 
 | Graphide | T3 key | command |
 |---|---|---|
-| `<C-h>` / `<C-l>` pane left/right | `ctrl+h` / `ctrl+l` | workspace.focusPrevious / focusNext |
-| `<C-j>` / `<C-k>` pane down/up | `ctrl+j` / `ctrl+k` | terminal.toggle, down into it and back up |
-| `<C-o>` / `<C-i>` jump back/forward | `ctrl+o` / `ctrl+i` | navigation.back / forward |
+| `<C-h> <C-j> <C-k> <C-l>` pane left/down/up/right | the plugin's, not a binding | the direction, then `workspace.focusNext`/`focusPrevious` |
+| `<C-o>` / `<C-i>` jump back/forward | `ctrl+o` / `ctrl+i`, `!editableFocus` | navigation.back / forward |
 | `<C-.>` agents.toggle | `ctrl+.` | sidebar.toggle |
 | `<C-;>` agent.harness | `ctrl+;` | modelPicker.toggle |
 | `<C-S-;>` agent.terminal | `ctrl+shift+;` | terminal.toggle |
@@ -128,6 +205,21 @@ target, so only these are safe to put on a bare or shifted key:
 `alt+f` is deliberately left unbound: Graphide's `<M-f>` is fast mode, and T3
 has no fast-mode command, so anything else on that key would fire the wrong
 action under Ben's fingers. It used to hold `filePicker.toggle`.
+
+Four chords were taken away rather than ported, because they had T3 commands
+on keys vim needs for text and for panes:
+
+| chord | had | why it went |
+|---|---|---|
+| `ctrl+h` | `workspace.focusPrevious` | the pane walk is the plugin's now, and `<C-h>` while typing is a backspace |
+| `ctrl+l` | `workspace.focusNext` | the same, the other way |
+| `ctrl+j` | `terminal.toggle` | Graphide's `<C-j>` is the pane below, not a toggle. `<C-S-;>` still toggles the terminal |
+| `ctrl+k` | `terminal.toggle` | Graphide's `<C-k>` is the pane above |
+
+`<C-w>`, `<C-u>` and `<C-h>` while typing were the worst of these: `mod+w`
+closed the right panel, `mod+u` opened the usage page and `mod+h` stepped the
+ring, so vim's three erasers all fired the app instead of editing the text.
+The plugin takes all three in insert mode now.
 
 ## Graphide features T3 has no command for
 
@@ -156,7 +248,9 @@ command in it. Listed so nobody spends a second afternoon looking.
 | `<leader>rn` `<leader>cf` | rename, format | none |
 | `<leader>ar af ab aR ad aL` | restart, fork, bump, resume-limited, definition, launcher | none. `thread.fork` exists as an RPC but is not bindable |
 | `<leader>tc tn tp tm tb` | chrome, engine, perf, motion, blame toggles | none |
-| `<C-w>` move, resize, exchange, equalize, only | window management | split, splitVertical, close, and only for terminals |
+| `<C-w>=` `<C-w>x` `<C-w>HJKL` `<C-w>> < + -` | equalize, exchange, move, resize | none: T3's panes are dragged, and no command moves or sizes one |
+| the list's `n y A e V / f N . ! L x gd gb` | answering, selecting, filtering, marking a row | none; each says so on the message line |
+| the row menu's archive, delete, snooze | taking an agent out of the list | menu items with no command behind them. `dd` settles instead, and `zz` and `dm` open the menu |
 
 `<C-w>s` and `<C-w>v` reach `terminal.split` / `terminal.splitVertical`, the
 only split T3 has. T3's own defaults guard those on `terminalFocus`, but the

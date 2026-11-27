@@ -147,25 +147,84 @@ The rest of gred's conversation keys are surfaces T3 has not: the folds that
 but here that would take copying a selection out of the chat, and
 `<leader>ak` stops the agent.
 
-## j and k in T3's lists
+## The agents' list
 
 T3's thread list (the sidebar, and the thread panel, which is the same row
 component) and the settings navigation are roving-tabindex lists: every row is
 a `role="button"` with a `data-sidebar-row` or `data-settings-section`
-attribute, and T3 listens on the list's container for the arrow keys, Home and
-End. `workspace.focusPrevious` (`<C-h>`) lands on the current row.
+attribute, and T3 listens on the list's container for the arrow keys, Home,
+End, and `ContextMenu`/`Shift+F10` for the row's own menu. A group row carries
+`aria-expanded`, and `ArrowRight` on a closed one clicks it.
 
-With a row focused, the plugin turns `j k h l gg G` into the arrows, `Home`
-and `End` that T3 already handles, dispatched at the row. Nothing about the
-list is reimplemented here, so expanding a group, loading more and the scroll
-into view stay T3's own. `Space` and `Enter` are left alone: they activate the
-focused row, and the leader is not taken over a focused control. A thread
-being renamed is an `input` inside a row, where every key stays its own.
+With a row focused the plugin reads Graphide's agents'-list table,
+`fleet/src/list/keys.rs`, whole. Every key of it is answered:
+
+| key | what it does | how |
+|---|---|---|
+| `j k G gg l h` | the line below, above, last, first, into, fold | T3's own arrows, `Home`, `End` |
+| `<C-d> <C-u>` | half the list | that many arrows: T3 handles no PageDown on a row |
+| `dd` | stop and settle | `thread.settle` |
+| `gp` | pin, or unpin | `thread.pin` |
+| `K` | show or hide the details | `threadPanel.toggle` |
+| `]c` `[c` | its change | `diff.toggle` |
+| `<C-c>` | stop its turn | `thread.stop`, unless something is selected, which is a copy |
+| `o` | a new agent | `chat.new` |
+| `i` `a` `r` | write to the agent | opens the row, then the composer |
+| `za zo zc` | toggle, open, close the group | the click T3's own `ArrowRight` makes |
+| `zR zM` | open all, close all | that click on every group row |
+| `zz` `dm` | snooze, archive, delete | the row's own menu, which T3 binds no key to |
+| `n y A e V / f N . ! L x gd gb <C-x> <C-v> <C-t>` | - | T3 has nothing for these, and each says so |
+
+Nothing about the list is reimplemented: expanding a group, loading more and
+the scroll into view stay T3's own, so a release that changes the list changes
+these keys with it. `Space` and `Enter` are left alone, since they activate the
+focused row and the leader is not taken over a focused control. A thread being
+renamed is an `input` inside a row, where every key stays its own.
+
+The keys T3 cannot do say so on the message line rather than going dead. That
+silence was most of what felt unfinished: six keys worked and thirty did
+nothing at all.
+
+`archive` and `delete` are the two gaps worth naming. T3 has them as row-menu
+items only, not as commands, so no key can be bound to them: `dd` settles,
+which moves the thread to the sidebar's Settled section, and `dm` opens the
+menu where archive, delete and snooze live.
 
 `[data-sidebar-row]` and `[data-settings-section]` are the only two lists T3
 drives this way. Its pickers are listboxes behind a text field, where a letter
-has to stay a letter. The key trees stay out of focused controls: `<leader>`,
-`g`, `]` and `[` run with nothing focused, not with a row focused.
+has to stay a letter.
+
+## The panes
+
+T3 marks each region of the window with `data-workspace-area` and
+`data-workspace-order`: sidebar 0, conversation 1, composer 2, details 3,
+panel 4, terminal 5. The order is the ring `workspace.focusNext` walks, and
+that ring is the only movement T3 has a command for.
+
+A ring is not a direction. Pointing all four of `<C-w>h j k l` at
+`focusNext`/`focusPrevious` made `<C-w>h` and `<C-w>k` one key and `<C-w>j`
+and `<C-w>l` another, so from the sidebar `<C-w>j` walked sideways into the
+chat and `<C-w>k` walked back out of it. That is what felt clunky.
+
+The direction is worked out here instead, by Graphide's own rule
+(`gred/src/panes.rs::nearest`): of the panes lying that way, the closest whose
+span crosses the focused pane's centre line, else the closest at all. Once the
+target is known, T3's ring is stepped the short way round until the focus
+arrives, rather than focusing an element directly, so T3 keeps its memory of
+where the focus stood in each area and its focus-visible outline lands with
+it.
+
+`<C-h> <C-j> <C-k> <C-l>` are the same four directions bare, as gred binds
+them beside the tree. Inside the terminal they stay the shell's, and `<C-w>`
+then a direction is the way out, as it is in tmux.
+
+`<C-w>c` and `<C-w>q` close the pane the focus is in, which is a different T3
+command for each (`sidebar.toggle`, `terminal.close`, `rightPanel.close`,
+`threadPanel.toggle`); in the chat and its composer they say it cannot be
+closed rather than closing something else. `<C-w>o` shuts the others.
+`<C-w>w` and `<C-w>p` are the ring itself. `<C-w>=`, `<C-w>x`, `<C-w>HJKL`
+and the four resize keys have no T3 counterpart: T3's panes are dragged, and
+nothing in its command table moves or sizes one.
 
 ## What it covers
 
@@ -179,9 +238,19 @@ Not covered: `/` and `?` search, ex commands, named registers other than `+`,
 and marks.
 
 Insert mode passes every key straight through, so T3's own send, mentions,
-slash commands and completion behave exactly as they do without this. In
-normal mode anything with a modifier is left to T3's keybindings, except
-`Ctrl-r` for redo, and `Enter` always sends.
+slash commands and completion behave exactly as they do without this, with
+three exceptions: vim's erasers `<C-w>` a word, `<C-h>` a character and
+`<C-u>` back to the start of the line. Graphide's own line editor has the
+same three (`ui/src/line.rs`), and T3 had all three bound elsewhere, so while
+typing `<C-w>` closed the right panel, `<C-u>` opened the usage page and
+`<C-h>` stepped the pane ring.
+
+In normal mode anything with a modifier is left to T3's keybindings, except
+`Ctrl-r` for redo and the four pane directions, and `Enter` always sends.
+`dd` with the composer empty settles the thread, which is what Graphide's own
+composer does with it: "gred's own composer sends `dd` as the agents' list
+does, and archives" (`fleet/src/composer.rs`). On a line with anything on it,
+whitespace included, `dd` still deletes the line.
 
 ## The preview's keys
 
@@ -241,9 +310,40 @@ carries the look: hairlines instead of fills, no shadow anywhere, the eyebrow
 on section headings, mono for keys, paths and the composer, radii of 4 to 8,
 and the accent kept for the one thing to look at.
 
+## The other half of the table
+
+`keybindings.json` here is T3's whole keybindings table, installed to
+`~/.t3/userdata/keybindings.json` at activation by `t3code-keys.py`. It and
+`vim-composer.js` are one key table split in two: the plugin owns every modal
+key and every sequence, and reaches a T3 command the only way a renderer
+script can, by dispatching a private `Ctrl+Alt+Shift+<key>` chord at `window`
+that this table maps to the command. Dispatched at `window`, T3's
+`editableFocus` reads false, so a command guarded against a focused text box
+still runs from the composer.
+
+It is the whole table rather than a patch because T3 appends its own default
+for any command no row holds: a key left out comes back on the next start.
+That also caps it at 256 rules, and there are 147.
+
+`check-chords.py` runs in the build and fails it if the plugin sends a chord
+nothing binds, since such a key eats the press and does nothing, which is
+worse than either half alone. `mod` is `ctrl` on Linux, which the check knows.
+
+The 40 private chords are an implementation detail, not keys to press. The
+keys to press are Graphide's, and the one-chord half of them is rebound to
+gred's own: `:` for the command line, `<C-.>` for the agents, `<C-;>` for the
+harness, `<C-,>` where a new agent starts, `<C-S-;>` for its terminal, `<C-o>`
+and `<C-i>` for the jump list.
+
+What was in `keybindings.json` before Nix first wrote it is kept beside it as
+`keybindings.json.before-nix`.
+
 ## Off switches
 
 * `ai.t3code.vimComposer = false` in home-manager, then rebuild.
+* `ai.t3code.keybindings = false` leaves `~/.t3/userdata/keybindings.json`
+  alone. The sequences then eat their keys and do nothing, since the chords
+  they send are unbound; the modal editing still works.
 * No rebuild: `__t3vim.disable()` in devtools, or set
   `localStorage['t3code:vim-composer'] = 'off'`.
 
@@ -268,11 +368,17 @@ and never bind to a name it shows.
 
 ## Tests
 
-`./run-tests.sh` drives the plugin in headless Chromium against a DOM shaped
-like Tiptap's, with a stand-in for the HardBreak extension. 269 cases, 130
-of them for the key sequences and 14 for the list keys, those last against a
-copy of T3's own list handler rather than an invented one, so they fail if the
-keys the plugin sends stop being the keys T3 waits for.
+`./run-tests.sh` drives both layers in headless Chromium: the composer and
+the app against a DOM shaped like T3's window, with a stand-in for the
+HardBreak extension, and `page-vim.js` against a page with something to
+scroll, label, walk and mark. 321 cases and 29.
+
+The fixture is T3's own shapes rather than invented ones: the list tests run
+against a copy of T3's list handler, the pane tests against its workspace
+areas and a copy of its focus ring, and the chat tests against its timeline
+rows. They fail if the keys the plugin sends stop being the keys T3 waits
+for, which is the point: nothing here binds to a minified name, so the shapes
+are the contract.
 
 `CHROME=/path/to/chromium ./run-tests.sh` to skip the nixpkgs build.
 
