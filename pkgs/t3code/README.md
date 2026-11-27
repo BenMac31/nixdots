@@ -371,7 +371,7 @@ and never bind to a name it shows.
 `./run-tests.sh` drives both layers in headless Chromium: the composer and
 the app against a DOM shaped like T3's window, with a stand-in for the
 HardBreak extension, and `page-vim.js` against a page with something to
-scroll, label, walk and mark. 321 cases and 29.
+scroll, label, walk and mark. 322 cases and 29.
 
 The fixture is T3's own shapes rather than invented ones: the list tests run
 against a copy of T3's list handler, the pane tests against its workspace

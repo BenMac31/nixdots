@@ -601,10 +601,20 @@
     sel.removeAllRanges();
     return V.sent === before ? "" : "it sent a chord over a selection";
   });
-  /* A key Graphide has and T3 has not: it says so rather than going dead. */
+  /* A bare key Graphide has and T3 has not: it says so rather than going
+     dead. */
   tl("a key T3 has nothing for says so", 3, 1, ["!"], (b, g, s) =>
     (s.length ? "sent " + s[0].key : "") ||
     (/no T3 equivalent/.test(V.said()) ? "" : "said " + JSON.stringify(V.said())));
+  /* A chord with no act is left to the platform and to T3's own table, not
+     eaten to say so: <C-x> keeps composer.mode and <C-v> keeps paste. */
+  tl("a chord with no act is left alone", 3, 1, [], (b) => {
+    const before = V.said();            /* a flash from an earlier case lingers */
+    const listBefore = V.listSent;
+    V.feed("x", { ctrl: true });
+    if (V.said() !== before) return "it answered <C-x> with " + JSON.stringify(V.said());
+    return V.listSent === listBefore ? "" : "it moved the list";
+  });
   tl("dd is not d alone", 3, 1, ["d"], (b, g, s) =>
     (s.length ? "sent " + s[0].key : "") || (V.state.seq === "d" ? "" : "seq " + JSON.stringify(V.state.seq)));
   /* <C-d> is half the list, which T3 handles no PageDown for: it is that

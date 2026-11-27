@@ -294,7 +294,10 @@
     let to = what === "word" ? wordBack(m.text, p, false)
       : what === "line" ? lineStart(m.text, p)
       : p - 1;
-    if (to >= p) to = p - 1;
+    /* <C-u> at the start of a line has nothing to take: vim does not reach
+       back over the break for it, and taking a character instead would join
+       two lines on a key that only ever shortens one. */
+    if (to >= p) { if (what === "line") return true; to = p - 1; }
     cut(m, to, p);
     const n = scan(S.el);
     caretTo(n, clamp(to, 0, n.text.length));
@@ -1740,7 +1743,16 @@
   const LIST_TREE = new Map();         /* "d" -> Map("d" -> row) */
   for (const row of LIST_ROWS) {
     const keys = row[0];
-    if (keys.length > 1 && keys[0] === "<") { LIST_CHORD.set(keys, row); continue; }
+    if (keys.length > 1 && keys[0] === "<") {
+      /* A chord belongs to the platform and to T3's own table first: gred
+         resolves its keymap before a surface's keys, and its app-level <C-x>
+         wins over the list's for exactly this reason. So a chord the list
+         has no T3 act for is left alone rather than eaten to say so - that
+         would cost <C-x> its command and <C-v> its paste and buy nothing.
+         A bare key is Graphide's, and those do say so. */
+      if (row[1] !== null) LIST_CHORD.set(keys, row);
+      continue;
+    }
     if (keys.length === 1) { LIST_ONE.set(keys, row); continue; }
     if (!LIST_TREE.has(keys[0])) LIST_TREE.set(keys[0], new Map());
     LIST_TREE.get(keys[0]).set(keys[1], row);
