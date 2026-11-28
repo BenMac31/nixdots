@@ -1,0 +1,29 @@
+Fix iterator invalidation (SIGSEGV) in CWorkspaceAlgoMatcher::updateWorkspaceLayouts().
+
+getWorkspaces() returns a live std::views::filter over CCompositor::m_workspaces.
+If updateTiledAlgo() destroys a workspace, its destroy listener calls
+std::erase(m_workspaces, weak), shrinking the vector underneath the active range
+iterator so the loop walks past end() into unrelated heap memory.
+
+Iterate over getWorkspacesCopy() instead, matching CCompositor's own pattern.
+
+--- a/src/layout/supplementary/WorkspaceAlgoMatcher.cpp
++++ b/src/layout/supplementary/WorkspaceAlgoMatcher.cpp
+@@ -114,7 +114,7 @@ SP<CAlgorithm> CWorkspaceAlgoMatcher::createAlgorithmForWorkspace(PHLWORKSPACE w
+ 
+ void CWorkspaceAlgoMatcher::updateWorkspaceLayouts() {
+     // TODO: make this ID-based, string comparison is slow
+-    for (const auto& ws : g_pCompositor->getWorkspaces()) {
++    for (const auto& ws : g_pCompositor->getWorkspacesCopy()) {
+         if (!ws)
+             continue;
+ 
+@@ -123,7 +123,7 @@ void CWorkspaceAlgoMatcher::updateWorkspaceLayouts() {
+         if (!TILED_ALGO)
+             continue;
+ 
+-        const auto LAYOUT_TO_USE = tiledAlgoForWorkspace(ws.lock());
++        const auto LAYOUT_TO_USE = tiledAlgoForWorkspace(ws);
+ 
+         const auto CURRENT_LAYOUT = getNameForTiledAlgo(TILED_ALGO.get());
+ 

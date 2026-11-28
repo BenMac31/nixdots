@@ -50,6 +50,9 @@
             quickshell = prev.quickshell.overrideAttrs (old: {
               patches = (old.patches or [ ]) ++ prev.lib.optional (old.version == "0.3.0") ./pkgs/quickshell-fileview-watcher.patch;
             });
+            hyprland = prev.hyprland.overrideAttrs (old: {
+              patches = (old.patches or [ ]) ++ prev.lib.optional (old.version == "0.55.4") ./pkgs/hyprland-update-workspace-layouts-copy.patch;
+            });
             waybar-pomodoro = prev.callPackage ./pkgs/waybar-module-pomodoro.nix { inherit inputs; };
             ridge = prev.callPackage ./pkgs/ridge.nix { };
             ubuntu-vm = prev.callPackage ./pkgs/ubuntu-vm.nix { };
